@@ -141,11 +141,31 @@ textarea {
   overflow: hidden;
 }
 
-.chat-header {
+.book-assist {
+  max-width: 520px;
+}
+
+.assist-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: #e7f2ee;
+  color: inherit;
+  text-decoration: none;
+}
+
+.assist-card strong,
+.assist-card span {
+  display: block;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid #e4eee9;
 }
@@ -155,8 +175,9 @@ textarea {
   font-size: 1.25rem;
 }
 
-.chat-header label {
-  min-width: 220px;
+.chat-back {
+  display: inline-flex;
+  color: inherit;
 }
 
 .chat .messages {
@@ -313,14 +334,5 @@ button.link {
     margin-left: 0;
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .chat-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .chat-header label {
-    min-width: 0;
   }
 }

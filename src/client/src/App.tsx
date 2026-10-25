@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppointmentsPage } from "./features/appointments/AppointmentsPage";
 import { BookPage } from "./features/appointments/BookPage";
 import { AuthPage } from "./features/auth/AuthPage";
+import { ChatPage } from "./features/chats/ChatPage";
 import { DoctorsPage } from "./features/doctors/DoctorsPage";
 import { Navbar } from "./shared/Navbar";
 import { useSession } from "./shared/session";
@@ -18,6 +19,7 @@ export function App() {
           <Route path="/doctors" element={<DoctorsPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/book" element={<BookPage />} />
+          <Route path="/book/chat" element={<ChatPage />} />
         </Routes>
       </main>
     </>
