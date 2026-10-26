@@ -5,9 +5,11 @@ export type Doctor = {
   name: string;
   specialtyId: string;
   specialty: string;
-  location: string;
   experienceYears: number;
   consultationFee: number;
+  followUpFee: number;
+  languages: string[];
+  bio: string;
 };
 
 export function getDoctors(specialtyId?: string) {

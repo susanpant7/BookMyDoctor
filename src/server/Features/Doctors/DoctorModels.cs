@@ -5,6 +5,8 @@ public sealed record Doctor(
     string Name,
     Guid SpecialtyId,
     string Specialty,
-    string Location,
     int ExperienceYears,
-    decimal ConsultationFee);
+    decimal ConsultationFee,
+    decimal FollowUpFee,
+    IReadOnlyList<string> Languages,
+    string Bio);

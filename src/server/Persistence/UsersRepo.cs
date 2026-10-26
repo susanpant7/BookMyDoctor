@@ -1,8 +1,16 @@
+using static BookMyDoctor.Persistence.SeedIds;
+
 namespace BookMyDoctor.Persistence;
 
 public sealed class UsersRepo : IUsersRepo
 {
-    private readonly List<UserAccount> _users = [.. StaticData.Users];
+    private static readonly IReadOnlyList<UserAccount> Seed =
+    [
+        new(HariPatientId, "Hari Bahadur", "hb@gmail.com", "susan123"),
+        new(MadanPatientId, "Madan Bahadur", "mb@gmail.com", "susan123")
+    ];
+
+    private readonly List<UserAccount> _users = [.. Seed];
 
     public UserAccount? GetById(Guid id) => _users.FirstOrDefault(user => user.Id == id);
 
@@ -13,3 +21,5 @@ public sealed class UsersRepo : IUsersRepo
 
     public void Add(UserAccount user) => _users.Add(user);
 }
+
+public sealed record UserAccount(Guid Id, string Name, string Email, string Password);

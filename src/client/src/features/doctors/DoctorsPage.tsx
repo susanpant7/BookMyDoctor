@@ -44,7 +44,7 @@ export function DoctorsPage() {
             <h2>{doctor.name}</h2>
             <p>{doctor.specialty}</p>
             <p className="muted">
-              {doctor.location} · {doctor.experienceYears} years · ${doctor.consultationFee}
+              {doctor.experienceYears} years · ${doctor.consultationFee}
             </p>
           </article>
         ))}
