@@ -40,7 +40,26 @@ public sealed class ChatHub : Hub
         var group = Clients.Group(GroupName(patientId));
         await group.SendAsync("ReceiveMessage", message);
 
-        var replyText = await _assistant.ReplyAsync(message);
+        string replyText;
+        await group.SendAsync("AssistantTyping", true);
+        try
+        {
+            replyText = await _assistant.ReplyAsync(message);
+        }
+        catch (HttpRequestException)
+        {
+            replyText = "Sorry, I'm having trouble right now. Please try again in a moment.";
+        }
+        catch (TaskCanceledException)   // the 2-minute timeout was hit
+        {
+            replyText = "Sorry, that took too long. Please try again.";
+        }
+        finally
+        {
+            // Always clear the indicator, even if the assistant throws something unexpected.
+            await group.SendAsync("AssistantTyping", false);
+        }
+
         var reply = _chatService.Send(new SendMessageRequest(patientId, "assistant", replyText));
         await group.SendAsync("ReceiveMessage", reply);
     }

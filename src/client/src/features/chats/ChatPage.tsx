@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../../shared/session";
 import { getMessages, type ChatMessage } from "./chatApi";
-import { createChatConnection, joinChat, onReceiveMessage, sendChatMessage } from "./chatHub";
+import { createChatConnection, joinChat, onAssistantTyping, onReceiveMessage, sendChatMessage } from "./chatHub";
 
 // Adds messages that aren't already in the list (history and live pushes can overlap).
 function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]) {
@@ -19,6 +19,7 @@ export function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [assistantTyping, setAssistantTyping] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
   const connectionRef = useRef<HubConnection | null>(null);
 
@@ -33,13 +34,21 @@ export function ChatPage() {
     let stopped = false;
 
     onReceiveMessage(connection, (message) => setMessages((current) => mergeMessages(current, [message])));
+    onAssistantTyping(connection, setAssistantTyping);
 
     // A reconnect gets a new connection id, so the server-side group membership must be renewed.
-    connection.onreconnecting(() => setConnected(false));
+    // A dropped connection may also miss the "typing stopped" push, so clear the indicator.
+    connection.onreconnecting(() => {
+      setConnected(false);
+      setAssistantTyping(false);
+    });
     connection.onreconnected(() => {
       joinChat(connection).then(() => setConnected(true));
     });
-    connection.onclose(() => setConnected(false));
+    connection.onclose(() => {
+      setConnected(false);
+      setAssistantTyping(false);
+    });
 
     async function start() {
       try {
@@ -69,7 +78,7 @@ export function ChatPage() {
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
-  }, [messages]);
+  }, [messages, assistantTyping]);
 
   if (!session) {
     return <p>Sign in to chat with the AI assistant.</p>;
@@ -78,17 +87,21 @@ export function ChatPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     const connection = connectionRef.current;
-    if (!text.trim() || sending || !connection) {
+    const messageText = text.trim();
+    if (!messageText || sending || !connection) {
       return;
     }
 
     setError(null);
     setSending(true);
+    // Clear right away: invoke only resolves after the assistant has replied, which can take a while.
+    setText("");
     try {
       // The server pushes both our message and the reply back through "ReceiveMessage".
-      await sendChatMessage(connection, text.trim());
-      setText("");
+      await sendChatMessage(connection, messageText);
     } catch (err) {
+      // Give the text back so it isn't lost, unless they've already started typing something new.
+      setText((current) => current || messageText);
       setError(err instanceof Error ? err.message : "Could not send message.");
     } finally {
       setSending(false);
@@ -116,6 +129,14 @@ export function ChatPage() {
             {message.text}
           </p>
         ))}
+        {assistantTyping ? (
+          <p className="bubble typing" role="status" aria-label="Vaidya Mitra is typing">
+            <span>Vaidya Mitra</span>
+            <i className="dot" />
+            <i className="dot" />
+            <i className="dot" />
+          </p>
+        ) : null}
       </div>
       <form onSubmit={onSubmit} className="chat-composer">
         <input

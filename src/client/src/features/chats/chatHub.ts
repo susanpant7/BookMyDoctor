@@ -3,7 +3,8 @@ import type { ChatMessage } from "./chatApi";
 
 // Method names must match ChatHub on the server.
 export const ChatHubEvents = {
-  receiveMessage: "ReceiveMessage"
+  receiveMessage: "ReceiveMessage",
+  assistantTyping: "AssistantTyping"
 } as const;
 
 export function createChatConnection(getToken: () => string): HubConnection {
@@ -25,4 +26,8 @@ export function sendChatMessage(connection: HubConnection, text: string) {
 
 export function onReceiveMessage(connection: HubConnection, handler: (message: ChatMessage) => void) {
   connection.on(ChatHubEvents.receiveMessage, handler);
+}
+
+export function onAssistantTyping(connection: HubConnection, handler: (isTyping: boolean) => void) {
+  connection.on(ChatHubEvents.assistantTyping, handler);
 }

@@ -3,6 +3,7 @@ using BookMyDoctor.Features.Chats;
 using BookMyDoctor.Features.Doctors;
 using BookMyDoctor.Features.Specialties;
 using BookMyDoctor.Persistence;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 var clientOrigin = builder.Configuration["Cors:ClientOrigin"] ?? "http://localhost:5173";
@@ -28,7 +29,13 @@ builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddSingleton<ISpecialtyService, SpecialtyService>();
 builder.Services.AddSingleton<IDoctorService, DoctorService>();
 builder.Services.AddSingleton<IChatService, ChatService>();
-builder.Services.AddSingleton<IChatAssistant, GreetingChatAssistant>();
+builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(OllamaOptions.SectionName));
+builder.Services.AddHttpClient<IChatAssistant, OllamaChatAssistant>((services, http) =>
+{
+    var options = services.GetRequiredService<IOptions<OllamaOptions>>().Value;
+    http.BaseAddress = new Uri(options.BaseUrl);
+    http.Timeout = TimeSpan.FromMinutes(2);   // a local model can be slow, especially on first load
+});
 
 var app = builder.Build();
 
