@@ -329,6 +329,54 @@ button.link {
   animation-delay: 0.3s;
 }
 
+.slot-picker {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid #cfe3da;
+  border-radius: 12px;
+  background: #f7fbf9;
+}
+
+.slot-picker-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.slot-list .slot {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #0f6a56;
+  border-radius: 999px;
+  background: white;
+  color: #0f6a56;
+  font-variant-numeric: tabular-nums;
+}
+
+.slot-list .slot.selected {
+  background: #0f6a56;
+  color: white;
+}
+
+.slot-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem;
+}
+
+.slot-confirm label {
+  flex: 1 1 14rem;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
 @keyframes typing-bounce {
   0%,
   60%,

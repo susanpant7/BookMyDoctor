@@ -4,7 +4,16 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../../shared/session";
 import { getMessages, type ChatMessage } from "./chatApi";
-import { createChatConnection, joinChat, onAssistantTyping, onReceiveMessage, sendChatMessage } from "./chatHub";
+import {
+  bookSlot,
+  createChatConnection,
+  joinChat,
+  onAssistantTyping,
+  onBookingOptions,
+  onReceiveMessage,
+  sendChatMessage,
+  type BookingOptions
+} from "./chatHub";
 
 // Adds messages that aren't already in the list (history and live pushes can overlap).
 function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]) {
@@ -20,6 +29,10 @@ export function ChatPage() {
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
   const [assistantTyping, setAssistantTyping] = useState(false);
+  const [bookingOptions, setBookingOptions] = useState<BookingOptions | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const [booking, setBooking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
   const connectionRef = useRef<HubConnection | null>(null);
 
@@ -35,6 +48,10 @@ export function ChatPage() {
 
     onReceiveMessage(connection, (message) => setMessages((current) => mergeMessages(current, [message])));
     onAssistantTyping(connection, setAssistantTyping);
+    onBookingOptions(connection, (options) => {
+      setBookingOptions(options);
+      setSelectedSlot(null);
+    });
 
     // A reconnect gets a new connection id, so the server-side group membership must be renewed.
     // A dropped connection may also miss the "typing stopped" push, so clear the indicator.
@@ -78,7 +95,7 @@ export function ChatPage() {
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
-  }, [messages, assistantTyping]);
+  }, [messages, assistantTyping, bookingOptions, selectedSlot]);
 
   if (!session) {
     return <p>Sign in to chat with the AI assistant.</p>;
@@ -108,6 +125,35 @@ export function ChatPage() {
     }
   }
 
+  function selectSlot(startsAt: string) {
+    setSelectedSlot(startsAt);
+    // Suggest the patient's latest message as the reason; they can edit it before confirming.
+    const lastPatientText = [...messages].reverse().find((message) => message.sender === "patient")?.text ?? "";
+    setReason((current) => current || lastPatientText);
+  }
+
+  async function onConfirmSlot(event: FormEvent) {
+    event.preventDefault();
+    const connection = connectionRef.current;
+    if (!connection || !bookingOptions || !selectedSlot || booking) {
+      return;
+    }
+
+    setError(null);
+    setBooking(true);
+    try {
+      // The server books it and posts the confirmation into the chat; it also hides the buttons.
+      await bookSlot(connection, { doctorId: bookingOptions.doctorId, startsAt: selectedSlot, reason: reason.trim() });
+      setReason("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not book that time.");
+    } finally {
+      setBooking(false);
+    }
+  }
+
+  const selectedLabel = bookingOptions?.slots.find((slot) => slot.startsAt === selectedSlot)?.label;
+
   return (
     <section className="chat">
       <header className="chat-header">
@@ -136,6 +182,37 @@ export function ChatPage() {
             <i className="dot" />
             <i className="dot" />
           </p>
+        ) : null}
+        {bookingOptions ? (
+          <div className="slot-picker" role="group" aria-label={`Free times with ${bookingOptions.doctorName}`}>
+            <p className="slot-picker-title">
+              {bookingOptions.doctorName} · {bookingOptions.day}
+            </p>
+            <div className="slot-list">
+              {bookingOptions.slots.map((slot) => (
+                <button
+                  key={slot.startsAt}
+                  type="button"
+                  className={slot.startsAt === selectedSlot ? "slot selected" : "slot"}
+                  aria-pressed={slot.startsAt === selectedSlot}
+                  onClick={() => selectSlot(slot.startsAt)}
+                >
+                  {slot.label}
+                </button>
+              ))}
+            </div>
+            {selectedSlot ? (
+              <form className="slot-confirm" onSubmit={onConfirmSlot}>
+                <label>
+                  Reason for the visit
+                  <input value={reason} onChange={(event) => setReason(event.target.value)} required />
+                </label>
+                <button type="submit" disabled={booking || reason.trim().length < 3}>
+                  {booking ? "Booking..." : `Confirm ${selectedLabel}`}
+                </button>
+              </form>
+            ) : null}
+          </div>
         ) : null}
       </div>
       <form onSubmit={onSubmit} className="chat-composer">

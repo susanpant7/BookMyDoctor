@@ -4,8 +4,17 @@ import type { ChatMessage } from "./chatApi";
 // Method names must match ChatHub on the server.
 export const ChatHubEvents = {
   receiveMessage: "ReceiveMessage",
-  assistantTyping: "AssistantTyping"
+  assistantTyping: "AssistantTyping",
+  bookingOptions: "BookingOptions"
 } as const;
+
+// Free times the assistant just looked up; null means "hide the buttons".
+export type BookingOptions = {
+  doctorId: string;
+  doctorName: string;
+  day: string;
+  slots: { startsAt: string; label: string }[];
+};
 
 export function createChatConnection(getToken: () => string): HubConnection {
   return new HubConnectionBuilder()
@@ -30,4 +39,13 @@ export function onReceiveMessage(connection: HubConnection, handler: (message: C
 
 export function onAssistantTyping(connection: HubConnection, handler: (isTyping: boolean) => void) {
   connection.on(ChatHubEvents.assistantTyping, handler);
+}
+
+export function onBookingOptions(connection: HubConnection, handler: (options: BookingOptions | null) => void) {
+  connection.on(ChatHubEvents.bookingOptions, handler);
+}
+
+// Books directly on the server (no AI involved); the confirmation arrives as a chat message.
+export function bookSlot(connection: HubConnection, request: { doctorId: string; startsAt: string; reason: string }) {
+  return connection.invoke("BookSlot", request);
 }

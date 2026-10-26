@@ -1,7 +1,9 @@
 using BookMyDoctor.Features.Appointments;
 using BookMyDoctor.Features.Auth;
 using BookMyDoctor.Features.Chats;
+using BookMyDoctor.Features.Chats.Tools;
 using BookMyDoctor.Features.Doctors;
+using BookMyDoctor.Features.Knowledge;
 using BookMyDoctor.Features.Specialties;
 using BookMyDoctor.Persistence;
 using Microsoft.Extensions.Options;
@@ -37,12 +39,31 @@ builder.Services.AddSingleton<IDoctorService, DoctorService>();
 builder.Services.AddSingleton<IChatService, ChatService>();
 builder.Services.AddSingleton<IAvailabilityService, AvailabilityService>();
 builder.Services.AddSingleton<IAppointmentService, AppointmentService>();
+builder.Services.AddSingleton<KnowledgeSources>();
+builder.Services.AddSingleton<IVectorStore, InMemoryVectorStore>();
+builder.Services.Configure<KnowledgeOptions>(builder.Configuration.GetSection(KnowledgeOptions.SectionName));
+builder.Services.AddSingleton<IKnowledgeRetriever, KnowledgeRetriever>();
+builder.Services.AddHostedService<KnowledgeIndexer>();
+builder.Services.AddSingleton<IAssistantTool, GetDoctorsTool>();
+builder.Services.AddSingleton<IAssistantTool, GetSpecialtiesTool>();
+builder.Services.AddSingleton<IAssistantTool, GetAvailableSlotsTool>();
+builder.Services.AddSingleton<IAssistantTool, GetMyAppointmentsTool>();
+builder.Services.AddSingleton<IAssistantTool, GetHospitalInfoTool>();
+builder.Services.AddSingleton<BookingDrafts>();
+builder.Services.AddSingleton<IAssistantTool, BookAppointmentTool>();
+builder.Services.AddSingleton<ToolTranscripts>();
+builder.Services.AddSingleton<ReplyFactChecker>();
 builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(OllamaOptions.SectionName));
 builder.Services.AddHttpClient<IChatAssistant, OllamaChatAssistant>((services, http) =>
 {
     var options = services.GetRequiredService<IOptions<OllamaOptions>>().Value;
     http.BaseAddress = new Uri(options.BaseUrl);
     http.Timeout = TimeSpan.FromMinutes(2);   // a local model can be slow, especially on first load
+});
+builder.Services.AddHttpClient<IEmbedder, OllamaEmbedder>((services, http) =>
+{
+    var options = services.GetRequiredService<IOptions<OllamaOptions>>().Value;
+    http.BaseAddress = new Uri(options.BaseUrl);
 });
 
 var app = builder.Build();

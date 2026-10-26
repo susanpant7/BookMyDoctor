@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../../shared/session";
 import { getDoctors, type Doctor } from "../doctors/doctorApi";
-import { getAppointments, type Appointment } from "./appointmentStorage";
+import { bookingReference, getMyAppointments, type Appointment } from "./appointmentApi";
 
 export function AppointmentsPage() {
   const { session } = useSession();
@@ -15,10 +15,12 @@ export function AppointmentsPage() {
     if (!session) {
       return;
     }
-    setAppointments(getAppointments(session.userId));
-    getDoctors()
-      .then(setDoctors)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not load doctors."));
+    Promise.all([getMyAppointments(), getDoctors()])
+      .then(([myAppointments, allDoctors]) => {
+        setAppointments(myAppointments);
+        setDoctors(allDoctors);
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not load appointments."));
   }, [session?.userId]);
 
   if (!session) {
@@ -45,9 +47,9 @@ export function AppointmentsPage() {
           return (
             <li key={appointment.id} className="card">
               <strong>{doctor?.name ?? "Doctor"}</strong>
-              <p>{new Date(appointment.scheduledAt).toLocaleString()}</p>
+              <p>{new Date(appointment.startsAt).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}</p>
               <p className="muted">
-                {appointment.reason} · {appointment.status}
+                {appointment.reason} · {appointment.status} · {bookingReference(appointment.id)}
               </p>
             </li>
           );
