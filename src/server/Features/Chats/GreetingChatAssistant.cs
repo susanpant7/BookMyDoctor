@@ -12,7 +12,7 @@ public sealed class GreetingChatAssistant : IChatAssistant
         _usersRepo = usersRepo;
     }
 
-    public Task<string> ReplyAsync(ChatMessage patientMessage)
+    public Task<string> ReplyAsync(ChatMessage patientMessage, IReplyDraft? draft = null)
     {
         var name = _usersRepo.GetById(patientMessage.PatientId)?.Name ?? "there";
         return Task.FromResult($"Hello {name}. How can I help you today? @{DateTimeOffset.UtcNow:HH:mm:ss}");

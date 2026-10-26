@@ -5,6 +5,7 @@ import type { ChatMessage } from "./chatApi";
 export const ChatHubEvents = {
   receiveMessage: "ReceiveMessage",
   assistantTyping: "AssistantTyping",
+  assistantDraft: "AssistantDraft",
   bookingOptions: "BookingOptions"
 } as const;
 
@@ -39,6 +40,12 @@ export function onReceiveMessage(connection: HubConnection, handler: (message: C
 
 export function onAssistantTyping(connection: HubConnection, handler: (isTyping: boolean) => void) {
   connection.on(ChatHubEvents.assistantTyping, handler);
+}
+
+// The reply so far while it's being written; null when the draft should disappear.
+// The final reply always arrives separately through "ReceiveMessage" and replaces the draft.
+export function onAssistantDraft(connection: HubConnection, handler: (textSoFar: string | null) => void) {
+  connection.on(ChatHubEvents.assistantDraft, handler);
 }
 
 export function onBookingOptions(connection: HubConnection, handler: (options: BookingOptions | null) => void) {

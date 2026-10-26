@@ -8,6 +8,7 @@ import {
   bookSlot,
   createChatConnection,
   joinChat,
+  onAssistantDraft,
   onAssistantTyping,
   onBookingOptions,
   onReceiveMessage,
@@ -29,6 +30,7 @@ export function ChatPage() {
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
   const [assistantTyping, setAssistantTyping] = useState(false);
+  const [draft, setDraft] = useState<string | null>(null);
   const [bookingOptions, setBookingOptions] = useState<BookingOptions | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -46,8 +48,15 @@ export function ChatPage() {
     connectionRef.current = connection;
     let stopped = false;
 
-    onReceiveMessage(connection, (message) => setMessages((current) => mergeMessages(current, [message])));
+    onReceiveMessage(connection, (message) => {
+      setMessages((current) => mergeMessages(current, [message]));
+      // The final assistant reply replaces the draft that was shown while it was written.
+      if (message.sender === "assistant") {
+        setDraft(null);
+      }
+    });
     onAssistantTyping(connection, setAssistantTyping);
+    onAssistantDraft(connection, setDraft);
     onBookingOptions(connection, (options) => {
       setBookingOptions(options);
       setSelectedSlot(null);
@@ -58,6 +67,7 @@ export function ChatPage() {
     connection.onreconnecting(() => {
       setConnected(false);
       setAssistantTyping(false);
+      setDraft(null);
     });
     connection.onreconnected(() => {
       joinChat(connection).then(() => setConnected(true));
@@ -65,6 +75,7 @@ export function ChatPage() {
     connection.onclose(() => {
       setConnected(false);
       setAssistantTyping(false);
+      setDraft(null);
     });
 
     async function start() {
@@ -95,7 +106,7 @@ export function ChatPage() {
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
-  }, [messages, assistantTyping, bookingOptions, selectedSlot]);
+  }, [messages, assistantTyping, draft, bookingOptions, selectedSlot]);
 
   if (!session) {
     return <p>Sign in to chat with the AI assistant.</p>;
@@ -175,7 +186,13 @@ export function ChatPage() {
             {message.text}
           </p>
         ))}
-        {assistantTyping ? (
+        {draft ? (
+          // Shown while the reply is being written; replaced by the final, checked reply.
+          <p className="bubble draft" aria-busy="true">
+            <span>Vaidya Mitra</span>
+            {draft}
+          </p>
+        ) : assistantTyping ? (
           <p className="bubble typing" role="status" aria-label="Vaidya Mitra is typing">
             <span>Vaidya Mitra</span>
             <i className="dot" />

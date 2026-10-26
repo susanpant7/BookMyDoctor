@@ -329,6 +329,10 @@ button.link {
   animation-delay: 0.3s;
 }
 
+.bubble.draft {
+  opacity: 0.85;
+}
+
 .slot-picker {
   display: grid;
   gap: 0.6rem;

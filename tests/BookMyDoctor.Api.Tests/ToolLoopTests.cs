@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using BookMyDoctor.Features.Chats;
 using BookMyDoctor.Features.Chats.Tools;
 using BookMyDoctor.Features.Doctors;
@@ -70,6 +71,36 @@ public sealed class ToolLoopTests
 
         Assert.Equal(OllamaChatAssistant.MaxToolRounds, ollama.Requests.Count);
         Assert.Contains("having trouble", reply);
+    }
+
+    [Fact]
+    public async Task StreamsTheAnswerIntoTheDraftWordByWord()
+    {
+        var ollama = new ScriptedOllama(Text("Hello Hari, how can I help?"));
+        var (assistant, message) = Assistant(ollama, "Hi");
+        var draft = new RecordingDraft();
+
+        var reply = await assistant.ReplyAsync(message, draft);
+
+        Assert.Equal("Hello Hari, how can I help?", reply);
+        Assert.Contains("\"stream\":true", ollama.RawRequests[0]);
+        Assert.Equal(["Hello ", "Hello Hari, ", "Hello Hari, how ", "Hello Hari, how can ", "Hello Hari, how can I ", "Hello Hari, how can I help?"],
+            draft.Events);
+    }
+
+    [Fact]
+    public async Task DraftThatFailsTheFactCheckIsClearedBeforeTheRewrite()
+    {
+        var ollama = new ScriptedOllama(Text("Dr. Ravi Kumar, $150."), Text("Doctor Cardiology, $180."));
+        var (assistant, message) = Assistant(ollama, "Who is the cardiologist?");
+        var draft = new RecordingDraft();
+
+        var reply = await assistant.ReplyAsync(message, draft);
+
+        Assert.Equal("Doctor Cardiology, $180.", reply);
+        var clear = draft.Events.IndexOf("<clear>");
+        Assert.Equal("Dr. Ravi Kumar, $150.", draft.Events[clear - 1]);   // the wrong draft was shown...
+        Assert.Equal("Doctor Cardiology, $180.", draft.Events[^1]);       // ...then removed and rewritten
     }
 
     [Fact]
@@ -202,7 +233,26 @@ public sealed class ToolLoopTests
             Task.FromResult<IReadOnlyList<SearchResult>>([]);
     }
 
+    // Collects what the assistant shows while writing: each draft text, and "<clear>" when it removes the draft.
+    private sealed class RecordingDraft : IReplyDraft
+    {
+        public List<string> Events { get; } = [];
+
+        public Task ShowAsync(string textSoFar)
+        {
+            Events.Add(textSoFar);
+            return Task.CompletedTask;
+        }
+
+        public Task ClearAsync()
+        {
+            Events.Add("<clear>");
+            return Task.CompletedTask;
+        }
+    }
+
     // Plays back prepared model replies in order and records every request it receives.
+    // Replies are streamed like Ollama does: one JSON line per word, then a final line with any tool calls.
     private sealed class ScriptedOllama(params OllamaMessage[] replies) : HttpMessageHandler
     {
         private readonly Queue<OllamaMessage> _replies = new(replies);
@@ -215,7 +265,13 @@ public sealed class ToolLoopTests
             var raw = await request.Content!.ReadAsStringAsync(cancellationToken);
             RawRequests.Add(raw);
             Requests.Add(JsonSerializer.Deserialize<OllamaChatRequest>(raw, JsonSerializerOptions.Web)!);
-            return new HttpResponseMessage { Content = JsonContent.Create(new OllamaChatResponse(_replies.Dequeue(), true)) };
+
+            var reply = _replies.Dequeue();
+            var lines = Regex.Matches(reply.Content, @"\S+\s*")
+                .Select(word => new OllamaChatResponse(new OllamaMessage("assistant", word.Value), false))
+                .Append(new OllamaChatResponse(new OllamaMessage("assistant", "", reply.ToolCalls), true))
+                .Select(chunk => JsonSerializer.Serialize(chunk, JsonSerializerOptions.Web));
+            return new HttpResponseMessage { Content = new StringContent(string.Join("\n", lines) + "\n") };
         }
     }
 }

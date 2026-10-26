@@ -59,7 +59,7 @@ public sealed class ChatHub : Hub
         await group.SendAsync("AssistantTyping", true);
         try
         {
-            replyText = await _assistant.ReplyAsync(message);
+            replyText = await _assistant.ReplyAsync(message, new GroupReplyDraft(group));
         }
         catch (HttpRequestException)
         {
@@ -75,8 +75,10 @@ public sealed class ChatHub : Hub
             await group.SendAsync("AssistantTyping", false);
         }
 
+        // The final, checked reply replaces whatever draft was shown while it was being written.
         var reply = _chatService.Send(new SendMessageRequest(patientId, "assistant", replyText));
         await group.SendAsync("ReceiveMessage", reply);
+        await group.SendAsync("AssistantDraft", null);
 
         // If the assistant looked up free times while answering this message, show them as buttons.
         if (_drafts.GetOffer(patientId) is { } offer && offer.OfferedInMessageId == message.Id)
@@ -116,4 +118,12 @@ public sealed class ChatHub : Hub
     }
 
     private static string GroupName(Guid patientId) => $"chat:{patientId}";
+
+    // Shows the reply in every tab of the patient's chat while it's being written ("AssistantDraft"; null = remove it).
+    private sealed class GroupReplyDraft(IClientProxy group) : IReplyDraft
+    {
+        public Task ShowAsync(string textSoFar) => group.SendAsync("AssistantDraft", textSoFar);
+
+        public Task ClearAsync() => group.SendAsync("AssistantDraft", null);
+    }
 }
