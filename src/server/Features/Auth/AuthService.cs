@@ -5,10 +5,12 @@ namespace BookMyDoctor.Features.Auth;
 public sealed class AuthService : IAuthService
 {
     private readonly IUsersRepo _usersRepo;
+    private readonly ITokenService _tokenService;
 
-    public AuthService(IUsersRepo usersRepo)
+    public AuthService(IUsersRepo usersRepo, ITokenService tokenService)
     {
         _usersRepo = usersRepo;
+        _tokenService = tokenService;
     }
 
     public AuthResponse Register(RegisterRequest request)
@@ -27,7 +29,7 @@ public sealed class AuthService : IAuthService
 
         var user = new UserAccount(Guid.NewGuid(), request.Name.Trim(), request.Email.Trim(), request.Password);
         _usersRepo.Add(user);
-        return new AuthResponse(user.Id, user.Name, user.Email);
+        return CreateResponse(user);
     }
 
     public AuthResponse Login(LoginRequest request)
@@ -38,6 +40,12 @@ public sealed class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
-        return new AuthResponse(user.Id, user.Name, user.Email);
+        return CreateResponse(user);
+    }
+
+    private AuthResponse CreateResponse(UserAccount user)
+    {
+        var token = _tokenService.Create(user);
+        return new AuthResponse(user.Id, user.Name, user.Email, token.Token, token.ExpiresAt);
     }
 }

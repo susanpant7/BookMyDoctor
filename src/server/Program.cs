@@ -8,12 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 var clientOrigin = builder.Configuration["Cors:ClientOrigin"] ?? "http://localhost:5173";
 
 builder.Services.AddControllers();
+// Detailed errors send the real exception message to the client; only safe in development.
+builder.Services.AddSignalR(options => options.EnableDetailedErrors = builder.Environment.IsDevelopment());
+builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy.WithOrigins(clientOrigin)
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 builder.Services.AddSingleton<IUsersRepo, UsersRepo>();
@@ -24,9 +28,13 @@ builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddSingleton<ISpecialtyService, SpecialtyService>();
 builder.Services.AddSingleton<IDoctorService, DoctorService>();
 builder.Services.AddSingleton<IChatService, ChatService>();
+builder.Services.AddSingleton<IChatAssistant, GreetingChatAssistant>();
 
 var app = builder.Build();
 
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 app.Run();

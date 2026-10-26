@@ -1,8 +1,11 @@
+using BookMyDoctor.Features.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookMyDoctor.Features.Chats;
 
 [ApiController]
+[Authorize]
 [Route("api/chats")]
 public sealed class ChatController : ControllerBase
 {
@@ -14,15 +17,15 @@ public sealed class ChatController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<IReadOnlyList<ChatMessage>> GetMessages([FromQuery] Guid doctorId, [FromQuery] Guid patientId) =>
-        Ok(_chatService.GetMessages(doctorId, patientId));
+    public ActionResult<IReadOnlyList<ChatMessage>> GetMessages() =>
+        Ok(_chatService.GetMessages(User.GetUserId()));
 
     [HttpPost]
-    public ActionResult<ChatMessage> Send(SendMessageRequest request)
+    public ActionResult<ChatMessage> Send(NewMessageRequest request)
     {
         try
         {
-            return Ok(_chatService.Send(request));
+            return Ok(_chatService.Send(new SendMessageRequest(User.GetUserId(), "patient", request.Text)));
         }
         catch (ArgumentException ex)
         {

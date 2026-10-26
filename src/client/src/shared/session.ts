@@ -7,6 +7,8 @@ export type SessionUser = {
   userId: string;
   name: string;
   email: string;
+  token: string;
+  expiresAt: string;
 };
 
 type SessionContextValue = {
@@ -24,11 +26,21 @@ function readSession(): SessionUser | null {
   }
 
   try {
-    return JSON.parse(raw) as SessionUser;
+    const session = JSON.parse(raw) as SessionUser;
+    // Drop sessions saved before tokens existed, or whose token has expired.
+    if (!session.token || new Date(session.expiresAt) <= new Date()) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return session;
   } catch {
     localStorage.removeItem(SESSION_KEY);
     return null;
   }
+}
+
+export function getAccessToken(): string | null {
+  return readSession()?.token ?? null;
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {

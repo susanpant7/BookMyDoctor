@@ -1,8 +1,16 @@
+import type { HubConnection } from "@microsoft/signalr";
 import { ArrowLeft, Send } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../../shared/session";
-import { BOOKING_CHAT_ID, getMessages, sendMessage, type ChatMessage } from "./chatApi";
+import { getMessages, type ChatMessage } from "./chatApi";
+import { createChatConnection, joinChat, onReceiveMessage, sendChatMessage } from "./chatHub";
+
+// Adds messages that aren't already in the list (history and live pushes can overlap).
+function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]) {
+  const known = new Set(current.map((message) => message.id));
+  return [...current, ...incoming.filter((message) => !known.has(message.id))];
+}
 
 export function ChatPage() {
   const { session } = useSession();
@@ -10,16 +18,54 @@ export function ChatPage() {
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [connected, setConnected] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const connectionRef = useRef<HubConnection | null>(null);
 
   useEffect(() => {
     if (!session) {
       return;
     }
-    getMessages(BOOKING_CHAT_ID, session.userId)
-      .then(setMessages)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not load chat."));
-  }, [session?.userId]);
+
+    const token = session.token;
+    const connection = createChatConnection(() => token);
+    connectionRef.current = connection;
+    let stopped = false;
+
+    onReceiveMessage(connection, (message) => setMessages((current) => mergeMessages(current, [message])));
+
+    // A reconnect gets a new connection id, so the server-side group membership must be renewed.
+    connection.onreconnecting(() => setConnected(false));
+    connection.onreconnected(() => {
+      joinChat(connection).then(() => setConnected(true));
+    });
+    connection.onclose(() => setConnected(false));
+
+    async function start() {
+      try {
+        await connection.start();
+        await joinChat(connection);
+        // Load history after joining so nothing sent in between is missed.
+        const history = await getMessages();
+        if (!stopped) {
+          setMessages((current) => mergeMessages(history, current));
+          setConnected(true);
+        }
+      } catch (err) {
+        if (!stopped) {
+          setError(err instanceof Error ? err.message : "Could not connect to chat.");
+        }
+      }
+    }
+
+    start();
+
+    return () => {
+      stopped = true;
+      connectionRef.current = null;
+      connection.stop();
+    };
+  }, [session?.userId, session?.token]);
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
@@ -29,24 +75,18 @@ export function ChatPage() {
     return <p>Sign in to chat with the AI assistant.</p>;
   }
 
-  const patientId = session.userId;
-
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!text.trim() || sending) {
+    const connection = connectionRef.current;
+    if (!text.trim() || sending || !connection) {
       return;
     }
 
     setError(null);
     setSending(true);
     try {
-      const message = await sendMessage({
-        doctorId: BOOKING_CHAT_ID,
-        patientId,
-        sender: "patient",
-        text: text.trim()
-      });
-      setMessages((current) => [...current, message]);
+      // The server pushes both our message and the reply back through "ReceiveMessage".
+      await sendChatMessage(connection, text.trim());
       setText("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send message.");
@@ -63,6 +103,7 @@ export function ChatPage() {
         </Link>
         <div>
           <h1>Vaidya Mitra</h1>
+          {connected ? null : <p className="muted">Connecting...</p>}
         </div>
       </header>
       <div className="messages" ref={threadRef}>
@@ -83,7 +124,7 @@ export function ChatPage() {
           placeholder="Write a message"
           aria-label="Message"
         />
-        <button type="submit" disabled={sending || !text.trim()} aria-label="Send">
+        <button type="submit" disabled={sending || !connected || !text.trim()} aria-label="Send">
           <Send size={16} aria-hidden="true" />
           Send
         </button>

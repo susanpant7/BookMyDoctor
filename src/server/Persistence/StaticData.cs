@@ -1,4 +1,3 @@
-using BookMyDoctor.Features.Chats;
 using BookMyDoctor.Features.Doctors;
 using BookMyDoctor.Features.Specialties;
 
@@ -20,7 +19,6 @@ public static class StaticData
     public static readonly Guid PediatricsDoctorId = Guid.Parse("33333333-3333-3333-3333-333333333333");
     public static readonly Guid OrthopedicsDoctorId = Guid.Parse("44444444-4444-4444-4444-444444444444");
     public static readonly Guid GeneralPracticeDoctorId = Guid.Parse("55555555-5555-5555-5555-555555555555");
-    public static readonly Guid BookingChatId = Guid.Parse("99999999-9999-9999-9999-999999999999");
 
     public static IReadOnlyList<UserAccount> Users { get; } =
     [
@@ -44,24 +42,6 @@ public static class StaticData
         new(PediatricsDoctorId, "Doctor Pediatrics", PediatricsId, "Pediatrics", "Houston", 15, 120),
         new(OrthopedicsDoctorId, "Doctor Orthopedics", OrthopedicsId, "Orthopedics", "Austin", 10, 160),
         new(GeneralPracticeDoctorId, "Doctor General Practice", GeneralPracticeId, "General Practice", "Dallas", 6, 90)
-    ];
-
-    public static IReadOnlyList<ChatMessage> ChatMessages { get; } =
-    [
-        new(
-            Guid.Parse("c1111111-1111-1111-1111-111111111111"),
-            BookingChatId,
-            HariPatientId,
-            "patient",
-            "Hi doctor, should I keep the same dosage this week?",
-            new DateTimeOffset(2026, 10, 20, 9, 15, 0, TimeSpan.FromHours(-5))),
-        new(
-            Guid.Parse("c2222222-2222-2222-2222-222222222222"),
-            BookingChatId,
-            HariPatientId,
-            "doctor",
-            "Yes, stay on the current dose and we will review it at your visit.",
-            new DateTimeOffset(2026, 10, 20, 9, 42, 0, TimeSpan.FromHours(-5)))
     ];
 }
 

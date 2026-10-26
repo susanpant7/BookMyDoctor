@@ -4,11 +4,11 @@ namespace BookMyDoctor.Persistence;
 
 public sealed class ChatsRepo : IChatsRepo
 {
-    private readonly List<ChatMessage> _messages = [.. StaticData.ChatMessages];
+    private readonly List<ChatMessage> _messages = [];
 
-    public IReadOnlyList<ChatMessage> GetMessages(Guid doctorId, Guid patientId) =>
+    public IReadOnlyList<ChatMessage> GetMessages(Guid patientId) =>
         _messages
-            .Where(message => message.DoctorId == doctorId && message.PatientId == patientId)
+            .Where(message => message.PatientId == patientId)
             .OrderBy(message => message.SentAt)
             .ToList();
 

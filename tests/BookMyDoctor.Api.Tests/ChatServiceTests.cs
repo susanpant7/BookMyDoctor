@@ -10,14 +10,13 @@ public sealed class ChatServiceTests
     public void Send_StoresAndReturnsMessage()
     {
         var service = new ChatService(new ChatsRepo());
-        var doctorId = Guid.NewGuid();
         var patientId = Guid.NewGuid();
 
-        var message = service.Send(new SendMessageRequest(doctorId, patientId, "patient", "Hello doctor"));
+        var message = service.Send(new SendMessageRequest(patientId, "patient", "Hello assistant"));
 
         Assert.Equal("patient", message.Sender);
-        Assert.Equal("Hello doctor", message.Text);
-        Assert.Single(service.GetMessages(doctorId, patientId));
+        Assert.Equal("Hello assistant", message.Text);
+        Assert.Single(service.GetMessages(patientId));
     }
 
     [Fact]
@@ -26,6 +25,6 @@ public sealed class ChatServiceTests
         var service = new ChatService(new ChatsRepo());
 
         Assert.Throws<ArgumentException>(() =>
-            service.Send(new SendMessageRequest(Guid.NewGuid(), Guid.NewGuid(), "patient", "  ")));
+            service.Send(new SendMessageRequest(Guid.NewGuid(), "patient", "  ")));
     }
 }

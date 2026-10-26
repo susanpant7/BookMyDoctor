@@ -11,8 +11,8 @@ public sealed class ChatService : IChatService
         _chatsRepo = chatsRepo;
     }
 
-    public IReadOnlyList<ChatMessage> GetMessages(Guid doctorId, Guid patientId) =>
-        _chatsRepo.GetMessages(doctorId, patientId);
+    public IReadOnlyList<ChatMessage> GetMessages(Guid patientId) =>
+        _chatsRepo.GetMessages(patientId);
 
     public ChatMessage Send(SendMessageRequest request)
     {
@@ -21,10 +21,9 @@ public sealed class ChatService : IChatService
             throw new ArgumentException("Message text is required.");
         }
 
-        var sender = request.Sender.Equals("doctor", StringComparison.OrdinalIgnoreCase) ? "doctor" : "patient";
+        var sender = request.Sender.Equals("assistant", StringComparison.OrdinalIgnoreCase) ? "assistant" : "patient";
         var message = new ChatMessage(
             Guid.NewGuid(),
-            request.DoctorId,
             request.PatientId,
             sender,
             request.Text.Trim(),
