@@ -29,4 +29,10 @@ public sealed class BookingDrafts
         _offers.TryRemove(patientId, out _);
         _pending.TryRemove(patientId, out _);
     }
+
+    public void ClearAll()
+    {
+        _offers.Clear();
+        _pending.Clear();
+    }
 }

@@ -11,9 +11,12 @@ public sealed class SettingsController : ControllerBase
 {
     private readonly ISettingsService _settingsService;
 
-    public SettingsController(ISettingsService settingsService)
+    private readonly DataCleanup _dataCleanup;
+
+    public SettingsController(ISettingsService settingsService, DataCleanup dataCleanup)
     {
         _settingsService = settingsService;
+        _dataCleanup = dataCleanup;
     }
 
     [HttpGet]
@@ -25,4 +28,12 @@ public sealed class SettingsController : ControllerBase
 
     [HttpPost("restore-defaults")]
     public ActionResult<IReadOnlyList<Setting>> RestoreDefaults() => Ok(_settingsService.RestoreDefaults());
+
+    // Deletes all data and starts again from the defaults a first start creates.
+    [HttpPost("clean-up")]
+    public async Task<IActionResult> CleanUp(CancellationToken cancellationToken)
+    {
+        await _dataCleanup.CleanUpAsync(cancellationToken);
+        return NoContent();
+    }
 }

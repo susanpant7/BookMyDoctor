@@ -60,10 +60,12 @@ public sealed partial class KnowledgeSources
     public IReadOnlyList<KnowledgeDocument> GetSpecialtySettings() =>
         _specialtiesRepo.GetAll().Select(specialty => SpecialtySection(specialty, _doctorsRepo.GetBySpecialty(specialty.Id))).ToList();
 
-    // hospital-settings.md: the hospital's details, one section per topic.
+    // hospital-settings.md: the hospital's details, one section per topic. Empty until the details are saved.
     public IReadOnlyList<KnowledgeDocument> GetHospitalSettings() =>
-        SplitMarkdown(HospitalSettingsSource, HospitalSettingsMarkdown(
-            _hospitalRepo.GetInfo(), _hospitalRepo.GetHours(), _hospitalRepo.GetServicePrices())).ToList();
+        !_hospitalRepo.HasInfo()
+            ? []
+            : SplitMarkdown(HospitalSettingsSource, HospitalSettingsMarkdown(
+                _hospitalRepo.GetInfo(), _hospitalRepo.GetHours(), _hospitalRepo.GetServicePrices())).ToList();
 
     // Each "## " section becomes one document. The heading stays in the text so the chunk makes sense on its own.
     internal static IEnumerable<KnowledgeDocument> SplitMarkdown(string fileName, string markdown) =>

@@ -33,7 +33,7 @@ public sealed class GetAvailableSlotsTool : IAssistantTool
         {
           "type": "object",
           "properties": {
-            "doctor": { "type": "string", "description": "The doctor's name or specialty, e.g. Doctor Dermatology or Dermatology" },
+            "doctor": { "type": "string", "description": "The doctor's name or specialty, e.g. Doctor Chhaalarog Bisesagya or Dermatology" },
             "date": { "type": "string", "description": "The day, as a word like today, tomorrow or tuesday (copy what the patient said), or as YYYY-MM-DD. Leave empty for today." },
             "time_of_day": { "type": "string", "enum": ["morning", "afternoon", "evening"], "description": "Optional: only times before 12:00 (morning), 12:00–17:00 (afternoon) or from 17:00 (evening)" }
           },

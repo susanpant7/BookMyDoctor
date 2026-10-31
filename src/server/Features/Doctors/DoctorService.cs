@@ -73,7 +73,8 @@ public sealed class DoctorService : IDoctorService
         var added = 0;
         foreach (var doctor in DefaultData.Doctors)
         {
-            if (_doctorsRepo.GetByName(doctor.Name) is not null)
+            // Skipped when already there, even if renamed since (same id).
+            if (_doctorsRepo.GetById(doctor.Id) is not null || _doctorsRepo.GetByName(doctor.Name) is not null)
             {
                 continue;
             }

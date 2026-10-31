@@ -42,4 +42,6 @@ public sealed class ToolTranscripts
             return turns.FirstOrDefault(turn => turn.PatientMessageId == patientMessageId)?.Messages ?? [];
         }
     }
+
+    public void ClearAll() => _byPatient.Clear();
 }

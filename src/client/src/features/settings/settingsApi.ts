@@ -35,7 +35,10 @@ export const updateSetting = (key: string, value: string) =>
 
 export const restoreDefaultSettings = () => apiFetch<Setting[]>("/settings/restore-defaults", { method: "POST" });
 
-export const getHospital = () => apiFetch<HospitalDetails>("/hospital");
+// Deletes all data (doctors, patients, appointments, chats, knowledge) and starts again from the defaults.
+export const cleanUpData = () => apiFetch<void>("/settings/clean-up", { method: "POST" });
+
+export const getHospital =() => apiFetch<HospitalDetails>("/hospital");
 
 export const restoreDefaultHospital = () => apiFetch<HospitalDetails>("/hospital/restore-defaults", { method: "POST" });
 

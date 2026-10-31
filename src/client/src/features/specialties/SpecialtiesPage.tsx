@@ -3,7 +3,6 @@ import SpecialtyForm from "@/features/specialties/SpecialtyForm";
 import {
   deleteSpecialty,
   getSpecialties,
-  loadDefaultSpecialties,
   type Specialty
 } from "@/features/specialties/specialtiesApi";
 import { errorMessage } from "@/shared/api/errorMessage";
@@ -16,12 +15,10 @@ export default function SpecialtiesPage() {
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Specialty | null>(null);
   const [deleting, setDeleting] = useState<Specialty | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [loadingDefaults, setLoadingDefaults] = useState(false);
   const [version, setVersion] = useState(0);
   const reload = () => setVersion((v) => v + 1);
 
@@ -45,25 +42,6 @@ export default function SpecialtiesPage() {
     setFormOpen(true);
   }
 
-  async function handleLoadDefaults() {
-    setError("");
-    setNotice("");
-    setLoadingDefaults(true);
-    try {
-      const { added, skipped } = await loadDefaultSpecialties();
-      setNotice(
-        added === 0
-          ? "The default specialties already exist."
-          : `Added ${added} default ${added === 1 ? "specialty" : "specialties"}${skipped > 0 ? ` (${skipped} already existed)` : ""}.`
-      );
-      reload();
-    } catch (err) {
-      setError(errorMessage(err, "Could not load the default specialties."));
-    } finally {
-      setLoadingDefaults(false);
-    }
-  }
-
   async function confirmDelete() {
     if (!deleting) return;
     setDeleteBusy(true);
@@ -84,18 +62,10 @@ export default function SpecialtiesPage() {
       <PageHeader
         title="Specialties"
         description="The kinds of care the hospital offers. Every doctor belongs to one."
-        action={
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={handleLoadDefaults} disabled={loadingDefaults}>
-              {loadingDefaults ? "Loading..." : "Load default specialties"}
-            </Button>
-            <Button onClick={() => openForm(null)}>Add specialty</Button>
-          </div>
-        }
+        action={<Button onClick={() => openForm(null)}>Add specialty</Button>}
       />
 
       <div className="mt-6 space-y-3">
-        {notice && <Alert variant="success" message={notice} />}
         {error && <Alert message={error} />}
       </div>
 
@@ -103,7 +73,7 @@ export default function SpecialtiesPage() {
         {loading ? (
           <p className="px-6 py-12 text-center text-sm text-stone-500">Loading specialties...</p>
         ) : specialties.length === 0 ? (
-          <p className="px-6 py-12 text-center text-sm text-stone-500">No specialties yet.</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">No specialties yet. Add one, or load the defaults in Settings → Manage App Data.</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">

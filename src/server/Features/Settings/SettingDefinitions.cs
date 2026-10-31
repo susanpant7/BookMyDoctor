@@ -127,13 +127,4 @@ public static class SettingDefaults
         """;
 
     public static SettingDefinition? Find(string key) => All.FirstOrDefault(definition => definition.Key == key);
-
-    // SHA-256 (lowercase hex, UTF-8) of default values that a later version replaced. A stored value that still matches
-    // one was never edited, so StartupSeeder updates it to the current default; edited values are left alone.
-    public static IReadOnlyDictionary<string, IReadOnlySet<string>> ReplacedDefaultHashes { get; } =
-        new Dictionary<string, IReadOnlySet<string>>
-        {
-            // The first system prompt, which looked up doctors, specialties and hospital details with tools.
-            [SettingKeys.AssistantSystemPrompt] = new HashSet<string> { "756de87e0599f671c833c4cf6de927a7bd5cdd9dc13127efc32eb87012a4ca11" }
-        };
 }

@@ -62,7 +62,7 @@ public sealed class SpecialtiesController : ControllerBase
     }
 
     // Keeps specialty-settings.md (and doctor-settings.md when asked) matching the specialties. The change is saved
-    // either way; if Ollama is down, "Sync settings" on the Knowledge page or the next start catches up.
+    // either way; if Ollama is down, "Sync settings" on the Knowledge page catches up.
     private async Task SyncKnowledgeAsync(bool includeDoctors, CancellationToken cancellationToken)
     {
         try

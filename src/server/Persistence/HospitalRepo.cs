@@ -15,6 +15,12 @@ public sealed class HospitalRepo : IHospitalRepo
         _factory = factory;
     }
 
+    public bool HasInfo()
+    {
+        using var db = _factory.CreateDbContext();
+        return db.HospitalInfo.Any(info => info.Id == InfoRowId);
+    }
+
     public HospitalInfo GetInfo()
     {
         using var db = _factory.CreateDbContext();
@@ -81,5 +87,15 @@ public sealed class HospitalRepo : IHospitalRepo
 
         db.SaveChanges();
         transaction.Commit();
+    }
+
+    public void AddHolidays(IEnumerable<(DateOnly Date, string Name)> holidays)
+    {
+        using var db = _factory.CreateDbContext();
+        var taken = db.TimeOff.Where(timeOff => timeOff.DoctorId == null).Select(timeOff => timeOff.Date).ToHashSet();
+        db.TimeOff.AddRange(holidays
+            .Where(holiday => taken.Add(holiday.Date))
+            .Select(holiday => new TimeOffEntity { Date = holiday.Date, Reason = holiday.Name }));
+        db.SaveChanges();
     }
 }

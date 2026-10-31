@@ -122,16 +122,17 @@ public sealed partial class ReplyFactChecker
         var problems = new List<string>();
 
         // "Dr. Ravi Kumar" or "Doctor Ravi": the words after the title must match one of our doctors' names.
-        // "Dr. Cardiology" is accepted as a short form of "Doctor Cardiology".
+        // "Dr. Muturog Bisesagya" is accepted as a short form of "Doctor Muturog Bisesagya", and so is "Dr. Muturog".
         var knownNames = doctors.Select(doctor => NameAfterTitle(doctor.Name)).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (Match match in DoctorMention().Matches(reply))
         {
-            // The pattern may also grab the next capitalised word ("Doctor Cardiology Monday"), so a known name
+            // The pattern may also grab the next capitalised word ("Doctor Muturog Bisesagya Monday"), so a known name
             // followed by more words is fine too.
             var name = match.Groups["name"].Value;
             var isKnown = knownNames.Any(known =>
                 name.Equals(known, StringComparison.OrdinalIgnoreCase) ||
-                name.StartsWith(known + " ", StringComparison.OrdinalIgnoreCase));
+                name.StartsWith(known + " ", StringComparison.OrdinalIgnoreCase) ||
+                known.StartsWith(name + " ", StringComparison.OrdinalIgnoreCase));
             if (!isKnown)
             {
                 problems.Add($"\"{match.Value}\" is not a doctor at this hospital. The doctors are: {string.Join(", ", doctors.Select(doctor => doctor.Name))}.");

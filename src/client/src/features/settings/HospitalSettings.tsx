@@ -1,10 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { dayNames, shortTime, weekOrder } from "@/features/doctors/doctorsApi";
-import { getHospital, restoreDefaultHospital, saveHospital, type HospitalDetails } from "@/features/settings/settingsApi";
+import { getHospital, saveHospital, type HospitalDetails } from "@/features/settings/settingsApi";
 import { errorMessage } from "@/shared/api/errorMessage";
 import Alert from "@/shared/components/Alert";
 import Button from "@/shared/components/Button";
-import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import { TextAreaField, TextField } from "@/shared/components/Field";
 
 // What patients and the assistant are told about the hospital itself: contact details, opening hours and test prices. Saving also updates hospital-settings.md in the assistant's knowledge.
@@ -14,7 +13,6 @@ export default function HospitalSettings() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
-  const [confirmingRestore, setConfirmingRestore] = useState(false);
 
   function show(loaded: HospitalDetails) {
     setDetails({
@@ -68,21 +66,6 @@ export default function HospitalSettings() {
       setError(errorMessage(err, "Could not save the hospital details. Please try again."));
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function restoreDefaults() {
-    setError("");
-    setNotice("");
-    setSaving(true);
-    try {
-      show(await restoreDefaultHospital());
-      setNotice("The default hospital details are restored.");
-    } catch (err) {
-      setError(errorMessage(err, "Could not restore the default hospital details. Please try again."));
-    } finally {
-      setSaving(false);
-      setConfirmingRestore(false);
     }
   }
 
@@ -174,26 +157,11 @@ export default function HospitalSettings() {
       {notice && <Alert variant="success" message={notice} />}
       {error && <Alert message={error} />}
 
-      <div className="flex justify-end gap-3">
-        <Button variant="secondary" disabled={saving} onClick={() => setConfirmingRestore(true)}>
-          Restore defaults
-        </Button>
+      <div className="flex justify-end">
         <Button type="submit" disabled={saving}>
           {saving ? "Saving..." : "Save hospital details"}
         </Button>
       </div>
-
-      {confirmingRestore && (
-        <ConfirmDialog
-          title="Restore default hospital details"
-          message="Replace the contact details, opening hours, parking, facilities and test prices with the defaults? Your changes on this page will be lost, and the assistant will use the defaults from the next question."
-          confirmLabel="Restore defaults"
-          busy={saving}
-          busyLabel="Restoring..."
-          onConfirm={restoreDefaults}
-          onCancel={() => setConfirmingRestore(false)}
-        />
-      )}
     </form>
   );
 }

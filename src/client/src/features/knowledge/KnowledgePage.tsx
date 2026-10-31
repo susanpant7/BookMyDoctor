@@ -3,7 +3,6 @@ import {
   deleteKnowledgeSource,
   GENERATED_SOURCES,
   getChunks,
-  loadDefaultKnowledge,
   searchKnowledge,
   syncSettings,
   uploadKnowledge,
@@ -105,14 +104,9 @@ export default function KnowledgePage() {
         title="Knowledge"
         description="The assistant answers hospital questions from this knowledge base: the Markdown files uploaded here, plus doctor-settings.md, specialty-settings.md and hospital-settings.md, which the server builds from the doctors, specialties and hospital settings."
         action={
-          <div className="flex gap-3">
-            <Button variant="secondary" disabled={busy} onClick={() => run(syncSettings, "doctor-settings.md, specialty-settings.md and hospital-settings.md are up to date.")}>
-              Sync settings
-            </Button>
-            <Button variant="secondary" disabled={busy} onClick={() => run(loadDefaultKnowledge, "")}>
-              Load default files
-            </Button>
-          </div>
+          <Button variant="secondary" disabled={busy} onClick={() => run(syncSettings, "doctor-settings.md, specialty-settings.md and hospital-settings.md are up to date.")}>
+            Sync settings
+          </Button>
         }
       />
 

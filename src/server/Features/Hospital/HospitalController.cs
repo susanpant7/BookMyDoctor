@@ -12,12 +12,14 @@ public sealed class HospitalController : ControllerBase
 {
     private readonly IHospitalRepo _hospitalRepo;
     private readonly IKnowledgeService _knowledgeService;
+    private readonly TimeProvider _time;
     private readonly ILogger<HospitalController> _logger;
 
-    public HospitalController(IHospitalRepo hospitalRepo, IKnowledgeService knowledgeService, ILogger<HospitalController> logger)
+    public HospitalController(IHospitalRepo hospitalRepo, IKnowledgeService knowledgeService, TimeProvider time, ILogger<HospitalController> logger)
     {
         _hospitalRepo = hospitalRepo;
         _knowledgeService = knowledgeService;
+        _time = time;
         _logger = logger;
     }
 
@@ -50,18 +52,21 @@ public sealed class HospitalController : ControllerBase
         return Ok(Load());
     }
 
-    // Replaces the hospital details with the starting ones (contact details, opening hours, test prices).
+    // Replaces the hospital details with the starting ones (contact details, opening hours, test prices),
+    // and adds the public holidays for this year and next.
     [HttpPost("restore-defaults")]
     [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<HospitalDetails>> RestoreDefaults(CancellationToken cancellationToken)
     {
         _hospitalRepo.Save(DefaultData.Hospital);
+        var year = _time.GetUtcNow().Year;
+        _hospitalRepo.AddHolidays(DefaultData.Holidays(year).Concat(DefaultData.Holidays(year + 1)));
         await SyncKnowledgeAsync(cancellationToken);
         return Ok(Load());
     }
 
     // The settings are saved either way. If Ollama is down, hospital-settings.md catches up via "Sync settings" on the
-    // Knowledge page or at the next start.
+    // Knowledge page.
     private async Task SyncKnowledgeAsync(CancellationToken cancellationToken)
     {
         try

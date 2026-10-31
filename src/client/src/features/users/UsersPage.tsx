@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import LoadDefaultsForm from "@/features/users/LoadDefaultsForm";
 import UserForm from "@/features/users/UserForm";
-import { deletePatient, getPatients, type LoadDefaultsResult, type Patient } from "@/features/users/usersApi";
+import { deletePatient, getPatients, type Patient } from "@/features/users/usersApi";
 import { errorMessage } from "@/shared/api/errorMessage";
 import Alert from "@/shared/components/Alert";
 import Button from "@/shared/components/Button";
@@ -12,12 +11,10 @@ export default function UsersPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Patient | null>(null);
   const [deleting, setDeleting] = useState<Patient | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [loadDefaultsOpen, setLoadDefaultsOpen] = useState(false);
   const [version, setVersion] = useState(0);
   const reload = () => setVersion((v) => v + 1);
 
@@ -56,33 +53,15 @@ export default function UsersPage() {
     }
   }
 
-  function handleDefaultsLoaded({ added, skipped }: LoadDefaultsResult) {
-    setLoadDefaultsOpen(false);
-    setNotice(
-      added === 0
-        ? "The demo patients already exist."
-        : `Added ${added} demo ${added === 1 ? "patient" : "patients"}${skipped > 0 ? ` (${skipped} already existed)` : ""}.`
-    );
-    reload();
-  }
-
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <PageHeader
         title="Patients"
         description="The people who can sign in to book appointments and chat with the assistant."
-        action={
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setLoadDefaultsOpen(true)}>
-              Load demo patients
-            </Button>
-            <Button onClick={() => openForm(null)}>Add patient</Button>
-          </div>
-        }
+        action={<Button onClick={() => openForm(null)}>Add patient</Button>}
       />
 
       <div className="mt-6 space-y-3">
-        {notice && <Alert variant="success" message={notice} />}
         {error && <Alert message={error} />}
       </div>
 
@@ -90,7 +69,7 @@ export default function UsersPage() {
         {loading ? (
           <p className="px-6 py-12 text-center text-sm text-stone-500">Loading patients...</p>
         ) : patients.length === 0 ? (
-          <p className="px-6 py-12 text-center text-sm text-stone-500">No patients yet. Patients can also register themselves.</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">No patients yet. Patients can register themselves, and demo patients can be loaded in Settings → Manage App Data.</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
@@ -141,8 +120,6 @@ export default function UsersPage() {
           onCancel={() => setFormOpen(false)}
         />
       )}
-
-      {loadDefaultsOpen && <LoadDefaultsForm onLoaded={handleDefaultsLoaded} onCancel={() => setLoadDefaultsOpen(false)} />}
 
       {deleting && (
         <ConfirmDialog

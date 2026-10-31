@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DoctorForm from "@/features/doctors/DoctorForm";
-import { deleteDoctor, getDoctors, loadDefaultDoctors, type Doctor } from "@/features/doctors/doctorsApi";
+import { deleteDoctor, getDoctors, type Doctor } from "@/features/doctors/doctorsApi";
 import { getSpecialties, type Specialty } from "@/features/specialties/specialtiesApi";
 import { errorMessage } from "@/shared/api/errorMessage";
 import Alert from "@/shared/components/Alert";
@@ -16,12 +16,10 @@ export default function DoctorsAdminPage() {
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Doctor | null>(null);
   const [deleting, setDeleting] = useState<Doctor | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [loadingDefaults, setLoadingDefaults] = useState(false);
   const [version, setVersion] = useState(0);
   const reload = () => setVersion((v) => v + 1);
 
@@ -44,25 +42,6 @@ export default function DoctorsAdminPage() {
   function openForm(doctor: Doctor | null) {
     setEditing(doctor);
     setFormOpen(true);
-  }
-
-  async function handleLoadDefaults() {
-    setError("");
-    setNotice("");
-    setLoadingDefaults(true);
-    try {
-      const { added, skipped } = await loadDefaultDoctors();
-      setNotice(
-        added === 0
-          ? "The default doctors already exist."
-          : `Added ${added} default ${added === 1 ? "doctor" : "doctors"}${skipped > 0 ? ` (${skipped} already existed)` : ""}.`
-      );
-      reload();
-    } catch (err) {
-      setError(errorMessage(err, "Could not load the default doctors."));
-    } finally {
-      setLoadingDefaults(false);
-    }
   }
 
   async function confirmDelete() {
@@ -88,14 +67,9 @@ export default function DoctorsAdminPage() {
         title="Doctors"
         description="Add, edit and remove doctors, and set the hours patients can book them."
         action={
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={handleLoadDefaults} disabled={loadingDefaults || noSpecialties}>
-              {loadingDefaults ? "Loading..." : "Load default doctors"}
-            </Button>
-            <Button onClick={() => openForm(null)} disabled={noSpecialties}>
-              Add doctor
-            </Button>
-          </div>
+          <Button onClick={() => openForm(null)} disabled={noSpecialties}>
+            Add doctor
+          </Button>
         }
       />
 
@@ -114,7 +88,6 @@ export default function DoctorsAdminPage() {
             }
           />
         )}
-        {notice && <Alert variant="success" message={notice} />}
         {error && <Alert message={error} />}
       </div>
 

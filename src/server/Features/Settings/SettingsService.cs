@@ -35,10 +35,12 @@ public sealed class SettingsService : ISettingsService
 
     public IReadOnlyList<Setting> RestoreDefaults()
     {
-        foreach (var definition in SettingDefaults.All)
-        {
-            _settingsRepo.SetValue(definition.Key, definition.Value);
-        }
+        _settingsRepo.ReplaceAll(SettingDefaults.All
+            .Select(definition => new SettingEntity
+            {
+                Key = definition.Key, Label = definition.Label, Description = definition.Description, Value = definition.Value
+            })
+            .ToList());
         return GetAll();
     }
 

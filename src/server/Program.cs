@@ -9,7 +9,6 @@ using BookMyDoctor.Features.Settings;
 using BookMyDoctor.Features.Specialties;
 using BookMyDoctor.Features.Users;
 using BookMyDoctor.Persistence;
-using BookMyDoctor.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -53,11 +52,11 @@ builder.Services.AddSingleton<IAvailabilityService, AvailabilityService>();
 builder.Services.AddSingleton<IAppointmentService, AppointmentService>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<IAiSettingsProvider>(services => services.GetRequiredService<ISettingsService>());
+builder.Services.AddSingleton<DataCleanup>();
 builder.Services.AddSingleton<KnowledgeSources>();
 builder.Services.AddSingleton<IVectorStore, SqliteVectorStore>();
 builder.Services.AddSingleton<IKnowledgeRetriever, KnowledgeRetriever>();
 builder.Services.AddSingleton<IKnowledgeService, KnowledgeService>();
-builder.Services.AddHostedService<KnowledgeIndexer>();
 builder.Services.AddSingleton<IAssistantTool, GetAvailableSlotsTool>();
 builder.Services.AddSingleton<IAssistantTool, GetMyAppointmentsTool>();
 builder.Services.AddSingleton<BookingDrafts>();
@@ -81,15 +80,12 @@ Directory.CreateDirectory("data");
 
 var app = builder.Build();
 
-// Creates the database or brings it up to date, then fills in settings, the hospital details and holidays.
+// Creates the tables or brings them up to date. No data is added: the admin loads it on Settings → Manage App Data.
 using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-    await using (var db = await factory.CreateDbContextAsync())
-    {
-        await db.Database.MigrateAsync();
-    }
-    await StartupSeeder.SeedAsync(factory, scope.ServiceProvider.GetRequiredService<IHospitalRepo>(), TimeProvider.System);
+    await using var db = await factory.CreateDbContextAsync();
+    await db.Database.MigrateAsync();
 }
 
 app.UseCors();

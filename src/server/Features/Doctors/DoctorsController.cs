@@ -74,8 +74,7 @@ public sealed class DoctorsController : ControllerBase
     }
 
     // Updates the doctor's section in doctor-settings.md, and specialty-settings.md, which lists each specialty's doctors.
-    // The doctor is saved either way. If Ollama is down, the files catch up via "Sync settings" on the Knowledge page
-    // or at the next start.
+    // The doctor is saved either way. If Ollama is down, the files catch up via "Sync settings" on the Knowledge page.
     private async Task SyncKnowledgeAsync(CancellationToken cancellationToken)
     {
         try

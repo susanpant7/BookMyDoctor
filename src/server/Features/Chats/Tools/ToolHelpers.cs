@@ -93,7 +93,7 @@ public static class ToolFormat
 
 public static class DoctorLookup
 {
-    // Finds a doctor from what the model sends: the exact name ("Doctor Dermatology"), part of it,
+    // Finds a doctor from what the model sends: the exact name ("Doctor Chhaalarog Bisesagya"), part of it,
     // or the specialty in another form ("dermatologist", "pediatrician"). Returns an error the model can act on otherwise.
     public static Doctor Find(IDoctorService doctorService, string query)
     {

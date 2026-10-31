@@ -6,7 +6,7 @@ using static BookMyDoctor.Persistence.SeedIds;
 
 namespace BookMyDoctor.Persistence;
 
-// What the admin pages load with "Load defaults", and what the hospital settings start with.
+// What the admin loads on Settings → Manage App Data.
 public static class DefaultData
 {
     public static IReadOnlyList<Specialty> Specialties { get; } =
@@ -20,15 +20,15 @@ public static class DefaultData
 
     public static IReadOnlyList<Doctor> Doctors { get; } =
     [
-        new(CardiologyDoctorId, "Doctor Cardiology", CardiologyId, "Cardiology", 12, 180, 120, ["English", "Hindi"],
+        new(CardiologyDoctorId, "Doctor Muturog Bisesagya", CardiologyId, "Cardiology", 12, 180, 120, ["English", "Hindi"],
             "Heart specialist focused on blood pressure, cholesterol and rhythm problems, with a strong interest in preventive care for patients with a family history of heart disease."),
-        new(DermatologyDoctorId, "Doctor Dermatology", DermatologyId, "Dermatology", 8, 140, 90, ["English", "Spanish"],
+        new(DermatologyDoctorId, "Doctor Chhaalarog Bisesagya", DermatologyId, "Dermatology", 8, 140, 90, ["English", "Spanish"],
             "Skin, hair and nail specialist who treats acne, eczema and psoriasis and runs yearly full-body skin cancer checks."),
-        new(PediatricsDoctorId, "Doctor Pediatrics", PediatricsId, "Pediatrics", 15, 120, 80, ["English", "Nepali"],
+        new(PediatricsDoctorId, "Doctor Baalrog Bisesagya", PediatricsId, "Pediatrics", 15, 120, 80, ["English", "Nepali"],
             "Children's doctor caring for newborns to teenagers, known for a calm approach with anxious children and first-time parents."),
-        new(OrthopedicsDoctorId, "Doctor Orthopedics", OrthopedicsId, "Orthopedics", 10, 160, 100, ["English"],
+        new(OrthopedicsDoctorId, "Doctor Haadjorni Bisesagya", OrthopedicsId, "Orthopedics", 10, 160, 100, ["English"],
             "Bone and joint specialist with a sports-medicine background, focused on getting patients back to activity with physiotherapy-led recovery plans."),
-        new(GeneralPracticeDoctorId, "Doctor General Practice", GeneralPracticeId, "General Practice", 6, 90, 60, ["English", "Hindi"],
+        new(GeneralPracticeDoctorId, "Doctor Saamanya Chikitsak", GeneralPracticeId, "General Practice", 6, 90, 60, ["English", "Hindi"],
             "Family doctor for everyday illnesses, yearly checkups and long-term conditions like diabetes and thyroid problems; refers patients to specialists when needed.")
     ];
 
