@@ -10,7 +10,7 @@ const features = [
 ];
 
 export default function HomePage() {
-  const { user, isPatient, isAdmin } = useAuth();
+  const { user, isPatient, isAdmin, isDoctor } = useAuth();
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-16">
@@ -28,6 +28,11 @@ export default function HomePage() {
           {isPatient && (
             <Link to="/book" className={buttonClass("secondary", "lg")}>
               Book an appointment
+            </Link>
+          )}
+          {isDoctor && (
+            <Link to="/doctor/appointments" className={buttonClass("secondary", "lg")}>
+              See my appointments
             </Link>
           )}
           {isAdmin && (

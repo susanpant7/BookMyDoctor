@@ -14,7 +14,7 @@ public interface IDoctorService
     Doctor Update(Guid id, DoctorRequest request);
     void Delete(Guid id);
 
-    // Adds the default doctors (with their weekly schedules) that do not exist yet (by name).
+    // Adds the default doctors (with their weekly schedules and logins, all with this password) that do not exist yet.
     // Their specialties must exist; throws ArgumentException when one is missing.
-    LoadDefaultsResult LoadDefaults();
+    LoadDefaultsResult LoadDefaults(string password);
 }

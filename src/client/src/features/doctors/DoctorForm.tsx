@@ -33,6 +33,9 @@ export default function DoctorForm({ doctor, specialties, onSaved, onCancel }: D
   const [followUpFee, setFollowUpFee] = useState(String(doctor?.followUpFee ?? 0));
   const [languages, setLanguages] = useState(doctor?.languages.join(", ") ?? "English");
   const [bio, setBio] = useState(doctor?.bio ?? "");
+  const [username, setUsername] = useState(doctor?.username ?? "");
+  const [password, setPassword] = useState("");
+  const hasLogin = Boolean(doctor?.username);
   const [schedule, setSchedule] = useState<ScheduleBlock[]>([]);
   const [scheduleLoaded, setScheduleLoaded] = useState(doctor === null);
   const [error, setError] = useState("");
@@ -70,7 +73,9 @@ export default function DoctorForm({ doctor, specialties, onSaved, onCancel }: D
         followUpFee: Number(followUpFee),
         languages: languages.split(",").map((language) => language.trim()).filter(Boolean),
         bio,
-        schedule
+        schedule,
+        username: username.trim(),
+        password
       };
       if (doctor) await updateDoctor(doctor.id, input);
       else await createDoctor(input);
@@ -140,6 +145,33 @@ export default function DoctorForm({ doctor, specialties, onSaved, onCancel }: D
           value={bio}
           onChange={(e) => setBio(e.target.value)}
         />
+
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium text-stone-700">Login</legend>
+          <p className="text-xs text-stone-500">
+            The doctor signs in with this username to see their appointments. Leave the username empty for no login.
+          </p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField
+              label="Username"
+              maxLength={50}
+              autoComplete="off"
+              placeholder="e.g. muturog"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <TextField
+              label="Password"
+              type="text"
+              autoComplete="off"
+              placeholder={hasLogin ? "Leave empty to keep it" : ""}
+              required={username.trim().length > 0 && !hasLogin}
+              disabled={username.trim().length === 0}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+        </fieldset>
 
         <fieldset>
           <div className="flex items-center justify-between">

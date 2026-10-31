@@ -34,6 +34,17 @@ public sealed record Appointment(
     AppointmentStatus Status,
     DateTimeOffset BookedAt);
 
+// An appointment as the doctor sees it: with the patient's name and email, and the booking reference.
+public sealed record DoctorAppointment(
+    Guid Id,
+    string Reference,
+    DateTimeOffset StartsAt,
+    DateTimeOffset EndsAt,
+    string Reason,
+    AppointmentStatus Status,
+    string PatientName,
+    string PatientEmail);
+
 // A free, bookable slot calculated from schedules, time off and existing appointments (not stored).
 public sealed record TimeSlot(
     Guid DoctorId,

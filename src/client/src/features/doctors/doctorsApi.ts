@@ -11,6 +11,8 @@ export type Doctor = {
   followUpFee: number;
   languages: string[];
   bio: string;
+  // What the doctor signs in with; only sent to the admin. Null when the doctor has no login.
+  username?: string | null;
 };
 
 // day: 0 = Sunday … 6 = Saturday. Times are "HH:mm" (the server also sends seconds) in hospital time.
@@ -30,6 +32,10 @@ export type DoctorInput = {
   languages: string[];
   bio: string;
   schedule: ScheduleBlock[];
+  // Empty removes the doctor's login.
+  username: string;
+  // Empty keeps the current password.
+  password: string;
 };
 
 export const getDoctors = (specialtyId?: string) =>
@@ -45,7 +51,8 @@ export const updateDoctor = (id: string, input: DoctorInput) =>
 
 export const deleteDoctor = (id: string) => apiFetch<void>(`/doctors/${id}`, { method: "DELETE" });
 
-export const loadDefaultDoctors = () => apiFetch<LoadDefaultsResult>("/doctors/load-defaults", { method: "POST" });
+export const loadDefaultDoctors = (password: string) =>
+  apiFetch<LoadDefaultsResult>("/doctors/load-defaults", { method: "POST", body: JSON.stringify({ password }) });
 
 export const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 

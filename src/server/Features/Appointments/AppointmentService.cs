@@ -7,15 +7,29 @@ public sealed class AppointmentService : IAppointmentService
     private readonly IAppointmentsRepo _appointmentsRepo;
     private readonly IAvailabilityService _availabilityService;
     private readonly TimeProvider _time;
+    private readonly IUsersRepo _usersRepo;
 
-    public AppointmentService(IAppointmentsRepo appointmentsRepo, IAvailabilityService availabilityService, TimeProvider time)
+    public AppointmentService(IAppointmentsRepo appointmentsRepo, IAvailabilityService availabilityService, TimeProvider time, IUsersRepo usersRepo)
     {
         _appointmentsRepo = appointmentsRepo;
         _availabilityService = availabilityService;
         _time = time;
+        _usersRepo = usersRepo;
     }
 
     public IReadOnlyList<Appointment> GetForPatient(Guid patientId) => _appointmentsRepo.GetForPatient(patientId);
+
+    public IReadOnlyList<DoctorAppointment> GetForDoctor(Guid doctorId)
+    {
+        var appointments = _appointmentsRepo.GetForDoctor(doctorId, DateTimeOffset.MinValue, DateTimeOffset.MaxValue);
+        var patients = appointments.Select(appointment => appointment.PatientId).Distinct()
+            .ToDictionary(id => id, id => _usersRepo.GetById(id));
+        return appointments
+            .Select(appointment => new DoctorAppointment(
+                appointment.Id, BookingReference.For(appointment.Id), appointment.StartsAt, appointment.EndsAt, appointment.Reason,
+                appointment.Status, patients[appointment.PatientId]?.Name ?? "Unknown patient", patients[appointment.PatientId]?.Email ?? ""))
+            .ToList();
+    }
 
     public Appointment Book(Guid patientId, BookAppointmentRequest request)
     {

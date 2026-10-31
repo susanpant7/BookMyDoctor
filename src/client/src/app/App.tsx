@@ -7,6 +7,7 @@ import LoginPage from "@/features/auth/LoginPage";
 import ProtectedRoute from "@/features/auth/ProtectedRoute";
 import { useAuth } from "@/features/auth/useAuth";
 import ChatPage from "@/features/chats/ChatPage";
+import DoctorAppointmentsPage from "@/features/doctors/DoctorAppointmentsPage";
 import DoctorsAdminPage from "@/features/doctors/DoctorsAdminPage";
 import DoctorsPage from "@/features/doctors/DoctorsPage";
 import HomePage from "@/features/home/HomePage";
@@ -36,6 +37,9 @@ export default function App() {
               <Route path="/appointments" element={<AppointmentsPage />} />
               <Route path="/book" element={<BookPage />} />
               <Route path="/book/chat" element={<ChatPage />} />
+            </Route>
+            <Route element={<ProtectedRoute role="Doctor" />}>
+              <Route path="/doctor/appointments" element={<DoctorAppointmentsPage />} />
             </Route>
             <Route element={<ProtectedRoute role="Admin" />}>
               <Route path="/users" element={<UsersPage />} />

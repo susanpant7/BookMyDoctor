@@ -72,6 +72,30 @@ public sealed class DoctorsRepo : IDoctorsRepo
         return db.Appointments.Any(appointment => appointment.DoctorId == id);
     }
 
+    public Doctor? GetByUsername(string username)
+    {
+        using var db = _factory.CreateDbContext();
+        return Query(db).Where(doctor => doctor.Username == username).ToList().Select(ToDoctor).FirstOrDefault();
+    }
+
+    public bool UsernameExists(string username, Guid? excludeId = null)
+    {
+        using var db = _factory.CreateDbContext();
+        return db.Doctors.Any(doctor => doctor.Username == username && doctor.Id != excludeId);
+    }
+
+    public string? GetPasswordHash(Guid id)
+    {
+        using var db = _factory.CreateDbContext();
+        return db.Doctors.Where(doctor => doctor.Id == id).Select(doctor => doctor.PasswordHash).FirstOrDefault();
+    }
+
+    public void SetPasswordHash(Guid id, string? passwordHash)
+    {
+        using var db = _factory.CreateDbContext();
+        db.Doctors.Where(doctor => doctor.Id == id).ExecuteUpdate(setters => setters.SetProperty(doctor => doctor.PasswordHash, passwordHash));
+    }
+
     private static IQueryable<DoctorEntity> Query(AppDbContext db) =>
         db.Doctors.AsNoTracking().Include(doctor => doctor.Specialty);
 
@@ -84,11 +108,13 @@ public sealed class DoctorsRepo : IDoctorsRepo
         entity.FollowUpFee = doctor.FollowUpFee;
         entity.Languages = string.Join(',', doctor.Languages);
         entity.Bio = doctor.Bio;
+        entity.Username = doctor.Username;
     }
 
     private static Doctor ToDoctor(DoctorEntity entity) =>
         new(entity.Id, entity.Name, entity.SpecialtyId, entity.Specialty.Name, entity.ExperienceYears,
             entity.ConsultationFee, entity.FollowUpFee,
             entity.Languages.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
-            entity.Bio);
+            entity.Bio,
+            entity.Username);
 }

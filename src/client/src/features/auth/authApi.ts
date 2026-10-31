@@ -1,10 +1,11 @@
+import type { Role } from "@/features/auth/AuthContext";
 import { apiFetch } from "@/shared/api/apiClient";
 
 export type AuthResponse = {
   userId: string;
   name: string;
   email: string;
-  role: "Admin" | "Patient";
+  role: Role;
   token: string;
   expiresAt: string;
 };

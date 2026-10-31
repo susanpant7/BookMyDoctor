@@ -25,13 +25,13 @@ public sealed class DoctorsController : ControllerBase
 
     [HttpGet]
     public ActionResult<IReadOnlyList<Doctor>> GetAll([FromQuery] Guid? specialtyId) =>
-        Ok(_doctorService.GetAll(specialtyId));
+        Ok(_doctorService.GetAll(specialtyId).Select(ForCaller).ToList());
 
     [HttpGet("{id:guid}")]
     public ActionResult<Doctor> GetById(Guid id)
     {
         var doctor = _doctorService.GetById(id);
-        return doctor is null ? NotFound() : Ok(doctor);
+        return doctor is null ? NotFound() : Ok(ForCaller(doctor));
     }
 
     [HttpGet("{id:guid}/schedule")]
@@ -48,9 +48,9 @@ public sealed class DoctorsController : ControllerBase
 
     [HttpPost("load-defaults")]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<ActionResult<LoadDefaultsResult>> LoadDefaults(CancellationToken cancellationToken)
+    public async Task<ActionResult<LoadDefaultsResult>> LoadDefaults(LoadDefaultDoctorsRequest request, CancellationToken cancellationToken)
     {
-        var result = _doctorService.LoadDefaults();
+        var result = _doctorService.LoadDefaults(request.Password);
         await SyncKnowledgeAsync(cancellationToken);
         return Ok(result);
     }
@@ -87,4 +87,7 @@ public sealed class DoctorsController : ControllerBase
             _logger.LogWarning("doctor-settings.md and specialty-settings.md were not updated ({Error}). Is Ollama running?", ex.Message);
         }
     }
+
+    // Doctors' usernames are only for the admin, who manages the logins.
+    private Doctor ForCaller(Doctor doctor) => User.IsInRole(Roles.Admin) ? doctor : doctor with { Username = null };
 }

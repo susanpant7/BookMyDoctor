@@ -51,7 +51,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAdmin: user?.role === "Admin", isPatient: user?.role === "Patient", login, register, logout }}
+      value={{ user, isAdmin: user?.role === "Admin", isPatient: user?.role === "Patient", isDoctor: user?.role === "Doctor", login, register, logout }}
     >
       {children}
     </AuthContext.Provider>

@@ -25,6 +25,8 @@ type Module = {
   button: string;
   // Replaces what is there (asks first), instead of only adding what is missing.
   replaces?: boolean;
+  // Asks for a password the loaded accounts sign in with, starting with this one.
+  password?: { label: string; initial: string };
   run: (password: string) => Promise<string>;
 };
 
@@ -67,15 +69,18 @@ const modules: Module[] = [
   {
     id: "doctors",
     title: "Doctors",
-    description: "One doctor per default specialty, with fees and weekly hours. Needs the default specialties first.",
+    description:
+      "One doctor per default specialty, with fees and weekly hours. Each signs in with their username (muturog, chhaalarog, baalrog, haadjorni, saamanya) and the password below. Needs the default specialties first.",
     button: "Load default doctors",
-    run: async () => addedText(await loadDefaultDoctors(), "doctor", "doctors")
+    password: { label: "Password for the default doctors", initial: "doctor" },
+    run: async (password) => addedText(await loadDefaultDoctors(password), "doctor", "doctors")
   },
   {
     id: "patients",
     title: "Demo patients",
     description: "Hari Bahadur (hb@gmail.com) and Madan Bahadur (mb@gmail.com), who sign in with the password below.",
     button: "Load demo patients",
+    password: { label: "Password for the demo patients", initial: "user" },
     run: async (password) => addedText(await loadDefaultPatients(password), "demo patient", "demo patients")
   },
   {
@@ -103,7 +108,11 @@ const allSteps = [{ id: "cleanup", title: "Clean up all data" }, ...modules.map(
 
 // Loading and clearing the default data for every module, in one place.
 export default function ManageAppData() {
-  const [password, setPassword] = useState("user");
+  const [passwords, setPasswords] = useState<Record<string, string>>(() =>
+    Object.fromEntries(modules.filter((m) => m.password).map((m) => [m.id, m.password!.initial]))
+  );
+  const passwordFor = (module: Module) => passwords[module.id] ?? "";
+  const missingPassword = (module: Module) => module.password !== undefined && passwordFor(module).length === 0;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -117,7 +126,7 @@ export default function ManageAppData() {
     setSteps([]);
     setBusy(true);
     try {
-      setNotice(await module.run(password));
+      setNotice(await module.run(passwordFor(module)));
     } catch (err) {
       setError(failureText(err, `Could not load the ${module.title.toLowerCase()}. Please try again.`));
     } finally {
@@ -154,7 +163,7 @@ export default function ManageAppData() {
     };
     setSteps([...progress]);
 
-    const actions = [() => cleanUpData(), ...modules.map((module) => () => module.run(password))];
+    const actions = [() => cleanUpData(), ...modules.map((module) => () => module.run(passwordFor(module)))];
     for (const [index, action] of actions.entries()) {
       mark(index, "running");
       try {
@@ -182,7 +191,7 @@ export default function ManageAppData() {
               demo patients and knowledge files.
             </p>
           </div>
-          <Button disabled={busy || password.length === 0} onClick={() => setConfirming("all")}>
+          <Button disabled={busy || modules.some(missingPassword)} onClick={() => setConfirming("all")}>
             Load all default data
           </Button>
         </div>
@@ -210,14 +219,14 @@ export default function ManageAppData() {
               <div className="min-w-0">
                 <p className="font-medium text-stone-900">{module.title}</p>
                 <p className="mt-1 text-sm text-stone-500">{module.description}</p>
-                {module.id === "patients" && (
+                {module.password && (
                   <label className="mt-3 flex max-w-xs flex-col gap-1 text-sm font-medium text-stone-700">
-                    Password for the demo patients
+                    {module.password.label}
                     <input
                       type="text"
                       autoComplete="off"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={passwordFor(module)}
+                      onChange={(e) => setPasswords({ ...passwords, [module.id]: e.target.value })}
                       className="rounded-lg border-0 px-3 py-2 text-sm font-normal shadow-sm ring-1 ring-inset ring-stone-300"
                     />
                   </label>
@@ -225,7 +234,7 @@ export default function ManageAppData() {
               </div>
               <Button
                 variant="secondary"
-                disabled={busy || (module.id === "patients" && password.length === 0)}
+                disabled={busy || missingPassword(module)}
                 onClick={() => (module.replaces ? setConfirming(module) : void runOne(module))}
               >
                 {module.button}

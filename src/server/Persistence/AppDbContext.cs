@@ -39,6 +39,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(doctor => doctor.SpecialtyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasMany(doctor => doctor.Schedule).WithOne()
                 .HasForeignKey(block => block.DoctorId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(doctor => doctor.Username).UseCollation("NOCASE");
+            entity.HasIndex(doctor => doctor.Username).IsUnique();
         });
 
         modelBuilder.Entity<TimeOffEntity>(entity =>

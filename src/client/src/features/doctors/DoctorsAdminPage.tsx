@@ -112,7 +112,10 @@ export default function DoctorsAdminPage() {
                 <tr key={doctor.id} className="hover:bg-stone-50/60">
                   <td className="px-6 py-4">
                     <p className="font-medium text-stone-900">{doctor.name}</p>
-                    <p className="text-stone-500">{doctor.experienceYears} years of experience</p>
+                    <p className="text-stone-500">
+                      {doctor.experienceYears} years of experience
+                      {doctor.username ? ` · signs in as ${doctor.username}` : " · no login"}
+                    </p>
                   </td>
                   <td className="px-6 py-4">
                     <Badge name={doctor.specialty} />

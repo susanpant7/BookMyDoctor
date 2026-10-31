@@ -24,7 +24,7 @@ export default function LoginPage() {
     try {
       const user = registering ? await register(name, username, password) : await login(username, password);
       if (user) {
-        navigate(user.role === "Admin" ? "/users" : "/doctors", { replace: true });
+        navigate(user.role === "Admin" ? "/users" : user.role === "Doctor" ? "/doctor/appointments" : "/doctors", { replace: true });
       } else {
         setError("Invalid email, username or password");
       }
@@ -58,7 +58,7 @@ export default function LoginPage() {
             <TextField label="Name" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
           )}
           <TextField
-            label={registering ? "Email" : "Email or admin username"}
+            label={registering ? "Email" : "Email or username"}
             type={registering ? "email" : "text"}
             required
             autoComplete="username"

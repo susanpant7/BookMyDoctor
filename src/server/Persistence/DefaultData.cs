@@ -18,18 +18,24 @@ public static class DefaultData
         new(GeneralPracticeId, "General Practice", "Primary care and routine checkups")
     ];
 
+    // Each default doctor signs in with their username and the password given when loading them.
     public static IReadOnlyList<Doctor> Doctors { get; } =
     [
         new(CardiologyDoctorId, "Doctor Muturog Bisesagya", CardiologyId, "Cardiology", 12, 180, 120, ["English", "Hindi"],
-            "Heart specialist focused on blood pressure, cholesterol and rhythm problems, with a strong interest in preventive care for patients with a family history of heart disease."),
+            "Heart specialist focused on blood pressure, cholesterol and rhythm problems, with a strong interest in preventive care for patients with a family history of heart disease.",
+            Username: "muturog"),
         new(DermatologyDoctorId, "Doctor Chhaalarog Bisesagya", DermatologyId, "Dermatology", 8, 140, 90, ["English", "Spanish"],
-            "Skin, hair and nail specialist who treats acne, eczema and psoriasis and runs yearly full-body skin cancer checks."),
+            "Skin, hair and nail specialist who treats acne, eczema and psoriasis and runs yearly full-body skin cancer checks.",
+            Username: "chhaalarog"),
         new(PediatricsDoctorId, "Doctor Baalrog Bisesagya", PediatricsId, "Pediatrics", 15, 120, 80, ["English", "Nepali"],
-            "Children's doctor caring for newborns to teenagers, known for a calm approach with anxious children and first-time parents."),
+            "Children's doctor caring for newborns to teenagers, known for a calm approach with anxious children and first-time parents.",
+            Username: "baalrog"),
         new(OrthopedicsDoctorId, "Doctor Haadjorni Bisesagya", OrthopedicsId, "Orthopedics", 10, 160, 100, ["English"],
-            "Bone and joint specialist with a sports-medicine background, focused on getting patients back to activity with physiotherapy-led recovery plans."),
+            "Bone and joint specialist with a sports-medicine background, focused on getting patients back to activity with physiotherapy-led recovery plans.",
+            Username: "haadjorni"),
         new(GeneralPracticeDoctorId, "Doctor Saamanya Chikitsak", GeneralPracticeId, "General Practice", 6, 90, 60, ["English", "Hindi"],
-            "Family doctor for everyday illnesses, yearly checkups and long-term conditions like diabetes and thyroid problems; refers patients to specialists when needed.")
+            "Family doctor for everyday illnesses, yearly checkups and long-term conditions like diabetes and thyroid problems; refers patients to specialists when needed.",
+            Username: "saamanya")
     ];
 
     public static DayOfWeek[] Weekdays =>

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using MyHospitalAI.Features.Doctors;
 using MyHospitalAI.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -21,6 +22,9 @@ public sealed class JwtTokenService : ITokenService
         Create(user.Id.ToString(), user.Name, Roles.Patient, new Claim(JwtRegisteredClaimNames.Email, user.Email));
 
     public AccessToken CreateAdmin(string username) => Create("admin", username, Roles.Admin);
+
+    // The subject is the doctor's id, so User.GetUserId() gives the doctor.
+    public AccessToken CreateDoctor(Doctor doctor) => Create(doctor.Id.ToString(), doctor.Name, Roles.Doctor);
 
     private AccessToken Create(string subject, string name, string role, params Claim[] extra)
     {

@@ -13,6 +13,11 @@ public class DoctorEntity
 
     public string Bio { get; set; } = "";
 
+    /// <summary>What the doctor signs in with, e.g. "muturog". Null when the doctor has no login.</summary>
+    public string? Username { get; set; }
+
+    public string? PasswordHash { get; set; }
+
     public Guid SpecialtyId { get; set; }
     public SpecialtyEntity Specialty { get; set; } = null!;
 

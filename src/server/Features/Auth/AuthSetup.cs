@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using MyHospitalAI.Features.Doctors;
 using MyHospitalAI.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -25,6 +26,7 @@ public static class AuthSetup
             .ValidateDataAnnotations();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<IPasswordHasher<UserAccount>, PasswordHasher<UserAccount>>();
+        services.AddSingleton<IPasswordHasher<Doctor>, PasswordHasher<Doctor>>();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>

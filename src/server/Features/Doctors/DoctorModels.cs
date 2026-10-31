@@ -9,7 +9,8 @@ public sealed record Doctor(
     decimal ConsultationFee,
     decimal FollowUpFee,
     IReadOnlyList<string> Languages,
-    string Bio);
+    string Bio,
+    string? Username = null);   // the doctor's login; only sent to the admin
 
 // A weekly block when the doctor sees patients, in hospital-local time. Day: 0 = Sunday … 6 = Saturday.
 public sealed record ScheduleBlock(DayOfWeek Day, TimeOnly Start, TimeOnly End, int SlotMinutes);
@@ -22,4 +23,8 @@ public sealed record DoctorRequest(
     decimal FollowUpFee,
     IReadOnlyList<string>? Languages,
     string? Bio,
-    IReadOnlyList<ScheduleBlock>? Schedule);
+    IReadOnlyList<ScheduleBlock>? Schedule,
+    string? Username = null,    // empty removes the doctor's login
+    string? Password = null);   // empty keeps the current password
+
+public sealed record LoadDefaultDoctorsRequest(string Password);

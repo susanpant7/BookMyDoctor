@@ -12,6 +12,7 @@ const patientLinks: NavItem[] = [
   { to: "/appointments", label: "Appointments" },
   { to: "/book", label: "Book" }
 ];
+const doctorLinks: NavItem[] = [{ to: "/doctor/appointments", label: "My appointments" }];
 const adminLinks: NavItem[] = [
   { to: "/users", label: "Patients" },
   { to: "/specialties", label: "Specialties" },
@@ -20,11 +21,12 @@ const adminLinks: NavItem[] = [
 ];
 
 export default function Navbar() {
-  const { user, isAdmin, isPatient, logout } = useAuth();
+  const { user, isAdmin, isPatient, isDoctor, logout } = useAuth();
   const links: NavItem[] = [
     ...publicLinks,
     ...(user ? signedInLinks : []),
     ...(isPatient ? patientLinks : []),
+    ...(isDoctor ? doctorLinks : []),
     ...(isAdmin ? adminLinks : [])
   ];
 

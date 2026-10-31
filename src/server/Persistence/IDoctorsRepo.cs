@@ -17,4 +17,14 @@ public interface IDoctorsRepo
     bool Delete(Guid id);
 
     bool HasAppointments(Guid id);
+
+    // The doctor who signs in with this username (any case), or null.
+    Doctor? GetByUsername(string username);
+
+    bool UsernameExists(string username, Guid? excludeId = null);
+
+    // Null when the doctor has no password (no login).
+    string? GetPasswordHash(Guid id);
+
+    void SetPasswordHash(Guid id, string? passwordHash);
 }
