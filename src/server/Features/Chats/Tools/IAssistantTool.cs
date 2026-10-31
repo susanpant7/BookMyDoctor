@@ -4,7 +4,11 @@ namespace BookMyDoctor.Features.Chats.Tools;
 
 // Who the tool is running for (from the signed-in patient's token, never from the model)
 // and which patient message this turn is answering.
-public sealed record ToolContext(Guid PatientId, Guid MessageId = default);
+public sealed record ToolContext(Guid PatientId, Guid MessageId = default)
+{
+    // The free times looked up while answering this message (the last lookup wins), shown as buttons after the reply.
+    public SlotOffer? SlotsShown { get; set; }
+}
 
 // A function the AI model can ask the server to run. The model only sees Name, Description and Parameters;
 // the server decides whether and how to run it.

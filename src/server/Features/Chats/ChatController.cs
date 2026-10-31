@@ -25,7 +25,7 @@ public sealed class ChatController : ControllerBase
     {
         try
         {
-            return Ok(_chatService.Send(new SendMessageRequest(User.GetUserId(), "patient", request.Text)));
+            return Ok(_chatService.Save(new SaveMessageRequest(User.GetUserId(), "patient", request.Text)));
         }
         catch (ArgumentException ex)
         {

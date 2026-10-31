@@ -10,7 +10,7 @@ BookMyDoctor accepts credit and debit cards (Visa, Mastercard, American Express,
 The consultation fee is paid when the appointment is booked online. Extra charges, such as lab tests, X-rays, or procedures done during the visit, are paid at the hospital after the visit. The hospital confirms the price of any extra test before doing it.
 
 ## Using insurance
-Patients should add their insurance details in their profile before the visit and bring their insurance card. Not every insurance plan is accepted, and some plans have restrictions; the Vaidya Mitra assistant can check whether a plan is accepted.
+Patients should add their insurance details in their profile before the visit and bring their insurance card. Not every insurance plan is accepted, and some plans have restrictions, so patients should call the hospital to check whether their plan is accepted before the visit.
 
 ## Insurance copay and claims
 When a patient uses insurance, they pay only their plan's copay at booking. BookMyDoctor sends the claim to the insurer. If the insurer rejects the claim, the patient is billed the remaining amount and receives an itemized receipt.

@@ -4,7 +4,7 @@ using BookMyDoctor.Features.Appointments;
 namespace BookMyDoctor.Features.Chats.Tools;
 
 // Free times most recently shown to the patient for one doctor and day.
-public sealed record SlotOffer(Guid DoctorId, string DoctorName, DateOnly Date, IReadOnlyList<TimeSlot> Slots, Guid OfferedInMessageId);
+public sealed record SlotOffer(Guid DoctorId, string DoctorName, DateOnly Date, IReadOnlyList<TimeSlot> Slots);
 
 // A booking the assistant has proposed but the patient hasn't confirmed yet.
 public sealed record PendingBooking(Guid DoctorId, DateTimeOffset StartsAt, string Reason, Guid ProposedInMessageId);

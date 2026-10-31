@@ -1,12 +1,12 @@
 namespace BookMyDoctor.Persistence.Entities;
 
-/// <summary>One section of a knowledge file (or a doctor profile), with its embedding for similarity search.</summary>
+/// <summary>One section of a knowledge file (uploaded, or generated: doctor-settings.md, hospital-settings.md), with its embedding for similarity search.</summary>
 public class KnowledgeChunkEntity
 {
-    /// <summary>Stable id, for example "booking.md#how-to-book" or "doctor:2222…".</summary>
+    /// <summary>Stable id, for example "booking.md#how-to-book" or "doctor-settings.md#2222…".</summary>
     public required string Id { get; set; }
 
-    /// <summary>The file name, or "doctors" for doctor profiles.</summary>
+    /// <summary>The file name, e.g. "booking.md" or "doctor-settings.md".</summary>
     public required string Source { get; set; }
 
     public required string Title { get; set; }

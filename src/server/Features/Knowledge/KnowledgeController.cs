@@ -72,12 +72,13 @@ public sealed class KnowledgeController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<UploadFileResult>>> LoadDefaults(CancellationToken cancellationToken) =>
         Ok(await _knowledgeService.LoadDefaultsAsync(cancellationToken));
 
-    [HttpPost("sync-doctors")]
-    public async Task<IActionResult> SyncDoctors(CancellationToken cancellationToken)
+    // Rebuilds doctor-settings.md, specialty-settings.md and hospital-settings.md from the database, e.g. after edits made while Ollama was down.
+    [HttpPost("sync-settings")]
+    public async Task<IActionResult> SyncSettings(CancellationToken cancellationToken)
     {
         try
         {
-            await _knowledgeService.SyncDoctorProfilesAsync(cancellationToken);
+            await _knowledgeService.SyncSettingsAsync(cancellationToken);
             return NoContent();
         }
         catch (HttpRequestException ex)

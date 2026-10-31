@@ -3,7 +3,7 @@ import { updateSetting, type Setting } from "@/features/settings/settingsApi";
 import { errorMessage } from "@/shared/api/errorMessage";
 import Alert from "@/shared/components/Alert";
 import Button from "@/shared/components/Button";
-import { TextField } from "@/shared/components/Field";
+import { SelectField, TextAreaField, TextField } from "@/shared/components/Field";
 import Modal from "@/shared/components/Modal";
 
 type SettingFormProps = {
@@ -33,18 +33,42 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
   }
 
   return (
-    <Modal title={setting.label} onClose={onCancel} maxWidth="max-w-xl">
+    <Modal title={setting.label} onClose={onCancel} maxWidth={setting.kind === "longtext" ? "max-w-4xl" : "max-w-xl"}>
       <form onSubmit={handleSubmit} className="space-y-5">
         <p className="text-sm leading-6 text-stone-600">{setting.description}</p>
-        <TextField
-          label="Value"
-          type={setting.kind === "text" ? "text" : "number"}
-          step={setting.kind === "number" ? "any" : undefined}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-        />
+        {setting.kind === "longtext" ? (
+          <TextAreaField
+            label="Value"
+            required
+            rows={20}
+            spellCheck={false}
+            className="font-mono leading-6"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        ) : setting.kind === "boolean" ? (
+          <SelectField label="Value" value={value} onChange={(e) => setValue(e.target.value)}>
+            <option value="true">On</option>
+            <option value="false">Off</option>
+          </SelectField>
+        ) : (
+          <TextField
+            label="Value"
+            type={setting.kind === "text" ? "text" : "number"}
+            step={setting.kind === "number" ? "any" : undefined}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        )}
         <p className="text-sm text-stone-500">
-          Default: <span className="font-mono">{setting.defaultValue === "" ? "(empty)" : setting.defaultValue}</span>
+          Default:{" "}
+          <span className="font-mono">
+            {setting.kind === "longtext"
+              ? "the original text"
+              : setting.kind === "boolean"
+                ? setting.defaultValue === "true" ? "On" : "Off"
+                : setting.defaultValue === "" ? "(empty)" : setting.defaultValue}
+          </span>
           {value !== setting.defaultValue && (
             <button type="button" className="ml-3 font-semibold text-brand-600" onClick={() => setValue(setting.defaultValue)}>
               Use default
@@ -55,7 +79,7 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
         {isEmbeddingModel && (
           <Alert
             variant="warning"
-            message="Changing the embedding model makes the stored knowledge unsearchable until you upload the knowledge files again and sync the doctor profiles on the Knowledge page. Vectors made by different models cannot be compared."
+            message="Changing the embedding model makes the stored knowledge unsearchable until you upload the knowledge files again and click Sync settings on the Knowledge page. Vectors made by different models cannot be compared."
           />
         )}
 

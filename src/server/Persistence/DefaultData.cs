@@ -71,15 +71,6 @@ public static class DefaultData
             new(Guid.Empty, "Allergy skin test", 120),
             new(Guid.Empty, "Wart or skin tag removal", 75),
             new(Guid.Empty, "Adult flu shot (September to March)", 25)
-        ],
-        [
-            new(Guid.Empty, "Blue Cross Blue Shield", null),
-            new(Guid.Empty, "Aetna", null),
-            new(Guid.Empty, "Cigna", null),
-            new(Guid.Empty, "UnitedHealthcare", null),
-            new(Guid.Empty, "Humana", null),
-            new(Guid.Empty, "Medicare", null),
-            new(Guid.Empty, "Medicaid", "Children only")
         ]);
 
     // Hospital-wide days off in a year.

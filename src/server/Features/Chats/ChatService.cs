@@ -14,7 +14,7 @@ public sealed class ChatService : IChatService
     public IReadOnlyList<ChatMessage> GetMessages(Guid patientId) =>
         _chatsRepo.GetMessages(patientId);
 
-    public ChatMessage Send(SendMessageRequest request)
+    public ChatMessage Save(SaveMessageRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Text))
         {

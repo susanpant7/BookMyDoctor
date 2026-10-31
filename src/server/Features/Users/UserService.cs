@@ -8,8 +8,6 @@ namespace BookMyDoctor.Features.Users;
 
 public sealed class UserService : IUserService
 {
-    private const int MinPasswordLength = 6;
-
     private readonly IUsersRepo _usersRepo;
     private readonly IPasswordHasher<UserAccount> _passwordHasher;
 
@@ -99,11 +97,12 @@ public sealed class UserService : IUserService
         return (name, email);
     }
 
+    // Demo app: any password is fine (e.g. "user"), it just can't be empty.
     private static void CheckPassword(string? password)
     {
-        if (password is null || password.Length < MinPasswordLength)
+        if (string.IsNullOrEmpty(password))
         {
-            throw new ArgumentException($"The password must be at least {MinPasswordLength} characters.");
+            throw new ArgumentException("A password is required.");
         }
     }
 

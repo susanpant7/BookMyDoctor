@@ -78,8 +78,12 @@ public sealed class GetAvailableSlotsTool : IAssistantTool
 
     // Lets book_appointment fill in the doctor and day when the patient just picks one of these times,
     // and lets the chat show them as buttons.
-    private void Remember(ToolContext context, Doctor doctor, DateOnly date, IReadOnlyList<TimeSlot> slots) =>
-        _drafts.SetOffer(context.PatientId, new SlotOffer(doctor.Id, doctor.Name, date, slots, context.MessageId));
+    private void Remember(ToolContext context, Doctor doctor, DateOnly date, IReadOnlyList<TimeSlot> slots)
+    {
+        var offer = new SlotOffer(doctor.Id, doctor.Name, date, slots);
+        context.SlotsShown = offer;                      // returned with the reply, so the chat shows the buttons
+        _drafts.SetOffer(context.PatientId, offer);      // kept, so "11:30 please" knows which doctor and day
+    }
 
     private static Func<TimeSlot, bool> PeriodFilter(string? timeOfDay)
     {

@@ -22,11 +22,12 @@ export function TextField({ label, ...props }: { label: string } & InputHTMLAttr
 
 export function TextAreaField({
   label,
+  className,
   ...props
 }: { label: string } & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <FieldLabel label={label}>
-      <textarea className={controlClass} {...props} />
+      <textarea className={className ? `${controlClass} ${className}` : controlClass} {...props} />
     </FieldLabel>
   )
 }

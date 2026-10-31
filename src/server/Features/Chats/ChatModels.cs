@@ -18,7 +18,7 @@ public sealed record SlotOption(DateTimeOffset StartsAt, string Label);
 // Sent when the patient confirms a time from the buttons; the patient comes from the token.
 public sealed record BookSlotRequest(Guid DoctorId, DateTimeOffset StartsAt, string Reason);
 
-public sealed record SendMessageRequest(
+public sealed record SaveMessageRequest(
     Guid PatientId,
     string Sender,
     string Text);

@@ -1,18 +1,20 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { dayNames, shortTime, weekOrder } from "@/features/doctors/doctorsApi";
-import { getHospital, saveHospital, type HospitalDetails } from "@/features/settings/settingsApi";
+import { getHospital, restoreDefaultHospital, saveHospital, type HospitalDetails } from "@/features/settings/settingsApi";
 import { errorMessage } from "@/shared/api/errorMessage";
 import Alert from "@/shared/components/Alert";
 import Button from "@/shared/components/Button";
+import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import { TextAreaField, TextField } from "@/shared/components/Field";
 
-// What patients and the assistant are told about the hospital itself: contact details, opening hours, prices and insurance.
+// What patients and the assistant are told about the hospital itself: contact details, opening hours and test prices. Saving also updates hospital-settings.md in the assistant's knowledge.
 export default function HospitalSettings() {
   const [details, setDetails] = useState<HospitalDetails | null>(null);
   const [facilities, setFacilities] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmingRestore, setConfirmingRestore] = useState(false);
 
   function show(loaded: HospitalDetails) {
     setDetails({
@@ -32,7 +34,7 @@ export default function HospitalSettings() {
     return error ? <Alert message={error} /> : <p className="mt-8 text-center text-sm text-stone-500">Loading...</p>;
   }
 
-  const { info, hours, servicePrices, insurancePlans } = details;
+  const { info, hours, servicePrices } = details;
   const change = (changes: Partial<HospitalDetails>) => setDetails({ ...details, ...changes });
   const changeInfo = (changes: Partial<typeof info>) => change({ info: { ...info, ...changes } });
   const hoursFor = (day: number) => hours.find((h) => h.day === day);
@@ -66,6 +68,21 @@ export default function HospitalSettings() {
       setError(errorMessage(err, "Could not save the hospital details. Please try again."));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function restoreDefaults() {
+    setError("");
+    setNotice("");
+    setSaving(true);
+    try {
+      show(await restoreDefaultHospital());
+      setNotice("The default hospital details are restored.");
+    } catch (err) {
+      setError(errorMessage(err, "Could not restore the default hospital details. Please try again."));
+    } finally {
+      setSaving(false);
+      setConfirmingRestore(false);
     }
   }
 
@@ -154,45 +171,29 @@ export default function HospitalSettings() {
         </Button>
       </Section>
 
-      <Section title="Insurance plans accepted">
-        <ul className="space-y-2">
-          {insurancePlans.map((plan, index) => (
-            <li key={index} className="grid grid-cols-[1fr_1fr_auto] items-center gap-3">
-              <input
-                required
-                aria-label="Plan name"
-                value={plan.name}
-                onChange={(e) => change({ insurancePlans: insurancePlans.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)) })}
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
-              />
-              <input
-                placeholder="Restrictions (optional)"
-                aria-label="Restrictions"
-                value={plan.restrictions ?? ""}
-                onChange={(e) =>
-                  change({ insurancePlans: insurancePlans.map((p, i) => (i === index ? { ...p, restrictions: e.target.value || null } : p)) })
-                }
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
-              />
-              <Button variant="dangerGhost" size="sm" onClick={() => change({ insurancePlans: insurancePlans.filter((_, i) => i !== index) })}>
-                Remove
-              </Button>
-            </li>
-          ))}
-        </ul>
-        <Button variant="secondary" size="sm" onClick={() => change({ insurancePlans: [...insurancePlans, { id: "", name: "", restrictions: null }] })}>
-          Add plan
-        </Button>
-      </Section>
-
       {notice && <Alert variant="success" message={notice} />}
       {error && <Alert message={error} />}
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        <Button variant="secondary" disabled={saving} onClick={() => setConfirmingRestore(true)}>
+          Restore defaults
+        </Button>
         <Button type="submit" disabled={saving}>
           {saving ? "Saving..." : "Save hospital details"}
         </Button>
       </div>
+
+      {confirmingRestore && (
+        <ConfirmDialog
+          title="Restore default hospital details"
+          message="Replace the contact details, opening hours, parking, facilities and test prices with the defaults? Your changes on this page will be lost, and the assistant will use the defaults from the next question."
+          confirmLabel="Restore defaults"
+          busy={saving}
+          busyLabel="Restoring..."
+          onConfirm={restoreDefaults}
+          onCancel={() => setConfirmingRestore(false)}
+        />
+      )}
     </form>
   );
 }

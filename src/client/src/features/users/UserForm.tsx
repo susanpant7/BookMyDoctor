@@ -44,9 +44,8 @@ export default function UserForm({ patient, onSaved, onCancel }: UserFormProps) 
           label={isEdit ? "New password" : "Password"}
           type="password"
           required={!isEdit}
-          minLength={6}
           autoComplete="new-password"
-          placeholder={isEdit ? "Leave blank to keep" : "At least 6 characters"}
+          placeholder={isEdit ? "Leave blank to keep" : "Any password, e.g. user"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

@@ -62,17 +62,42 @@ public sealed class KnowledgeService : IKnowledgeService
 
     public int DeleteSource(string source)
     {
-        if (source == KnowledgeSources.DoctorsSource)
+        if (KnowledgeSources.GeneratedSources.Contains(source))
         {
-            throw new ArgumentException("Doctor profiles follow the doctors. Edit or delete the doctor instead.");
+            throw new ArgumentException($"{source} follows the doctors and hospital settings. Change those instead.");
         }
         return _store.RemoveSource(source);
     }
 
-    public async Task SyncDoctorProfilesAsync(CancellationToken cancellationToken = default)
+    public async Task SyncDoctorSettingsAsync(CancellationToken cancellationToken = default)
     {
-        var wanted = _sources.GetDoctorProfiles();
-        var stored = _store.GetHashes(KnowledgeSources.DoctorsSource);
+        await SyncGeneratedAsync(KnowledgeSources.DoctorSettingsSource, _sources.GetDoctorSettings(), cancellationToken);
+
+        // Profiles from before doctor-settings.md existed.
+        if (_store.RemoveSource(KnowledgeSources.LegacyDoctorsSource) is > 0 and var legacy)
+        {
+            _logger.LogInformation("Removed {Count} old doctor profiles (now in {Source})", legacy, KnowledgeSources.DoctorSettingsSource);
+        }
+    }
+
+    public Task SyncSpecialtySettingsAsync(CancellationToken cancellationToken = default) =>
+        SyncGeneratedAsync(KnowledgeSources.SpecialtySettingsSource, _sources.GetSpecialtySettings(), cancellationToken);
+
+    public Task SyncHospitalSettingsAsync(CancellationToken cancellationToken = default) =>
+        SyncGeneratedAsync(KnowledgeSources.HospitalSettingsSource, _sources.GetHospitalSettings(), cancellationToken);
+
+    public async Task SyncSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        await SyncDoctorSettingsAsync(cancellationToken);
+        await SyncSpecialtySettingsAsync(cancellationToken);
+        await SyncHospitalSettingsAsync(cancellationToken);
+    }
+
+    // Makes a generated file's sections match `wanted`: embeds only new or changed sections (by content hash)
+    // and removes sections that no longer exist, e.g. a deleted doctor.
+    private async Task SyncGeneratedAsync(string source, IReadOnlyList<KnowledgeDocument> wanted, CancellationToken cancellationToken)
+    {
+        var stored = _store.GetHashes(source);
 
         var changed = wanted.Where(document => !stored.TryGetValue(document.Id, out var hash) || hash != document.Hash).ToList();
         if (changed.Count > 0)
@@ -88,7 +113,7 @@ public sealed class KnowledgeService : IKnowledgeService
             _store.Remove(removed);
         }
 
-        _logger.LogInformation("Doctor profiles synced: {Changed} embedded, {Removed} removed", changed.Count, removed.Count);
+        _logger.LogInformation("{Source} synced: {Changed} embedded, {Removed} removed", source, changed.Count, removed.Count);
     }
 
     public async Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(string query, int top, CancellationToken cancellationToken = default)
@@ -109,6 +134,10 @@ public sealed class KnowledgeService : IKnowledgeService
         if (file.FileName.Contains('#'))
         {
             return (null, "This file name is not allowed. Rename the file.");
+        }
+        if (KnowledgeSources.GeneratedSources.Contains(file.FileName))
+        {
+            return (null, $"{file.FileName} is generated from the doctors and hospital settings. Rename your file.");
         }
         if (alreadyInUpload.Contains(file.FileName))
         {

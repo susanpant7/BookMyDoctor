@@ -4,6 +4,11 @@ namespace BookMyDoctor.Features.Settings;
 
 // The settings the chat assistant, the embedder and the retriever read, parsed from the Settings table.
 public sealed record AiSettings(
+    string SystemPrompt,
+    bool FactCheck,
+    int MaxToolRounds,
+    string UncheckedReply,
+    string UnavailableReply,
     string ChatModel,
     double Temperature,
     int ContextSize,
@@ -14,10 +19,16 @@ public sealed record AiSettings(
     string EmbeddingDocumentPrefix,
     int RetrievalTop,
     double RetrievalMinScore,
-    double RetrievalMaxScoreGap)
+    double RetrievalMaxScoreGap,
+    string KeepAlive)
 {
     // A value that is missing or cannot be read falls back to its default.
     public static AiSettings From(IReadOnlyDictionary<string, string> values) => new(
+        Text(values, SettingKeys.AssistantSystemPrompt),
+        Text(values, SettingKeys.AssistantFactCheck).Equals("true", StringComparison.OrdinalIgnoreCase),
+        (int)Number(values, SettingKeys.AssistantMaxToolRounds),
+        Text(values, SettingKeys.AssistantUncheckedReply),
+        Text(values, SettingKeys.AssistantUnavailableReply),
         Text(values, SettingKeys.ChatModel),
         Number(values, SettingKeys.ChatTemperature),
         (int)Number(values, SettingKeys.ChatContextSize),
@@ -28,7 +39,8 @@ public sealed record AiSettings(
         Text(values, SettingKeys.EmbeddingDocumentPrefix),
         (int)Number(values, SettingKeys.RetrievalTopK),
         Number(values, SettingKeys.RetrievalMinScore),
-        Number(values, SettingKeys.RetrievalMaxScoreGap));
+        Number(values, SettingKeys.RetrievalMaxScoreGap),
+        Text(values, SettingKeys.ChatKeepAlive));
 
     public static AiSettings Defaults { get; } = From(new Dictionary<string, string>());
 

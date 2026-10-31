@@ -18,11 +18,21 @@ public interface IKnowledgeService
     // Uploads the starting files shipped with the app.
     Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default);
 
-    // Returns how many sections were deleted. Throws ArgumentException for the doctor profiles, which follow the doctors.
+    // Returns how many sections were deleted. Throws ArgumentException for the generated files
+    // (doctor-settings.md, specialty-settings.md, hospital-settings.md), which follow the data they are built from.
     int DeleteSource(string source);
 
-    // Makes the doctor profiles match the doctors, embedding only the ones that changed.
-    Task SyncDoctorProfilesAsync(CancellationToken cancellationToken = default);
+    // Makes doctor-settings.md match the doctors, embedding only the sections that changed.
+    Task SyncDoctorSettingsAsync(CancellationToken cancellationToken = default);
+
+    // Makes specialty-settings.md match the specialties and their doctors, embedding only the sections that changed.
+    Task SyncSpecialtySettingsAsync(CancellationToken cancellationToken = default);
+
+    // Makes hospital-settings.md match the hospital settings, embedding only the sections that changed.
+    Task SyncHospitalSettingsAsync(CancellationToken cancellationToken = default);
+
+    // All of the above.
+    Task SyncSettingsAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(string query, int top, CancellationToken cancellationToken = default);
 }

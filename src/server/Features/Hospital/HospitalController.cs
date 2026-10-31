@@ -1,4 +1,5 @@
 using BookMyDoctor.Features.Auth;
+using BookMyDoctor.Features.Knowledge;
 using BookMyDoctor.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,12 +11,14 @@ namespace BookMyDoctor.Features.Hospital;
 public sealed class HospitalController : ControllerBase
 {
     private readonly IHospitalRepo _hospitalRepo;
-    private readonly IInsurancePlansRepo _insurancePlansRepo;
+    private readonly IKnowledgeService _knowledgeService;
+    private readonly ILogger<HospitalController> _logger;
 
-    public HospitalController(IHospitalRepo hospitalRepo, IInsurancePlansRepo insurancePlansRepo)
+    public HospitalController(IHospitalRepo hospitalRepo, IKnowledgeService knowledgeService, ILogger<HospitalController> logger)
     {
         _hospitalRepo = hospitalRepo;
-        _insurancePlansRepo = insurancePlansRepo;
+        _knowledgeService = knowledgeService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -23,7 +26,7 @@ public sealed class HospitalController : ControllerBase
 
     [HttpPut]
     [Authorize(Roles = Roles.Admin)]
-    public ActionResult<HospitalDetails> Update(HospitalDetails details)
+    public async Task<ActionResult<HospitalDetails>> Update(HospitalDetails details, CancellationToken cancellationToken)
     {
         var info = details.Info;
         if (string.IsNullOrWhiteSpace(info.Name) || info.Name.Length > 100)
@@ -34,19 +37,42 @@ public sealed class HospitalController : ControllerBase
         {
             return BadRequest(new { message = "Each day can appear once, and must close after it opens." });
         }
-        if (details.ServicePrices.Any(price => string.IsNullOrWhiteSpace(price.Name) || price.Price < 0) ||
-            details.InsurancePlans.Any(plan => string.IsNullOrWhiteSpace(plan.Name)))
+        if (details.ServicePrices.Any(price => string.IsNullOrWhiteSpace(price.Name) || price.Price < 0))
         {
-            return BadRequest(new { message = "Every test and insurance plan needs a name, and prices cannot be negative." });
+            return BadRequest(new { message = "Every test needs a name, and prices cannot be negative." });
         }
 
         _hospitalRepo.Save(details with
         {
             Info = info with { Facilities = [.. info.Facilities.Select(facility => facility.Trim()).Where(facility => facility.Length > 0)] }
         });
+        await SyncKnowledgeAsync(cancellationToken);
         return Ok(Load());
     }
 
-    private HospitalDetails Load() =>
-        new(_hospitalRepo.GetInfo(), _hospitalRepo.GetHours(), _hospitalRepo.GetServicePrices(), _insurancePlansRepo.GetAll());
+    // Replaces the hospital details with the starting ones (contact details, opening hours, test prices).
+    [HttpPost("restore-defaults")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<ActionResult<HospitalDetails>> RestoreDefaults(CancellationToken cancellationToken)
+    {
+        _hospitalRepo.Save(DefaultData.Hospital);
+        await SyncKnowledgeAsync(cancellationToken);
+        return Ok(Load());
+    }
+
+    // The settings are saved either way. If Ollama is down, hospital-settings.md catches up via "Sync settings" on the
+    // Knowledge page or at the next start.
+    private async Task SyncKnowledgeAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _knowledgeService.SyncHospitalSettingsAsync(cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning("hospital-settings.md was not updated ({Error}). Is Ollama running?", ex.Message);
+        }
+    }
+
+    private HospitalDetails Load() => new(_hospitalRepo.GetInfo(), _hospitalRepo.GetHours(), _hospitalRepo.GetServicePrices());
 }

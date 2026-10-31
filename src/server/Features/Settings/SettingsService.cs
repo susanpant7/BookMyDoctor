@@ -33,6 +33,15 @@ public sealed class SettingsService : ISettingsService
         return GetAll().First(setting => setting.Key == key);
     }
 
+    public IReadOnlyList<Setting> RestoreDefaults()
+    {
+        foreach (var definition in SettingDefaults.All)
+        {
+            _settingsRepo.SetValue(definition.Key, definition.Value);
+        }
+        return GetAll();
+    }
+
     private static void Validate(SettingDefinition definition, string value)
     {
         switch (definition.Kind)
@@ -43,6 +52,18 @@ public sealed class SettingsService : ISettingsService
                 if (value.Length == 0 || value.Length > 200)
                 {
                     throw new ArgumentException($"{definition.Label} is required and can be up to 200 characters.");
+                }
+                break;
+            case SettingKind.LongText:
+                if (value.Length == 0 || value.Length > 8000)
+                {
+                    throw new ArgumentException($"{definition.Label} is required and can be up to 8000 characters.");
+                }
+                break;
+            case SettingKind.Boolean:
+                if (value is not ("true" or "false"))
+                {
+                    throw new ArgumentException($"{definition.Label} must be true or false.");
                 }
                 break;
             case SettingKind.Integer:

@@ -22,4 +22,7 @@ public sealed class SettingsController : ControllerBase
     [HttpPut("{key}")]
     public ActionResult<Setting> Update(string key, UpdateSettingRequest request) =>
         Ok(_settingsService.Update(key, request.Value));
+
+    [HttpPost("restore-defaults")]
+    public ActionResult<IReadOnlyList<Setting>> RestoreDefaults() => Ok(_settingsService.RestoreDefaults());
 }

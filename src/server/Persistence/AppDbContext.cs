@@ -16,7 +16,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<HospitalInfoEntity> HospitalInfo => Set<HospitalInfoEntity>();
     public DbSet<HospitalHoursEntity> HospitalHours => Set<HospitalHoursEntity>();
     public DbSet<ServicePriceEntity> ServicePrices => Set<ServicePriceEntity>();
-    public DbSet<InsurancePlanEntity> InsurancePlans => Set<InsurancePlanEntity>();
     public DbSet<KnowledgeChunkEntity> KnowledgeChunks => Set<KnowledgeChunkEntity>();
     public DbSet<SettingEntity> Settings => Set<SettingEntity>();
 

@@ -197,27 +197,6 @@ namespace BookMyDoctor.Persistence.Migrations
                     b.ToTable("HospitalInfo");
                 });
 
-            modelBuilder.Entity("BookMyDoctor.Persistence.Entities.InsurancePlanEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Restrictions")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("InsurancePlans");
-                });
-
             modelBuilder.Entity("BookMyDoctor.Persistence.Entities.KnowledgeChunkEntity", b =>
                 {
                     b.Property<string>("Id")

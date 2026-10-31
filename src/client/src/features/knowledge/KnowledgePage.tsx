@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   deleteKnowledgeSource,
-  DOCTORS_SOURCE,
+  GENERATED_SOURCES,
   getChunks,
   loadDefaultKnowledge,
   searchKnowledge,
-  syncDoctorProfiles,
+  syncSettings,
   uploadKnowledge,
   type KnowledgeChunk,
   type KnowledgeSearchResult,
@@ -103,11 +103,11 @@ export default function KnowledgePage() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <PageHeader
         title="Knowledge"
-        description="The assistant answers hospital questions from this knowledge base: the Markdown files uploaded here, and a profile for every doctor."
+        description="The assistant answers hospital questions from this knowledge base: the Markdown files uploaded here, plus doctor-settings.md, specialty-settings.md and hospital-settings.md, which the server builds from the doctors, specialties and hospital settings."
         action={
           <div className="flex gap-3">
-            <Button variant="secondary" disabled={busy} onClick={() => run(syncDoctorProfiles, "Doctor profiles are up to date.")}>
-              Sync doctor profiles
+            <Button variant="secondary" disabled={busy} onClick={() => run(syncSettings, "doctor-settings.md, specialty-settings.md and hospital-settings.md are up to date.")}>
+              Sync settings
             </Button>
             <Button variant="secondary" disabled={busy} onClick={() => run(loadDefaultKnowledge, "")}>
               Load default files
@@ -161,7 +161,7 @@ export default function KnowledgePage() {
         ) : (
           <>
             <Tabs tabs={tabs} active={selectedTab} onChange={setActiveTab} />
-            {selectedTab !== ALL && selectedTab !== DOCTORS_SOURCE && (
+            {selectedTab !== ALL && !GENERATED_SOURCES.includes(selectedTab) && (
               <div className="flex justify-end border-b border-stone-100 px-6 py-2">
                 <Button variant="dangerGhost" size="sm" onClick={() => setDeleting(selectedTab)}>
                   Delete {selectedTab}

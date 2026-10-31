@@ -12,7 +12,8 @@ type LoadDefaultsFormProps = {
 };
 
 export default function LoadDefaultsForm({ onLoaded, onCancel }: LoadDefaultsFormProps) {
-  const [password, setPassword] = useState("");
+  // Demo patients: a simple password is fine.
+  const [password, setPassword] = useState("user");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,15 +34,14 @@ export default function LoadDefaultsForm({ onLoaded, onCancel }: LoadDefaultsFor
       <form onSubmit={handleSubmit} className="space-y-5">
         <p className="text-sm leading-6 text-stone-600">
           This adds two demo patients (Hari Bahadur, hb@gmail.com, and Madan Bahadur, mb@gmail.com). A patient that already
-          exists is skipped. Enter the password both of them will sign in with.
+          exists is skipped. Both of them sign in with this password; any password works, e.g. user.
         </p>
 
         <TextField
           label="Password for both patients"
-          type="password"
+          type="text"
           required
-          minLength={6}
-          autoComplete="new-password"
+          autoComplete="off"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -52,7 +52,7 @@ export default function LoadDefaultsForm({ onLoaded, onCancel }: LoadDefaultsFor
           <Button variant="secondary" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting || password.length < 6}>
+          <Button type="submit" disabled={submitting || password.length === 0}>
             {submitting ? "Loading..." : "Load patients"}
           </Button>
         </div>

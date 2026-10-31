@@ -5,20 +5,20 @@ using BookMyDoctor.Features.Chats.Tools;
 using BookMyDoctor.Features.Knowledge;
 using BookMyDoctor.Features.Settings;
 using BookMyDoctor.Persistence;
-using Microsoft.Extensions.Options;
 
 namespace BookMyDoctor.Features.Chats;
 
 public sealed class OllamaChatAssistant : IChatAssistant
 {
-    // Stops a confused model from calling tools forever.
-    internal const int MaxToolRounds = 5;
+    // Sent when the model keeps claiming a booking that didn't happen.
+    internal const string NotBookedReply =
+        "Sorry, your appointment is not booked yet. Please pick a time from the buttons and confirm it, or ask me for free times again.";
 
     private readonly HttpClient _http;
-    private readonly OllamaOptions _options;
     private readonly IAiSettingsProvider _settings;
     private readonly IChatService _chatService;
     private readonly IUsersRepo _usersRepo;
+    private readonly IHospitalRepo _hospitalRepo;
     private readonly IKnowledgeRetriever _retriever;
     private readonly IReadOnlyDictionary<string, IAssistantTool> _tools;
     private readonly ToolTranscripts _transcripts;
@@ -28,10 +28,10 @@ public sealed class OllamaChatAssistant : IChatAssistant
 
     public OllamaChatAssistant(
         HttpClient http,
-        IOptions<OllamaOptions> options,
         IAiSettingsProvider settings,
         IChatService chatService,
         IUsersRepo usersRepo,
+        IHospitalRepo hospitalRepo,
         IKnowledgeRetriever retriever,
         IEnumerable<IAssistantTool> tools,
         ToolTranscripts transcripts,
@@ -40,10 +40,10 @@ public sealed class OllamaChatAssistant : IChatAssistant
         ILogger<OllamaChatAssistant> logger)
     {
         _http = http;
-        _options = options.Value;
         _settings = settings;
         _chatService = chatService;
         _usersRepo = usersRepo;
+        _hospitalRepo = hospitalRepo;
         _retriever = retriever;
         _tools = tools.ToDictionary(tool => tool.Name);
         _transcripts = transcripts;
@@ -52,18 +52,21 @@ public sealed class OllamaChatAssistant : IChatAssistant
         _logger = logger;
     }
 
-    public async Task<string> ReplyAsync(ChatMessage patientMessage, IReplyDraft? draft = null)
+    public async Task<AssistantReply> ReplyAsync(ChatMessage patientMessage, IReplyDraft? draft = null)
     {
+        // Read once per message, so a change on the Settings page applies from the next message.
+        var settings = _settings.Get();
         var name = _usersRepo.GetById(patientMessage.PatientId)?.Name ?? "there";
         // The patient's new message was already saved by the hub, so it's the last one here.
-        var history = RecentHistory(_chatService.GetMessages(patientMessage.PatientId), _settings.Get().MaxHistoryMessages);
+        var history = RecentHistory(_chatService.GetMessages(patientMessage.PatientId), settings.MaxHistoryMessages);
 
         // 1. Retrieve: find the knowledge chunks most related to what the patient just asked.
         var knowledge = await RetrieveAsync(patientMessage.Text);
 
         // 2. Instructions for the model. Kept identical from turn to turn so Ollama can reuse its cached work
         //    for the start of the prompt instead of re-reading it on every call.
-        var messages = new List<OllamaMessage> { new("system", SystemPrompt(name, HospitalTime.Today(_time))) };
+        var systemPrompt = SystemPrompt(settings.SystemPrompt, name, HospitalTime.Today(_time), _hospitalRepo.GetInfo().Phone);
+        var messages = new List<OllamaMessage> { new("system", systemPrompt) };
 
         // 3. Recent conversation, so the model remembers context. Earlier turns get their tool calls and results
         //    back, so the facts looked up then are still available. The retrieved knowledge is attached to the
@@ -83,12 +86,14 @@ public sealed class OllamaChatAssistant : IChatAssistant
         // 4. Generate, running any tools the model asks for, until it answers with text.
         var context = new ToolContext(patientMessage.PatientId, patientMessage.Id);
         var toolMessages = new List<OllamaMessage>();
-        var reply = await GenerateAsync(messages, context, toolMessages, draft);
+        var reply = await GenerateAsync(messages, context, toolMessages, draft, settings.MaxToolRounds);
 
-        // 5. Check the reply for made-up doctors, prices and times. If there are any, tell the model and let it
-        //    try once more. What the model was given (tool results, knowledge, the conversation) counts as known.
+        // 5. Check the reply for made-up doctors, prices and times (unless turned off in Settings). If there are any,
+        //    tell the model and let it try once more. What the model was given (tool results, knowledge, the
+        //    conversation) counts as known.
         var seenTexts = messages.Select(message => message.Content).ToList();
-        var problems = reply is null ? [] : _factChecker.FindProblems(reply, seenTexts);
+        IEnumerable<string> TurnToolResults() => toolMessages.Where(message => message.Role == "tool").Select(message => message.Content);
+        var problems = reply is null || !settings.FactCheck ? [] : _factChecker.FindProblems(reply, seenTexts, TurnToolResults());
         if (problems.Count > 0)
         {
             _logger.LogWarning("Reply failed the fact check, retrying: {Problems}", string.Join(" ", problems));
@@ -100,32 +105,36 @@ public sealed class OllamaChatAssistant : IChatAssistant
             messages.Add(new("assistant", reply!));
             messages.Add(new("user", FactCheckCorrection(problems)));
             var toolMessagesBeforeRetry = toolMessages.Count;
-            reply = await GenerateAsync(messages, context, toolMessages, draft);
+            reply = await GenerateAsync(messages, context, toolMessages, draft, settings.MaxToolRounds);
 
             // The rejected draft and the correction quote the made-up facts, so they don't count as known;
             // only what was known before plus any tools called during the retry.
             seenTexts.AddRange(toolMessages.Skip(toolMessagesBeforeRetry).Select(message => message.Content));
-            if (reply is not null && _factChecker.FindProblems(reply, seenTexts) is { Count: > 0 } stillWrong)
+            if (reply is not null && _factChecker.FindProblems(reply, seenTexts, TurnToolResults()) is { Count: > 0 } stillWrong)
             {
                 _logger.LogWarning("Reply failed the fact check again; using a safe reply instead: {Problems}", string.Join(" ", stillWrong));
-                reply = "Sorry, I couldn't check that properly. You can see every doctor, their fees and their details on the Doctors page.";
+                // Never leave the patient believing they are booked when they aren't.
+                reply = stillWrong.Any(problem => problem.StartsWith(ReplyFactChecker.FalseBookingProblem, StringComparison.Ordinal))
+                    ? NotBookedReply
+                    : settings.UncheckedReply;
             }
         }
 
-        _transcripts.Save(patientMessage.PatientId, patientMessage.Id, toolMessages, _settings.Get().ToolHistoryTurns);
-        return reply ?? "Sorry, I'm having trouble looking that up right now. Please try again.";
+        _transcripts.Save(patientMessage.PatientId, patientMessage.Id, toolMessages, settings.ToolHistoryTurns);
+        return new AssistantReply(reply ?? settings.UnavailableReply, context.SlotsShown);
     }
 
     // Calls the model, running any tools it asks for, until it answers with text. Tool calls and results are added
-    // to `messages` (for the model) and to `toolMessages` (to remember for later turns). Null if it never answers.
+    // to `messages` (for the model) and to `toolMessages` (to remember for later turns). Null if it is still calling
+    // tools after `maxToolRounds`, which stops a confused model from looping.
     private async Task<string?> GenerateAsync(
-        List<OllamaMessage> messages, ToolContext context, List<OllamaMessage> toolMessages, IReplyDraft? draft)
+        List<OllamaMessage> messages, ToolContext context, List<OllamaMessage> toolMessages, IReplyDraft? draft, int maxToolRounds)
     {
         var toolDefinitions = _tools.Values
             .Select(tool => new OllamaTool("function", new OllamaFunction(tool.Name, tool.Description, tool.Parameters)))
             .ToList();
 
-        for (var round = 0; round < MaxToolRounds; round++)
+        for (var round = 0; round < maxToolRounds; round++)
         {
             var reply = await ChatAsync(messages, toolDefinitions, draft);
             if (reply.ToolCalls is not { Count: > 0 })
@@ -144,7 +153,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
             }
         }
 
-        _logger.LogWarning("Model was still calling tools after {Rounds} rounds", MaxToolRounds);
+        _logger.LogWarning("Model was still calling tools after {Rounds} rounds", maxToolRounds);
         return null;
     }
 
@@ -162,7 +171,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
         var settings = _settings.Get();
         var request = new OllamaChatRequest(
             settings.ChatModel, messages, Stream: true, tools.Count == 0 ? null : tools,
-            new OllamaRequestOptions(settings.ContextSize, settings.Temperature), _options.KeepAlive);
+            new OllamaRequestOptions(settings.ContextSize, settings.Temperature), settings.KeepAlive);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/chat") { Content = JsonContent.Create(request) };
         // ResponseHeadersRead: start reading as soon as Ollama starts sending, instead of waiting for the whole reply.
         using var response = await _http.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
@@ -267,32 +276,17 @@ public sealed class OllamaChatAssistant : IChatAssistant
         return history.Skip(start).ToList();
     }
 
-    internal static string SystemPrompt(string patientName, DateOnly today) => $"""
-        You are Vaidya Mitra, a friendly assistant for BookMyDoctor Hospital.
-        You are talking to a patient named {patientName}. Help them find the right specialty and doctor, and answer questions about the hospital.
-        Today is {today:dddd, d MMMM yyyy} ({today:yyyy-MM-dd}).
-        Use this calendar for dates; don't work them out yourself:
-        {string.Join("\n", Enumerable.Range(1, 7).Select(offset => today.AddDays(offset)).Select((date, i) =>
-            $"- {(i == 0 ? "tomorrow, " : "")}{date:dddd d MMMM} = {date:yyyy-MM-dd}"))}
-        Do not give medical diagnoses or prescribe medicine.
-
-        Rules:
-        - For doctors, fees, languages, appointment times, the patient's own appointments and other hospital data, use your tools
-          to look up the current facts. Never guess them.
-        - Never ask the patient for permission to look something up and never say you will check it; call the tool straight away
-          and answer with what it returns. If a specialty is mentioned (e.g. a cardiologist), look up that specialty's doctor.
-        - When you share free times, write up to four of them in your reply; don't end with an empty list.
-        - For policies and medical guidance, use the HOSPITAL INFORMATION attached to the patient's latest message.
-        - Never invent doctors, policies, prices or times. If you can't find the answer, say so and suggest contacting the hospital.
-        - If the patient describes an emergency warning sign, tell them to call 911 first.
-        - Keep replies to two or three short sentences. When offering appointment times, suggest at most four and ask which suits.
-        - When the patient picks one of the times you showed, call book_appointment with that time and their health problem
-          as the reason (don't look up the times again). Then ask the patient to confirm the summary it gives you.
-          When they say yes, call book_appointment with no arguments.
-        - Never say an appointment is booked unless book_appointment replied "Booked", and then give the patient the reference.
-        - Never mention tools, functions or the information block to the patient, and never describe what you are about
-          to look up; just look it up and answer naturally.
-        """;
+    // Fills in the System prompt setting's placeholders. Same output all day, so Ollama can keep reusing its cache.
+    internal static string SystemPrompt(string template, string patientName, DateOnly today, string hospitalPhone)
+    {
+        var calendar = string.Join("\n", Enumerable.Range(1, 7).Select(offset => today.AddDays(offset)).Select((date, i) =>
+            $"- {(i == 0 ? "tomorrow, " : "")}{date:dddd d MMMM} = {date:yyyy-MM-dd}"));
+        return template
+            .Replace("{patient_name}", patientName)
+            .Replace("{today}", $"{today:dddd, d MMMM yyyy} ({today:yyyy-MM-dd})")
+            .Replace("{calendar}", calendar)
+            .Replace("{hospital_phone}", string.IsNullOrWhiteSpace(hospitalPhone) ? "the hospital's phone number" : hospitalPhone);
+    }
 
     // Attaches the retrieved knowledge to the patient's latest message (the "augment" step of RAG).
     internal static string WithKnowledge(string patientText, IReadOnlyList<SearchResult> knowledge)

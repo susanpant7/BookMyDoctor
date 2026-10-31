@@ -1,7 +1,7 @@
 namespace BookMyDoctor.Features.Knowledge;
 
-// Makes the doctor profiles in the vector store match the doctors in the background when the server starts, so the API
-// is usable straight away. Retries if Ollama isn't reachable yet. Knowledge files are uploaded by an admin instead.
+// Makes doctor-settings.md, specialty-settings.md and hospital-settings.md in the vector store match the database in the background when the
+// server starts, so the API is usable straight away. Retries if Ollama isn't reachable yet. Knowledge files are uploaded by an admin instead.
 public sealed class KnowledgeIndexer : BackgroundService
 {
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(5);
@@ -23,12 +23,12 @@ public sealed class KnowledgeIndexer : BackgroundService
         {
             try
             {
-                await _knowledge.SyncDoctorProfilesAsync(stoppingToken);
+                await _knowledge.SyncSettingsAsync(stoppingToken);
                 return;
             }
             catch (Exception ex) when ((ex is HttpRequestException or TaskCanceledException) && !stoppingToken.IsCancellationRequested)
             {
-                _logger.LogWarning("Doctor profile indexing failed ({Error}); retrying in {Delay}s. Is Ollama running?",
+                _logger.LogWarning("Syncing the generated settings files failed ({Error}); retrying in {Delay}s. Is Ollama running?",
                     ex.Message, retryDelay.TotalSeconds);
                 await Task.Delay(retryDelay, stoppingToken);
                 retryDelay = TimeSpan.FromTicks(Math.Min(retryDelay.Ticks * 2, MaxRetryDelay.Ticks));

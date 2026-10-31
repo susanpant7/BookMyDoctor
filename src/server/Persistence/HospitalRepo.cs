@@ -79,15 +79,6 @@ public sealed class HospitalRepo : IHospitalRepo
             SortOrder = i
         }));
 
-        db.InsurancePlans.ExecuteDelete();
-        db.InsurancePlans.AddRange(details.InsurancePlans.Select((plan, i) => new InsurancePlanEntity
-        {
-            Id = plan.Id == Guid.Empty ? Guid.NewGuid() : plan.Id,
-            Name = plan.Name,
-            Restrictions = plan.Restrictions,
-            SortOrder = i
-        }));
-
         db.SaveChanges();
         transaction.Commit();
     }

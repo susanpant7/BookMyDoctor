@@ -23,6 +23,9 @@ export function createChatConnection(getToken: () => string): HubConnection {
     // WebSockets can't send an Authorization header, so SignalR passes this as ?access_token=.
     .withUrl(`${API_URL}/hubs/chat`, { accessTokenFactory: getToken })
     .withAutomaticReconnect()
+    // The server pings every 15 s, but while a local model is busy on all CPU cores a ping can arrive late.
+    // The default (30 s) would then drop the connection in the middle of a reply.
+    .withServerTimeout(120_000)
     .configureLogging(LogLevel.Warning)
     .build();
 }

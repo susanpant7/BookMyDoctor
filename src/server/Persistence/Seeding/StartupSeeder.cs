@@ -1,10 +1,13 @@
+using System.Security.Cryptography;
+using System.Text;
 using BookMyDoctor.Features.Settings;
 using BookMyDoctor.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookMyDoctor.Persistence.Seeding;
 
-// Fills in what the app needs to run, on every start. Rows that exist are never changed, so edits are kept.
+// Fills in what the app needs to run, on every start. Edited rows are never changed; the only exception is a setting
+// still holding a default that a later version replaced (see SettingDefaults.ReplacedDefaultHashes).
 public static class StartupSeeder
 {
     public static async Task SeedAsync(IDbContextFactory<AppDbContext> factory, IHospitalRepo hospitalRepo, TimeProvider time)
@@ -29,6 +32,17 @@ public static class StartupSeeder
             {
                 Key = definition.Key, Label = definition.Label, Description = definition.Description, Value = definition.Value
             }));
+
+        // A value still equal to an old default was never edited, so it moves to the current default.
+        var replaceable = SettingDefaults.ReplacedDefaultHashes.Keys.ToList();
+        foreach (var row in await db.Settings.Where(setting => replaceable.Contains(setting.Key)).ToListAsync())
+        {
+            var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(row.Value)));
+            if (SettingDefaults.ReplacedDefaultHashes[row.Key].Contains(hash))
+            {
+                row.Value = SettingDefaults.Find(row.Key)!.Value;
+            }
+        }
         await db.SaveChangesAsync();
     }
 
