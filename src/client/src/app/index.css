@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* The app's main colour. Use brand-* classes (bg-brand-600, text-brand-700, …) instead of a named palette,
+   so the whole theme can be changed here. Neutrals use the warm stone greys. */
+@theme {
+  --color-brand-50: var(--color-teal-50);
+  --color-brand-100: var(--color-teal-100);
+  --color-brand-200: var(--color-teal-200);
+  --color-brand-300: var(--color-teal-300);
+  --color-brand-400: var(--color-teal-400);
+  --color-brand-500: var(--color-teal-500);
+  --color-brand-600: var(--color-teal-600);
+  --color-brand-700: var(--color-teal-700);
+  --color-brand-800: var(--color-teal-800);
+  --color-brand-900: var(--color-teal-900);
+  --color-brand-950: var(--color-teal-950);
+}
+
 @layer base {
   html {
     font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

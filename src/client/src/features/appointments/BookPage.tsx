@@ -8,14 +8,14 @@ export default function BookPage() {
       <PageHeader title="Book an appointment" description="Tell the assistant what is wrong and it finds a doctor and a time." />
       <Link
         to="/book/chat"
-        className="mt-8 flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
+        className="mt-8 flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
       >
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
           <Bot className="size-6" aria-hidden="true" />
         </span>
         <span>
-          <strong className="block text-slate-900">Don&apos;t know which doctor to book?</strong>
-          <span className="text-sm text-slate-500">Ask your Vaidya Mitra</span>
+          <strong className="block text-stone-900">Don&apos;t know which doctor to book?</strong>
+          <span className="text-sm text-stone-500">Ask your Vaidya Mitra</span>
         </span>
       </Link>
     </main>

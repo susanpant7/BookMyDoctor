@@ -143,15 +143,15 @@ export default function DoctorForm({ doctor, specialties, onSaved, onCancel }: D
 
         <fieldset>
           <div className="flex items-center justify-between">
-            <legend className="text-sm font-medium text-slate-700">Weekly schedule (hospital time)</legend>
+            <legend className="text-sm font-medium text-stone-700">Weekly schedule (hospital time)</legend>
             <Button variant="ghost" size="sm" onClick={() => setSchedule((blocks) => [...blocks, newBlock])}>
               Add hours
             </Button>
           </div>
           {!scheduleLoaded ? (
-            <p className="mt-2 text-sm text-slate-500">Loading...</p>
+            <p className="mt-2 text-sm text-stone-500">Loading...</p>
           ) : schedule.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">No hours yet, so patients cannot book this doctor.</p>
+            <p className="mt-2 text-sm text-stone-500">No hours yet, so patients cannot book this doctor.</p>
           ) : (
             <ul className="mt-2 space-y-2">
               {schedule.map((block, index) => (

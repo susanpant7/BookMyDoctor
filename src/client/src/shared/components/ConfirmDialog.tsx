@@ -25,7 +25,7 @@ export default function ConfirmDialog({
         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
           <TriangleAlert className="size-5" />
         </div>
-        <p className="text-sm leading-6 text-slate-600">{message}</p>
+        <p className="text-sm leading-6 text-stone-600">{message}</p>
       </div>
       <div className="mt-6 flex justify-end gap-3">
         <Button variant="secondary" onClick={onCancel}>

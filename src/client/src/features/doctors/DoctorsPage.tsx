@@ -66,34 +66,34 @@ export default function DoctorsPage() {
       )}
 
       {loading ? (
-        <p className="mt-8 text-center text-sm text-slate-500">Loading doctors...</p>
+        <p className="mt-8 text-center text-sm text-stone-500">Loading doctors...</p>
       ) : doctors.length === 0 && !error ? (
-        <p className="mt-8 text-center text-sm text-slate-500">No doctors found.</p>
+        <p className="mt-8 text-center text-sm text-stone-500">No doctors found.</p>
       ) : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doctor) => (
-            <article key={doctor.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <article key={doctor.id} className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-base font-semibold text-indigo-700">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-base font-semibold text-brand-700">
                   {doctor.name[0]}
                 </span>
                 <div className="min-w-0">
-                  <h2 className="font-semibold text-slate-900">{doctor.name}</h2>
+                  <h2 className="font-semibold text-stone-900">{doctor.name}</h2>
                   <div className="mt-1">
                     <Badge name={doctor.specialty} />
                   </div>
                 </div>
               </div>
-              <p className="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-slate-600">{doctor.bio}</p>
+              <p className="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-stone-600">{doctor.bio}</p>
               <dl className="mt-4 grid grid-cols-2 gap-y-1 text-sm">
-                <dt className="text-slate-500">Experience</dt>
-                <dd className="text-right text-slate-900">{doctor.experienceYears} years</dd>
-                <dt className="text-slate-500">New visit</dt>
-                <dd className="text-right text-slate-900">${doctor.consultationFee}</dd>
-                <dt className="text-slate-500">Follow-up</dt>
-                <dd className="text-right text-slate-900">${doctor.followUpFee}</dd>
-                <dt className="text-slate-500">Speaks</dt>
-                <dd className="text-right text-slate-900">{doctor.languages.join(", ")}</dd>
+                <dt className="text-stone-500">Experience</dt>
+                <dd className="text-right text-stone-900">{doctor.experienceYears} years</dd>
+                <dt className="text-stone-500">New visit</dt>
+                <dd className="text-right text-stone-900">${doctor.consultationFee}</dd>
+                <dt className="text-stone-500">Follow-up</dt>
+                <dd className="text-right text-stone-900">${doctor.followUpFee}</dd>
+                <dt className="text-stone-500">Speaks</dt>
+                <dd className="text-right text-stone-900">{doctor.languages.join(", ")}</dd>
               </dl>
             </article>
           ))}

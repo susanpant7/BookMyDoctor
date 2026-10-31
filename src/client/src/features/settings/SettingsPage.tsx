@@ -30,7 +30,7 @@ export default function SettingsPage() {
         title="Settings"
         description="The hospital details patients see, and how the assistant searches the knowledge and writes its answers."
       />
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
         <Tabs tabs={tabs} active={tab} onChange={setTab} />
       </div>
       <div className="mt-6">{tab === "hospital" ? <HospitalSettings /> : <AiSettingsList />}</div>
@@ -66,21 +66,21 @@ function AiSettingsList() {
     <>
       {error && <Alert message={error} />}
       {loading ? (
-        <p className="mt-8 text-center text-sm text-slate-500">Loading settings...</p>
+        <p className="mt-8 text-center text-sm text-stone-500">Loading settings...</p>
       ) : (
         groups.map((group) => (
           <section key={group} className="mb-8">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{groupTitles[group] ?? group}</h2>
-            <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">{groupTitles[group] ?? group}</h2>
+            <div className="divide-y divide-stone-100 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
               {settings
                 .filter((s) => groupName(s.key) === group)
                 .map((setting) => (
                   <div key={setting.key} className="grid gap-3 px-6 py-5 sm:grid-cols-[1fr_14rem_auto] sm:items-start">
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900">{setting.label}</p>
-                      <p className="mt-1 text-sm text-slate-500">{setting.description}</p>
+                      <p className="font-medium text-stone-900">{setting.label}</p>
+                      <p className="mt-1 text-sm text-stone-500">{setting.description}</p>
                     </div>
-                    <p className="break-words rounded-lg bg-slate-50 px-3 py-2 font-mono text-sm text-slate-700">
+                    <p className="break-words rounded-lg bg-stone-50 px-3 py-2 font-mono text-sm text-stone-700">
                       {setting.value === "" ? "(empty)" : setting.value}
                     </p>
                     <Button variant="ghost" size="sm" onClick={() => setEditing(setting)}>

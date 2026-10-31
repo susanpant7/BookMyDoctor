@@ -31,7 +31,7 @@ export default function LoadDefaultsForm({ onLoaded, onCancel }: LoadDefaultsFor
   return (
     <Modal title="Load demo patients" onClose={onCancel}>
       <form onSubmit={handleSubmit} className="space-y-5">
-        <p className="text-sm leading-6 text-slate-600">
+        <p className="text-sm leading-6 text-stone-600">
           This adds two demo patients (Hari Bahadur, hb@gmail.com, and Madan Bahadur, mb@gmail.com). A patient that already
           exists is skipped. Enter the password both of them will sign in with.
         </p>

@@ -86,30 +86,30 @@ export default function UsersPage() {
         {error && <Alert message={error} />}
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-8 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
         {loading ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">Loading patients...</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">Loading patients...</p>
         ) : patients.length === 0 ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">No patients yet. Patients can also register themselves.</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">No patients yet. Patients can also register themselves.</p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
                 <th className="px-6 py-3 font-medium">Patient</th>
                 <th className="px-6 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-stone-100">
               {patients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-slate-50/60">
+                <tr key={patient.id} className="hover:bg-stone-50/60">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
                         {patient.name[0]}
                       </span>
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-900">{patient.name}</p>
-                        <p className="truncate text-slate-500">{patient.email}</p>
+                        <p className="font-medium text-stone-900">{patient.name}</p>
+                        <p className="truncate text-stone-500">{patient.email}</p>
                       </div>
                     </div>
                   </td>

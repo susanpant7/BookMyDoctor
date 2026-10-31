@@ -6,10 +6,8 @@ import { buttonClass } from "@/shared/components/buttonStyles";
 
 type NavItem = { to: string; label: string; end?: boolean };
 
-const publicLinks: NavItem[] = [
-  { to: "/", label: "Home", end: true },
-  { to: "/doctors", label: "Doctors" }
-];
+const publicLinks: NavItem[] = [{ to: "/", label: "Home", end: true }];
+const signedInLinks: NavItem[] = [{ to: "/doctors", label: "Doctors" }];
 const patientLinks: NavItem[] = [
   { to: "/appointments", label: "Appointments" },
   { to: "/book", label: "Book" }
@@ -23,17 +21,22 @@ const adminLinks: NavItem[] = [
 
 export default function Navbar() {
   const { user, isAdmin, isPatient, logout } = useAuth();
-  const links: NavItem[] = [...publicLinks, ...(isPatient ? patientLinks : []), ...(isAdmin ? adminLinks : [])];
+  const links: NavItem[] = [
+    ...publicLinks,
+    ...(user ? signedInLinks : []),
+    ...(isPatient ? patientLinks : []),
+    ...(isAdmin ? adminLinks : [])
+  ];
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/80 backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
         <div className="flex min-w-0 items-center gap-8">
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600 text-white">
               <Stethoscope className="size-5" aria-hidden="true" />
             </span>
-            <span className="text-lg font-semibold tracking-tight text-slate-900">BookMyDoctor</span>
+            <span className="text-lg font-semibold tracking-tight text-stone-900">BookMyDoctor</span>
           </Link>
           <div className="flex items-center gap-1 overflow-x-auto">
             {links.map(({ to, label, end }) => (
@@ -43,7 +46,7 @@ export default function Navbar() {
                 end={end}
                 className={({ isActive }) =>
                   `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition ${
-                    isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    isActive ? "bg-brand-50 text-brand-700" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
                   }`
                 }
               >
@@ -55,12 +58,12 @@ export default function Navbar() {
 
         {user ? (
           <div className="flex shrink-0 items-center gap-3">
-            <span className="flex size-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+            <span className="flex size-8 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
               {user.name[0].toUpperCase()}
             </span>
             <div className="hidden leading-tight sm:block">
-              <p className="text-sm font-medium text-slate-900">{user.name}</p>
-              <p className="text-xs text-slate-500">{user.role}</p>
+              <p className="text-sm font-medium text-stone-900">{user.name}</p>
+              <p className="text-xs text-stone-500">{user.role}</p>
             </div>
             <Button variant="secondary" size="sm" onClick={logout}>
               Sign out

@@ -29,7 +29,7 @@ export default function HospitalSettings() {
   }, []);
 
   if (!details) {
-    return error ? <Alert message={error} /> : <p className="mt-8 text-center text-sm text-slate-500">Loading...</p>;
+    return error ? <Alert message={error} /> : <p className="mt-8 text-center text-sm text-stone-500">Loading...</p>;
   }
 
   const { info, hours, servicePrices, insurancePlans } = details;
@@ -90,7 +90,7 @@ export default function HospitalSettings() {
             const open = hoursFor(day);
             return (
               <li key={day} className="grid grid-cols-[8rem_1fr] items-center gap-3 sm:grid-cols-[8rem_9rem_9rem_1fr]">
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <label className="flex items-center gap-2 text-sm font-medium text-stone-700">
                   <input type="checkbox" checked={open !== undefined} onChange={(e) => setOpen(day, e.target.checked)} />
                   {dayNames[day]}
                 </label>
@@ -102,7 +102,7 @@ export default function HospitalSettings() {
                       aria-label={`${dayNames[day]} opens`}
                       value={open.opens}
                       onChange={(e) => changeHours(day, { opens: e.target.value })}
-                      className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300"
+                      className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
                     />
                     <input
                       type="time"
@@ -110,11 +110,11 @@ export default function HospitalSettings() {
                       aria-label={`${dayNames[day]} closes`}
                       value={open.closes}
                       onChange={(e) => changeHours(day, { closes: e.target.value })}
-                      className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300"
+                      className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
                     />
                   </>
                 ) : (
-                  <span className="text-sm text-slate-500">Closed</span>
+                  <span className="text-sm text-stone-500">Closed</span>
                 )}
               </li>
             );
@@ -131,7 +131,7 @@ export default function HospitalSettings() {
                 aria-label="Test name"
                 value={price.name}
                 onChange={(e) => change({ servicePrices: servicePrices.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)) })}
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300"
+                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
               />
               <input
                 required
@@ -141,7 +141,7 @@ export default function HospitalSettings() {
                 aria-label="Price"
                 value={price.price}
                 onChange={(e) => change({ servicePrices: servicePrices.map((p, i) => (i === index ? { ...p, price: Number(e.target.value) } : p)) })}
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300"
+                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
               />
               <Button variant="dangerGhost" size="sm" onClick={() => change({ servicePrices: servicePrices.filter((_, i) => i !== index) })}>
                 Remove
@@ -163,7 +163,7 @@ export default function HospitalSettings() {
                 aria-label="Plan name"
                 value={plan.name}
                 onChange={(e) => change({ insurancePlans: insurancePlans.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)) })}
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300"
+                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
               />
               <input
                 placeholder="Restrictions (optional)"
@@ -172,7 +172,7 @@ export default function HospitalSettings() {
                 onChange={(e) =>
                   change({ insurancePlans: insurancePlans.map((p, i) => (i === index ? { ...p, restrictions: e.target.value || null } : p)) })
                 }
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300"
+                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
               />
               <Button variant="dangerGhost" size="sm" onClick={() => change({ insurancePlans: insurancePlans.filter((_, i) => i !== index) })}>
                 Remove
@@ -199,8 +199,8 @@ export default function HospitalSettings() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="font-semibold text-slate-900">{title}</h2>
+    <section className="space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+      <h2 className="font-semibold text-stone-900">{title}</h2>
       {children}
     </section>
   );

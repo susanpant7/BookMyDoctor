@@ -118,14 +118,14 @@ export default function DoctorsAdminPage() {
         {error && <Alert message={error} />}
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-8 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
         {loading ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">Loading doctors...</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">Loading doctors...</p>
         ) : doctors.length === 0 ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">No doctors yet.</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">No doctors yet.</p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
                 <th className="px-6 py-3 font-medium">Doctor</th>
                 <th className="px-6 py-3 font-medium">Specialty</th>
@@ -134,20 +134,20 @@ export default function DoctorsAdminPage() {
                 <th className="px-6 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-stone-100">
               {doctors.map((doctor) => (
-                <tr key={doctor.id} className="hover:bg-slate-50/60">
+                <tr key={doctor.id} className="hover:bg-stone-50/60">
                   <td className="px-6 py-4">
-                    <p className="font-medium text-slate-900">{doctor.name}</p>
-                    <p className="text-slate-500">{doctor.experienceYears} years of experience</p>
+                    <p className="font-medium text-stone-900">{doctor.name}</p>
+                    <p className="text-stone-500">{doctor.experienceYears} years of experience</p>
                   </td>
                   <td className="px-6 py-4">
                     <Badge name={doctor.specialty} />
                   </td>
-                  <td className="hidden px-6 py-4 text-slate-600 md:table-cell">
+                  <td className="hidden px-6 py-4 text-stone-600 md:table-cell">
                     ${doctor.consultationFee} / ${doctor.followUpFee}
                   </td>
-                  <td className="hidden px-6 py-4 text-slate-600 lg:table-cell">{doctor.languages.join(", ")}</td>
+                  <td className="hidden px-6 py-4 text-stone-600 lg:table-cell">{doctor.languages.join(", ")}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-1">
                       <Button variant="ghost" size="sm" onClick={() => openForm(doctor)}>

@@ -39,20 +39,20 @@ export default function LoginPage() {
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
             <Stethoscope className="size-7" aria-hidden="true" />
           </span>
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-stone-900">
             {registering ? "Create your account" : "Welcome back"}
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-stone-500">
             {registering ? "Register as a patient to book doctors" : "Sign in to your BookMyDoctor account"}
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="mt-8 space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="mt-8 space-y-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
         >
           {registering && (
             <TextField label="Name" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -81,11 +81,11 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-stone-500">
           {registering ? "Already have an account?" : "New patient?"}{" "}
           <button
             type="button"
-            className="font-semibold text-indigo-600 hover:text-indigo-500"
+            className="font-semibold text-brand-600 hover:text-brand-500"
             onClick={() => {
               setRegistering(!registering);
               setError("");

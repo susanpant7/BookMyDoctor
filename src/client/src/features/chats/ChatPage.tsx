@@ -167,28 +167,28 @@ export default function ChatPage() {
 
   return (
     <main className="mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col px-4 py-6">
-      <header className="flex items-center gap-3 rounded-t-2xl border border-slate-200 bg-white px-4 py-3">
+      <header className="flex items-center gap-3 rounded-t-2xl border border-stone-200 bg-white px-4 py-3">
         <Link
           to="/book"
           aria-label="Back to book"
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          className="rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-700"
         >
           <ArrowLeft className="size-5" aria-hidden="true" />
         </Link>
-        <span className="flex size-9 items-center justify-center rounded-full bg-indigo-600 text-white">
+        <span className="flex size-9 items-center justify-center rounded-full bg-brand-600 text-white">
           <Bot className="size-5" aria-hidden="true" />
         </span>
         <div className="leading-tight">
-          <h1 className="font-semibold text-slate-900">Vaidya Mitra</h1>
-          <p className="text-xs text-slate-500">{connected ? "Online" : "Connecting..."}</p>
+          <h1 className="font-semibold text-stone-900">Vaidya Mitra</h1>
+          <p className="text-xs text-stone-500">{connected ? "Online" : "Connecting..."}</p>
         </div>
       </header>
 
       <div
         ref={threadRef}
-        className="flex-1 space-y-3 overflow-y-auto border-x border-slate-200 bg-slate-50 px-4 py-5"
+        className="flex-1 space-y-3 overflow-y-auto border-x border-stone-200 bg-stone-50 px-4 py-5"
       >
-        {messages.length === 0 && <p className="text-center text-sm text-slate-500">How can I help you today?</p>}
+        {messages.length === 0 && <p className="text-center text-sm text-stone-500">How can I help you today?</p>}
         {messages.map((message) => (
           <Bubble key={message.id} mine={message.sender === "patient"} name={message.sender === "patient" ? "You" : "Vaidya Mitra"}>
             {message.text}
@@ -210,9 +210,9 @@ export default function ChatPage() {
           <div
             role="group"
             aria-label={`Free times with ${bookingOptions.doctorName}`}
-            className="rounded-2xl border border-indigo-200 bg-white p-4 shadow-sm"
+            className="rounded-2xl border border-brand-200 bg-white p-4 shadow-sm"
           >
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="text-sm font-semibold text-stone-900">
               {bookingOptions.doctorName} · {bookingOptions.day}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -224,8 +224,8 @@ export default function ChatPage() {
                   onClick={() => selectSlot(slot.startsAt)}
                   className={`rounded-lg px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition ${
                     slot.startsAt === selectedSlot
-                      ? "bg-indigo-600 text-white ring-indigo-600"
-                      : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50"
+                      ? "bg-brand-600 text-white ring-brand-600"
+                      : "bg-white text-stone-700 ring-stone-300 hover:bg-stone-50"
                   }`}
                 >
                   {slot.label}
@@ -244,13 +244,13 @@ export default function ChatPage() {
         )}
       </div>
 
-      <form onSubmit={onSubmit} className="flex gap-3 rounded-b-2xl border border-slate-200 bg-white p-3">
+      <form onSubmit={onSubmit} className="flex gap-3 rounded-b-2xl border border-stone-200 bg-white p-3">
         <input
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder="Write a message"
           aria-label="Message"
-          className="block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+          className="block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-stone-900 shadow-sm ring-1 ring-inset ring-stone-300 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-600"
         />
         <Button type="submit" disabled={sending || !connected || !text.trim()} aria-label="Send">
           <Send className="size-4" aria-hidden="true" />
@@ -286,10 +286,10 @@ function Bubble({
         aria-label={label}
         role={label ? "status" : undefined}
         className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-6 ${
-          mine ? "rounded-br-sm bg-indigo-600 text-white" : "rounded-bl-sm bg-white text-slate-800 shadow-sm ring-1 ring-slate-200"
+          mine ? "rounded-br-sm bg-brand-600 text-white" : "rounded-bl-sm bg-white text-stone-800 shadow-sm ring-1 ring-stone-200"
         }`}
       >
-        <span className={`block text-xs font-semibold ${mine ? "text-indigo-200" : "text-slate-400"}`}>{name}</span>
+        <span className={`block text-xs font-semibold ${mine ? "text-brand-200" : "text-stone-400"}`}>{name}</span>
         {children}
       </p>
     </div>

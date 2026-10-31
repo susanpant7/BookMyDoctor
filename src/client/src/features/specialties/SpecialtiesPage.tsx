@@ -99,14 +99,14 @@ export default function SpecialtiesPage() {
         {error && <Alert message={error} />}
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-8 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
         {loading ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">Loading specialties...</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">Loading specialties...</p>
         ) : specialties.length === 0 ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">No specialties yet.</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">No specialties yet.</p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
                 <th className="px-6 py-3 font-medium">Specialty</th>
                 <th className="hidden px-6 py-3 font-medium md:table-cell">Description</th>
@@ -114,12 +114,12 @@ export default function SpecialtiesPage() {
                 <th className="px-6 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-stone-100">
               {specialties.map((specialty) => (
-                <tr key={specialty.id} className="hover:bg-slate-50/60">
-                  <td className="px-6 py-4 font-medium text-slate-900">{specialty.name}</td>
-                  <td className="hidden px-6 py-4 text-slate-600 md:table-cell">{specialty.description}</td>
-                  <td className="px-6 py-4 text-slate-600">{specialty.doctorCount}</td>
+                <tr key={specialty.id} className="hover:bg-stone-50/60">
+                  <td className="px-6 py-4 font-medium text-stone-900">{specialty.name}</td>
+                  <td className="hidden px-6 py-4 text-stone-600 md:table-cell">{specialty.description}</td>
+                  <td className="px-6 py-4 text-stone-600">{specialty.doctorCount}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-1">
                       <Button variant="ghost" size="sm" onClick={() => openForm(specialty)}>

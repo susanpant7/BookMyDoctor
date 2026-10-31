@@ -1,6 +1,6 @@
 const styles = [
-  "bg-indigo-50 text-indigo-700",
-  "bg-emerald-50 text-emerald-700",
+  "bg-brand-50 text-brand-700",
+  "bg-lime-50 text-lime-700",
   "bg-amber-50 text-amber-700",
   "bg-sky-50 text-sky-700",
   "bg-rose-50 text-rose-700",

@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookMyDoctor.Features.Doctors;
 
+// Signed-in users only; changing doctors additionally needs the Admin role.
 [ApiController]
+[Authorize]
 [Route("api/doctors")]
 public sealed class DoctorsController : ControllerBase
 {

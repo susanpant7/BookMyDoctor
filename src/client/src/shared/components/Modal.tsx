@@ -20,16 +20,16 @@ export default function Modal({ title, onClose, maxWidth = 'max-w-lg', children 
       ref={dialogRef}
       onClose={onClose}
       onClick={(e) => e.target === dialogRef.current && onClose()}
-      className={`m-auto w-[calc(100%-2rem)] ${maxWidth} rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm`}
+      className={`m-auto w-[calc(100%-2rem)] ${maxWidth} rounded-2xl p-0 shadow-2xl backdrop:bg-stone-900/50 backdrop:backdrop-blur-sm`}
     >
       <div className="p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+          <h2 className="text-lg font-semibold text-stone-900">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-2 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="-mr-2 rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
           >
             <X className="size-5" />
           </button>

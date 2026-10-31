@@ -1,11 +1,11 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
 const controlClass =
-  'mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-slate-100 disabled:text-slate-500'
+  'mt-1.5 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-stone-900 shadow-sm ring-1 ring-inset ring-stone-300 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-600 disabled:bg-stone-100 disabled:text-stone-500'
 
 function FieldLabel({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="block text-sm font-medium text-slate-700">
+    <label className="block text-sm font-medium text-stone-700">
       {label}
       {children}
     </label>

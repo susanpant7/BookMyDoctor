@@ -29,7 +29,9 @@ export default function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/doctors" element={<Doctors />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/doctors" element={<Doctors />} />
+            </Route>
             <Route element={<ProtectedRoute role="Patient" />}>
               <Route path="/appointments" element={<AppointmentsPage />} />
               <Route path="/book" element={<BookPage />} />

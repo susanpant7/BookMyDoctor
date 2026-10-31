@@ -35,7 +35,7 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
   return (
     <Modal title={setting.label} onClose={onCancel} maxWidth="max-w-xl">
       <form onSubmit={handleSubmit} className="space-y-5">
-        <p className="text-sm leading-6 text-slate-600">{setting.description}</p>
+        <p className="text-sm leading-6 text-stone-600">{setting.description}</p>
         <TextField
           label="Value"
           type={setting.kind === "text" ? "text" : "number"}
@@ -43,10 +43,10 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-stone-500">
           Default: <span className="font-mono">{setting.defaultValue === "" ? "(empty)" : setting.defaultValue}</span>
           {value !== setting.defaultValue && (
-            <button type="button" className="ml-3 font-semibold text-indigo-600" onClick={() => setValue(setting.defaultValue)}>
+            <button type="button" className="ml-3 font-semibold text-brand-600" onClick={() => setValue(setting.defaultValue)}>
               Use default
             </button>
           )}

@@ -116,10 +116,10 @@ export default function KnowledgePage() {
         }
       />
 
-      <form onSubmit={handleUpload} className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="font-semibold text-slate-900">Upload knowledge files</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Markdown (.md) files. Each section starts with a <code className="rounded bg-slate-100 px-1">## Title</code> line.
+      <form onSubmit={handleUpload} className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+        <h2 className="font-semibold text-stone-900">Upload knowledge files</h2>
+        <p className="mt-1 text-sm text-stone-500">
+          Markdown (.md) files. Each section starts with a <code className="rounded bg-stone-100 px-1">## Title</code> line.
           Uploading a file with the same name replaces its sections.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -129,7 +129,7 @@ export default function KnowledgePage() {
             accept=".md"
             multiple
             onChange={(e) => setFiles([...(e.target.files ?? [])])}
-            className="block text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+            className="block text-sm text-stone-600 file:mr-3 file:rounded-lg file:border-0 file:bg-stone-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-stone-700 hover:file:bg-stone-200"
           />
           <Button type="submit" disabled={busy || files.length === 0}>
             {busy ? "Working..." : "Upload"}
@@ -151,40 +151,40 @@ export default function KnowledgePage() {
 
       <SearchTester />
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
         {loading ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">Loading...</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">Loading...</p>
         ) : chunks.length === 0 ? (
-          <p className="px-6 py-12 text-center text-sm text-slate-500">
+          <p className="px-6 py-12 text-center text-sm text-stone-500">
             The knowledge base is empty. Upload files above, or load the default files.
           </p>
         ) : (
           <>
             <Tabs tabs={tabs} active={selectedTab} onChange={setActiveTab} />
             {selectedTab !== ALL && selectedTab !== DOCTORS_SOURCE && (
-              <div className="flex justify-end border-b border-slate-100 px-6 py-2">
+              <div className="flex justify-end border-b border-stone-100 px-6 py-2">
                 <Button variant="dangerGhost" size="sm" onClick={() => setDeleting(selectedTab)}>
                   Delete {selectedTab}
                 </Button>
               </div>
             )}
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
                 <tr>
                   <th className="px-6 py-3 font-medium">Section</th>
                   {selectedTab === ALL && <th className="px-6 py-3 font-medium">File</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-stone-100">
                 {visible.map((chunk) => (
                   <tr
                     key={chunk.id}
                     onClick={() => setExpandedId(expandedId === chunk.id ? null : chunk.id)}
-                    className="cursor-pointer align-top hover:bg-slate-50/60"
+                    className="cursor-pointer align-top hover:bg-stone-50/60"
                   >
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900">{chunk.title}</p>
-                      <p className={`mt-1 max-w-2xl whitespace-pre-wrap text-slate-500 ${expandedId === chunk.id ? "" : "line-clamp-1"}`}>
+                      <p className="font-medium text-stone-900">{chunk.title}</p>
+                      <p className={`mt-1 max-w-2xl whitespace-pre-wrap text-stone-500 ${expandedId === chunk.id ? "" : "line-clamp-1"}`}>
                         {chunk.text.replace(/^## .*\n/, "")}
                       </p>
                     </td>
@@ -237,9 +237,9 @@ function SearchTester() {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="font-semibold text-slate-900">Test a question</h2>
-      <p className="mt-1 text-sm text-slate-500">
+    <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+      <h2 className="font-semibold text-stone-900">Test a question</h2>
+      <p className="mt-1 text-sm text-stone-500">
         See which sections the assistant would find for a question. Use the scores to tune the minimum similarity on the Settings page.
       </p>
       <form onSubmit={handleSearch} className="mt-4 flex gap-3">
@@ -249,7 +249,7 @@ function SearchTester() {
           placeholder="Can I get a refund if I cancel?"
           maxLength={500}
           aria-label="Question"
-          className="block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+          className="block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-stone-900 shadow-sm ring-1 ring-inset ring-stone-300 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-600"
         />
         <Button type="submit" disabled={searching || query.trim().length === 0}>
           {searching ? "Searching..." : "Search"}
@@ -261,16 +261,16 @@ function SearchTester() {
         </div>
       )}
       {found && (
-        <ul className="mt-4 divide-y divide-slate-100 rounded-lg ring-1 ring-inset ring-slate-200">
-          {found.length === 0 && <li className="px-4 py-3 text-sm text-slate-500">Nothing found.</li>}
+        <ul className="mt-4 divide-y divide-stone-100 rounded-lg ring-1 ring-inset ring-stone-200">
+          {found.length === 0 && <li className="px-4 py-3 text-sm text-stone-500">Nothing found.</li>}
           {found.map((result) => (
             <li key={result.id} className="flex items-start gap-4 px-4 py-3">
-              <span className="w-12 shrink-0 font-mono text-sm font-semibold text-indigo-700">{result.score.toFixed(3)}</span>
+              <span className="w-12 shrink-0 font-mono text-sm font-semibold text-brand-700">{result.score.toFixed(3)}</span>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-900">
-                  {result.title} <span className="font-normal text-slate-500">· {result.source}</span>
+                <p className="text-sm font-medium text-stone-900">
+                  {result.title} <span className="font-normal text-stone-500">· {result.source}</span>
                 </p>
-                <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">{result.text.replace(/^## .*\n/, "")}</p>
+                <p className="mt-0.5 line-clamp-2 text-sm text-stone-500">{result.text.replace(/^## .*\n/, "")}</p>
               </div>
             </li>
           ))}
