@@ -1,4 +1,4 @@
-# Visiting MyHospitalAI Hospital
+# Visiting Mero Aspataal
 
 ## Hospital details
 MyHospitalAI is a single hospital, and every consultation takes place in person at the hospital. The hospital's address, phone number, opening hours, parking, public transport and facilities are shown in the app and can be looked up by the Vaidya Mitra assistant. The appointment confirmation always includes the hospital address.
@@ -7,7 +7,7 @@ MyHospitalAI is a single hospital, and every consultation takes place in person 
 MyHospitalAI does not offer video (telehealth), phone, or home-visit consultations. All appointments are in person at the hospital, so the doctor can examine the patient properly.
 
 ## Accessibility
-MyHospitalAI Hospital is wheelchair accessible, with step-free entrances, accessible restrooms, and elevators. Patients who need a sign-language interpreter or other assistance should mention it when booking, at least 48 hours before the visit.
+Mero Aspataal is wheelchair accessible, with step-free entrances, accessible restrooms, and elevators. Patients who need a sign-language interpreter or other assistance should mention it when booking, at least 48 hours before the visit.
 
 ## Holidays
 The hospital's outpatient department closes on major US public holidays. Appointment slots are never offered on a closed day, so if a date has no available slots, the hospital or the doctor may be closed that day.

@@ -125,7 +125,7 @@ public sealed partial class KnowledgeSources
             doctor.Name,
             $"""
             ## {doctor.Name}
-            {doctor.Name} is a {doctor.Specialty} doctor at MyHospitalAI Hospital with {doctor.ExperienceYears} years of experience.
+            {doctor.Name} is a {doctor.Specialty} doctor at Mero Aspataal with {doctor.ExperienceYears} years of experience.
             Languages spoken: {string.Join(", ", doctor.Languages)}.
             Consultation fees: ${doctor.ConsultationFee:0.##} for a new visit, ${doctor.FollowUpFee:0.##} for a follow-up visit about the same problem within 30 days.
             Weekly hours: {hours} Exact free times depend on bookings and days off.
@@ -146,7 +146,7 @@ public sealed partial class KnowledgeSources
             specialty.Name,
             $"""
             ## {specialty.Name}
-            {specialty.Name} is a specialty at MyHospitalAI Hospital.{description}
+            {specialty.Name} is a specialty at Mero Aspataal.{description}
             {doctorNames}
             """);
     }

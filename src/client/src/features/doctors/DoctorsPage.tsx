@@ -44,7 +44,7 @@ export default function DoctorsPage() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <PageHeader
         title="Our doctors"
-        description="Specialists you can book at MyHospitalAI Hospital."
+        description="Specialists you can book at Mero Aspataal."
         action={
           <div className="w-56">
             <SelectField label="Specialty" value={specialtyId} onChange={(e) => setSpecialtyId(e.target.value)}>

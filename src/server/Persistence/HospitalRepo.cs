@@ -26,7 +26,7 @@ public sealed class HospitalRepo : IHospitalRepo
         using var db = _factory.CreateDbContext();
         var entity = db.HospitalInfo.AsNoTracking().FirstOrDefault(info => info.Id == InfoRowId);
         return entity is null
-            ? new HospitalInfo("MyHospitalAI Hospital", "", "", [], "", "")
+            ? new HospitalInfo("Mero Aspataal", "", "", [], "", "")
             : new HospitalInfo(entity.Name, entity.Address, entity.Phone,
                 entity.Facilities.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
                 entity.Parking, entity.PublicTransport);

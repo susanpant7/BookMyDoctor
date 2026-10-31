@@ -1,7 +1,7 @@
 # Frequently asked questions
 
 ## What is MyHospitalAI?
-MyHospitalAI is an app for finding and booking appointments with doctors at MyHospitalAI Hospital in Austin, Texas. Patients can browse doctors by specialty, book in-person consultations at the hospital, and chat with the Vaidya Mitra AI assistant for help choosing a doctor.
+MyHospitalAI is an app for finding and booking appointments with doctors at Mero Aspataal in Fort Worth, Texas. Patients can browse doctors by specialty, book in-person consultations at the hospital, and chat with the Vaidya Mitra AI assistant for help choosing a doctor.
 
 ## How do I find out about a doctor?
 Each doctor's specialty, experience, languages, fees and a short bio are shown on the Doctors page. The Vaidya Mitra assistant can also look up this information and check the doctor's available times.

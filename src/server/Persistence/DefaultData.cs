@@ -55,12 +55,12 @@ public static class DefaultData
 
     public static HospitalDetails Hospital { get; } = new(
         new HospitalInfo(
-            "MyHospitalAI Hospital",
-            "1200 Riverside Medical Plaza, Austin, TX 78741",
-            "(512) 555-0140",
+            "Mero Aspataal",
+            "Baafal-4, Fort Worth, TX",
+            "9846514741",
             ["ECG room", "X-ray room", "Blood test lab", "Children's play area", "Breastfeeding room"],
-            "Free parking in the Riverside Medical Plaza garage for up to 2 hours.",
-            "5-minute walk from the Riverside bus stop (routes 7 and 20)."),
+            "Free parking for patients and visitors. Show your patient card when exiting.",
+            "Sajha bus is available all around Texas."),
         [.. Weekdays.Append(DayOfWeek.Saturday).Select(day => new HospitalHours(day, new TimeOnly(8, 0), new TimeOnly(19, 0)))],
         [
             new(Guid.Empty, "ECG (electrocardiogram)", 45),
