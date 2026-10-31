@@ -2,7 +2,4 @@
   <Folder Name="/src/">
     <Project Path="src/server/BookMyDoctor.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/BookMyDoctor.Api.Tests/BookMyDoctor.Api.Tests.csproj" />
-  </Folder>
 </Solution>

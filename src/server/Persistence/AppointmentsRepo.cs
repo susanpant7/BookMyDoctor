@@ -1,50 +1,51 @@
 using BookMyDoctor.Features.Appointments;
+using BookMyDoctor.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookMyDoctor.Persistence;
 
-// Starts empty. Bookings are kept in memory for as long as the server runs (the repo is a singleton);
-// a real database will keep them across restarts.
 public sealed class AppointmentsRepo : IAppointmentsRepo
 {
-    private readonly List<Appointment> _appointments;
-    private readonly Lock _lock = new();
+    private readonly IDbContextFactory<AppDbContext> _factory;
 
-    public AppointmentsRepo() : this([])
-    {
-    }
+    // The API runs as one process, so this lock is what keeps two patients from taking the same slot.
+    private readonly Lock _bookingLock = new();
 
-    internal AppointmentsRepo(IEnumerable<Appointment> seed)
+    public AppointmentsRepo(IDbContextFactory<AppDbContext> factory)
     {
-        _appointments = [.. seed];
+        _factory = factory;
     }
 
     public IReadOnlyList<Appointment> GetForDoctor(Guid doctorId, DateTimeOffset from, DateTimeOffset to)
     {
-        lock (_lock)
-        {
-            return _appointments
-                .Where(appointment => appointment.DoctorId == doctorId && appointment.StartsAt < to && appointment.EndsAt > from)
-                .OrderBy(appointment => appointment.StartsAt)
-                .ToList();
-        }
+        using var db = _factory.CreateDbContext();
+        return db.Appointments
+            .AsNoTracking()
+            .Where(appointment => appointment.DoctorId == doctorId && appointment.StartsAt < to && appointment.EndsAt > from)
+            .OrderBy(appointment => appointment.StartsAt)
+            .ToList()
+            .Select(ToAppointment)
+            .ToList();
     }
 
     public IReadOnlyList<Appointment> GetForPatient(Guid patientId)
     {
-        lock (_lock)
-        {
-            return _appointments
-                .Where(appointment => appointment.PatientId == patientId)
-                .OrderBy(appointment => appointment.StartsAt)
-                .ToList();
-        }
+        using var db = _factory.CreateDbContext();
+        return db.Appointments
+            .AsNoTracking()
+            .Where(appointment => appointment.PatientId == patientId)
+            .OrderBy(appointment => appointment.StartsAt)
+            .ToList()
+            .Select(ToAppointment)
+            .ToList();
     }
 
     public bool TryAdd(Appointment appointment)
     {
-        lock (_lock)
+        lock (_bookingLock)
         {
-            var taken = _appointments.Any(existing =>
+            using var db = _factory.CreateDbContext();
+            var taken = db.Appointments.Any(existing =>
                 existing.DoctorId == appointment.DoctorId &&
                 existing.Status == AppointmentStatus.Scheduled &&
                 existing.StartsAt < appointment.EndsAt &&
@@ -54,8 +55,22 @@ public sealed class AppointmentsRepo : IAppointmentsRepo
                 return false;
             }
 
-            _appointments.Add(appointment);
+            db.Appointments.Add(new AppointmentEntity
+            {
+                Id = appointment.Id,
+                DoctorId = appointment.DoctorId,
+                PatientId = appointment.PatientId,
+                StartsAt = appointment.StartsAt,
+                EndsAt = appointment.EndsAt,
+                Reason = appointment.Reason,
+                Status = appointment.Status,
+                BookedAt = appointment.BookedAt
+            });
+            db.SaveChanges();
             return true;
         }
     }
+
+    private static Appointment ToAppointment(AppointmentEntity entity) =>
+        new(entity.Id, entity.DoctorId, entity.PatientId, entity.StartsAt, entity.EndsAt, entity.Reason, entity.Status, entity.BookedAt);
 }

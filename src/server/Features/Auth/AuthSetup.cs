@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using System.Text;
+using BookMyDoctor.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
@@ -18,12 +20,16 @@ public static class AuthSetup
         }
 
         services.Configure<JwtOptions>(section);
+        services.AddOptionsWithValidateOnStart<AdminOptions>()
+            .BindConfiguration(AdminOptions.SectionName)
+            .ValidateDataAnnotations();
         services.AddSingleton<ITokenService, JwtTokenService>();
+        services.AddSingleton<IPasswordHasher<UserAccount>, PasswordHasher<UserAccount>>();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                // Keep claim names as issued ("sub", "name", "email") instead of mapping to long URIs.
+                // Keep claim names as issued ("sub", "name", "email", "role") instead of mapping to long URIs.
                 options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -31,6 +37,7 @@ public static class AuthSetup
                     ValidAudience = jwt.Audience,
                     IssuerSigningKey = JwtTokenService.SigningKey(jwt.Key),
                     NameClaimType = JwtRegisteredClaimNames.Name,
+                    RoleClaimType = "role",
                     ClockSkew = TimeSpan.FromMinutes(1)
                 };
 

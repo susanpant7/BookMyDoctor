@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BookMyDoctor.Features.Chats;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = Roles.Patient)]
 [Route("api/chats")]
 public sealed class ChatController : ControllerBase
 {

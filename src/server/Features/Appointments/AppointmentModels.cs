@@ -18,9 +18,9 @@ public sealed record DoctorSchedule(
     TimeOnly End,
     int SlotMinutes);
 
-// A whole day the doctor is unavailable (holiday, leave, conference).
+// A whole day the doctor is unavailable (holiday, leave, conference). With no doctor it applies to the whole hospital.
 public sealed record DoctorTimeOff(
-    Guid DoctorId,
+    Guid? DoctorId,
     DateOnly Date,
     string Reason);
 

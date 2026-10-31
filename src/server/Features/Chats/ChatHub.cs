@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace BookMyDoctor.Features.Chats;
 
-[Authorize]
+[Authorize(Roles = Roles.Patient)]
 public sealed class ChatHub : Hub
 {
     private readonly IChatService _chatService;

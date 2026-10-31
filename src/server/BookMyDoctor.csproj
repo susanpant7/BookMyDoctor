@@ -6,16 +6,18 @@
     <RootNamespace>BookMyDoctor</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup>
-    <InternalsVisibleTo Include="BookMyDoctor.Api.Tests" />
-  </ItemGroup>
-
-  <!-- RAG knowledge base: copied next to the app so it can be indexed at startup. -->
+  <!-- Starting knowledge files: copied next to the app so an admin can load them from the Knowledge page. -->
   <ItemGroup>
     <None Include="Knowledge\**\*.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="sqlite-vec" Version="0.1.7-alpha.2.1" />
   </ItemGroup>
 </Project>

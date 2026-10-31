@@ -4,10 +4,13 @@ using BookMyDoctor.Persistence;
 
 namespace BookMyDoctor.Features.Knowledge;
 
-// Collects everything that goes into the vector store: the Knowledge/*.md sections and a profile per doctor.
+// Where knowledge text comes from: the starting files shipped in the Knowledge folder, and a profile per doctor.
 // Live facts (fees, slots, bookings) are deliberately left out; they are looked up directly when needed.
 public sealed partial class KnowledgeSources
 {
+    // The source name of doctor profiles. Uploaded files cannot use it.
+    public const string DoctorsSource = "doctors";
+
     private readonly IDoctorsRepo _doctorsRepo;
     private readonly string _folder;
 
@@ -21,13 +24,13 @@ public sealed partial class KnowledgeSources
         _folder = folder;
     }
 
-    public IReadOnlyList<KnowledgeDocument> GetDocuments() =>
-    [
-        .. Directory.GetFiles(_folder, "*.md")
-            .Order()
-            .SelectMany(file => SplitMarkdown(Path.GetFileName(file), File.ReadAllText(file))),
-        .. _doctorsRepo.GetAll().Select(DoctorProfile)
-    ];
+    // The starting knowledge files: file name and text.
+    public IReadOnlyList<(string FileName, string Text)> GetBundledFiles() =>
+        Directory.Exists(_folder)
+            ? Directory.GetFiles(_folder, "*.md").Order().Select(file => (Path.GetFileName(file), File.ReadAllText(file))).ToList()
+            : [];
+
+    public IReadOnlyList<KnowledgeDocument> GetDoctorProfiles() => _doctorsRepo.GetAll().Select(DoctorProfile).ToList();
 
     // Each "## " section becomes one document. The heading stays in the text so the chunk makes sense on its own.
     internal static IEnumerable<KnowledgeDocument> SplitMarkdown(string fileName, string markdown) =>
@@ -36,14 +39,14 @@ public sealed partial class KnowledgeSources
             .Select(part => part.Trim())
             .Select(section =>
             {
-                var title = section[3..section.IndexOf('\n')].Trim();
+                var title = section[3..(section.IndexOf('\n') is var end and >= 0 ? end : section.Length)].Trim();
                 return new KnowledgeDocument($"{fileName}#{Slug(title)}", fileName, title, section);
             });
 
     internal static KnowledgeDocument DoctorProfile(Doctor doctor) =>
         new(
             $"doctor:{doctor.Id}",
-            "doctors",
+            DoctorsSource,
             $"{doctor.Name} – profile",
             $"""
             ## {doctor.Name} – profile

@@ -1,4 +1,4 @@
-import { api } from "../../shared/api";
+import { apiFetch } from "@/shared/api/apiClient";
 
 export type ChatMessage = {
   id: string;
@@ -8,6 +8,4 @@ export type ChatMessage = {
   sentAt: string;
 };
 
-export function getMessages() {
-  return api<ChatMessage[]>("/api/chats");
-}
+export const getMessages = () => apiFetch<ChatMessage[]>("/chats");

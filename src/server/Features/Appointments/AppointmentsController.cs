@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BookMyDoctor.Features.Appointments;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = Roles.Patient)]
 [Route("api/appointments")]
 public sealed class AppointmentsController : ControllerBase
 {

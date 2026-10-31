@@ -17,7 +17,12 @@ public sealed class JwtTokenService : ITokenService
         _options = options.Value;
     }
 
-    public AccessToken Create(UserAccount user)
+    public AccessToken Create(UserAccount user) =>
+        Create(user.Id.ToString(), user.Name, Roles.Patient, new Claim(JwtRegisteredClaimNames.Email, user.Email));
+
+    public AccessToken CreateAdmin(string username) => Create("admin", username, Roles.Admin);
+
+    private AccessToken Create(string subject, string name, string role, params Claim[] extra)
     {
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_options.ExpiresMinutes);
         var descriptor = new SecurityTokenDescriptor
@@ -27,10 +32,11 @@ public sealed class JwtTokenService : ITokenService
             Expires = expiresAt.UtcDateTime,
             Subject = new ClaimsIdentity(
             [
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Name, user.Name),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Sub, subject),
+                new Claim(JwtRegisteredClaimNames.Name, name),
+                new Claim("role", role),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                .. extra
             ]),
             SigningCredentials = new SigningCredentials(SigningKey(_options.Key), SecurityAlgorithms.HmacSha256)
         };

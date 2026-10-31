@@ -1,40 +1,38 @@
 using BookMyDoctor.Features.Chats;
-using Microsoft.Extensions.Options;
+using BookMyDoctor.Features.Settings;
 
 namespace BookMyDoctor.Features.Knowledge;
 
 public sealed class OllamaEmbedder : IEmbedder
 {
-    // nomic-embed-text expects these task prefixes; without them retrieval is noticeably worse.
-    internal const string DocumentPrefix = "search_document: ";
-    internal const string QueryPrefix = "search_query: ";
     internal const int BatchSize = 32;
 
     private readonly HttpClient _http;
-    private readonly OllamaOptions _options;
+    private readonly IAiSettingsProvider _settings;
 
-    public OllamaEmbedder(HttpClient http, IOptions<OllamaOptions> options)
+    public OllamaEmbedder(HttpClient http, IAiSettingsProvider settings)
     {
         _http = http;
-        _options = options.Value;
+        _settings = settings;
     }
 
     public async Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken = default)
     {
+        var settings = _settings.Get();
         var vectors = new List<float[]>(texts.Count);
         foreach (var batch in texts.Chunk(BatchSize))
         {
-            vectors.AddRange(await EmbedAsync(batch.Select(text => DocumentPrefix + text).ToList(), cancellationToken));
+            vectors.AddRange(await EmbedAsync(batch.Select(text => AiSettings.WithPrefix(settings.EmbeddingDocumentPrefix, text)).ToList(), cancellationToken));
         }
         return vectors;
     }
 
     public async Task<float[]> EmbedQueryAsync(string text, CancellationToken cancellationToken = default) =>
-        (await EmbedAsync([QueryPrefix + text], cancellationToken))[0];
+        (await EmbedAsync([AiSettings.WithPrefix(_settings.Get().EmbeddingQueryPrefix, text)], cancellationToken))[0];
 
     private async Task<float[][]> EmbedAsync(IReadOnlyList<string> input, CancellationToken cancellationToken)
     {
-        var response = await _http.PostAsJsonAsync("/api/embed", new OllamaEmbedRequest(_options.EmbeddingModel, input), cancellationToken);
+        var response = await _http.PostAsJsonAsync("/api/embed", new OllamaEmbedRequest(_settings.Get().EmbeddingModel, input), cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<OllamaEmbedResponse>(cancellationToken);

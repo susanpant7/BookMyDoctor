@@ -1,16 +1,16 @@
-import { api } from "../../shared/api";
-import type { SessionUser } from "../../shared/session";
+import { apiFetch } from "@/shared/api/apiClient";
 
-export function login(email: string, password: string) {
-  return api<SessionUser>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password })
-  });
-}
+export type AuthResponse = {
+  userId: string;
+  name: string;
+  email: string;
+  role: "Admin" | "Patient";
+  token: string;
+  expiresAt: string;
+};
 
-export function register(name: string, email: string, password: string) {
-  return api<SessionUser>("/api/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ name, email, password })
-  });
-}
+export const loginRequest = (username: string, password: string) =>
+  apiFetch<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ username, password }) });
+
+export const registerRequest = (name: string, email: string, password: string) =>
+  apiFetch<AuthResponse>("/auth/register", { method: "POST", body: JSON.stringify({ name, email, password }) });

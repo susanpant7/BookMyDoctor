@@ -1,19 +1,25 @@
 using BookMyDoctor.Features.Hospital;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookMyDoctor.Persistence;
 
 public sealed class InsurancePlansRepo : IInsurancePlansRepo
 {
-    private static readonly IReadOnlyList<InsurancePlan> Seed =
-    [
-        new(Guid.Parse("60000001-0000-0000-0000-000000000000"), "Blue Cross Blue Shield", null),
-        new(Guid.Parse("60000002-0000-0000-0000-000000000000"), "Aetna", null),
-        new(Guid.Parse("60000003-0000-0000-0000-000000000000"), "Cigna", null),
-        new(Guid.Parse("60000004-0000-0000-0000-000000000000"), "UnitedHealthcare", null),
-        new(Guid.Parse("60000005-0000-0000-0000-000000000000"), "Humana", null),
-        new(Guid.Parse("60000006-0000-0000-0000-000000000000"), "Medicare", null),
-        new(Guid.Parse("60000007-0000-0000-0000-000000000000"), "Medicaid", "Children only")
-    ];
+    private readonly IDbContextFactory<AppDbContext> _factory;
 
-    public IReadOnlyList<InsurancePlan> GetAll() => Seed;
+    public InsurancePlansRepo(IDbContextFactory<AppDbContext> factory)
+    {
+        _factory = factory;
+    }
+
+    public IReadOnlyList<InsurancePlan> GetAll()
+    {
+        using var db = _factory.CreateDbContext();
+        return db.InsurancePlans
+            .AsNoTracking()
+            .OrderBy(plan => plan.SortOrder)
+            .ToList()
+            .Select(plan => new InsurancePlan(plan.Id, plan.Name, plan.Restrictions))
+            .ToList();
+    }
 }

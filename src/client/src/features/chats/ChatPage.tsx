@@ -1,9 +1,12 @@
 import type { HubConnection } from "@microsoft/signalr";
-import { ArrowLeft, Send } from "lucide-react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { ArrowLeft, Bot, Send } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { useSession } from "../../shared/session";
-import { getMessages, type ChatMessage } from "./chatApi";
+import Alert from "@/shared/components/Alert";
+import Button from "@/shared/components/Button";
+import { TextField } from "@/shared/components/Field";
+import { useAuth } from "@/features/auth/useAuth";
+import { getMessages, type ChatMessage } from "@/features/chats/chatApi";
 import {
   bookSlot,
   createChatConnection,
@@ -14,7 +17,7 @@ import {
   onReceiveMessage,
   sendChatMessage,
   type BookingOptions
-} from "./chatHub";
+} from "@/features/chats/chatHub";
 
 // Adds messages that aren't already in the list (history and live pushes can overlap).
 function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]) {
@@ -22,8 +25,10 @@ function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]) {
   return [...current, ...incoming.filter((message) => !known.has(message.id))];
 }
 
-export function ChatPage() {
-  const { session } = useSession();
+import { getToken } from "@/shared/api/token";
+
+export default function ChatPage() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,12 +44,11 @@ export function ChatPage() {
   const connectionRef = useRef<HubConnection | null>(null);
 
   useEffect(() => {
-    if (!session) {
+    if (!user) {
       return;
     }
 
-    const token = session.token;
-    const connection = createChatConnection(() => token);
+    const connection = createChatConnection(() => getToken() ?? "");
     connectionRef.current = connection;
     let stopped = false;
 
@@ -102,15 +106,11 @@ export function ChatPage() {
       connectionRef.current = null;
       connection.stop();
     };
-  }, [session?.userId, session?.token]);
+  }, [user?.userId]);
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
   }, [messages, assistantTyping, draft, bookingOptions, selectedSlot]);
-
-  if (!session) {
-    return <p>Sign in to chat with the AI assistant.</p>;
-  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -166,85 +166,132 @@ export function ChatPage() {
   const selectedLabel = bookingOptions?.slots.find((slot) => slot.startsAt === selectedSlot)?.label;
 
   return (
-    <section className="chat">
-      <header className="chat-header">
-        <Link to="/book" className="chat-back" aria-label="Back to book">
-          <ArrowLeft size={18} aria-hidden="true" />
+    <main className="mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col px-4 py-6">
+      <header className="flex items-center gap-3 rounded-t-2xl border border-slate-200 bg-white px-4 py-3">
+        <Link
+          to="/book"
+          aria-label="Back to book"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+        >
+          <ArrowLeft className="size-5" aria-hidden="true" />
         </Link>
-        <div>
-          <h1>Vaidya Mitra</h1>
-          {connected ? null : <p className="muted">Connecting...</p>}
+        <span className="flex size-9 items-center justify-center rounded-full bg-indigo-600 text-white">
+          <Bot className="size-5" aria-hidden="true" />
+        </span>
+        <div className="leading-tight">
+          <h1 className="font-semibold text-slate-900">Vaidya Mitra</h1>
+          <p className="text-xs text-slate-500">{connected ? "Online" : "Connecting..."}</p>
         </div>
       </header>
-      <div className="messages" ref={threadRef}>
-        {messages.length === 0 ? (
-          <p className="muted">How can I help you today?</p>
-        ) : null}
+
+      <div
+        ref={threadRef}
+        className="flex-1 space-y-3 overflow-y-auto border-x border-slate-200 bg-slate-50 px-4 py-5"
+      >
+        {messages.length === 0 && <p className="text-center text-sm text-slate-500">How can I help you today?</p>}
         {messages.map((message) => (
-          <p key={message.id} className={message.sender === "patient" ? "bubble me" : "bubble"}>
-            <span>{message.sender === "patient" ? "You" : "Vaidya Mitra"}</span>
+          <Bubble key={message.id} mine={message.sender === "patient"} name={message.sender === "patient" ? "You" : "Vaidya Mitra"}>
             {message.text}
-          </p>
+          </Bubble>
         ))}
         {draft ? (
           // Shown while the reply is being written; replaced by the final, checked reply.
-          <p className="bubble draft" aria-busy="true">
-            <span>Vaidya Mitra</span>
+          <Bubble mine={false} name="Vaidya Mitra" busy>
             {draft}
-          </p>
+          </Bubble>
         ) : assistantTyping ? (
-          <p className="bubble typing" role="status" aria-label="Vaidya Mitra is typing">
-            <span>Vaidya Mitra</span>
-            <i className="dot" />
-            <i className="dot" />
-            <i className="dot" />
-          </p>
+          <Bubble mine={false} name="Vaidya Mitra" label="Vaidya Mitra is typing">
+            <span className="typing-dot" />
+            <span className="typing-dot" />
+            <span className="typing-dot" />
+          </Bubble>
         ) : null}
-        {bookingOptions ? (
-          <div className="slot-picker" role="group" aria-label={`Free times with ${bookingOptions.doctorName}`}>
-            <p className="slot-picker-title">
+        {bookingOptions && (
+          <div
+            role="group"
+            aria-label={`Free times with ${bookingOptions.doctorName}`}
+            className="rounded-2xl border border-indigo-200 bg-white p-4 shadow-sm"
+          >
+            <p className="text-sm font-semibold text-slate-900">
               {bookingOptions.doctorName} · {bookingOptions.day}
             </p>
-            <div className="slot-list">
+            <div className="mt-3 flex flex-wrap gap-2">
               {bookingOptions.slots.map((slot) => (
                 <button
                   key={slot.startsAt}
                   type="button"
-                  className={slot.startsAt === selectedSlot ? "slot selected" : "slot"}
                   aria-pressed={slot.startsAt === selectedSlot}
                   onClick={() => selectSlot(slot.startsAt)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition ${
+                    slot.startsAt === selectedSlot
+                      ? "bg-indigo-600 text-white ring-indigo-600"
+                      : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50"
+                  }`}
                 >
                   {slot.label}
                 </button>
               ))}
             </div>
-            {selectedSlot ? (
-              <form className="slot-confirm" onSubmit={onConfirmSlot}>
-                <label>
-                  Reason for the visit
-                  <input value={reason} onChange={(event) => setReason(event.target.value)} required />
-                </label>
-                <button type="submit" disabled={booking || reason.trim().length < 3}>
+            {selectedSlot && (
+              <form className="mt-4 space-y-3" onSubmit={onConfirmSlot}>
+                <TextField label="Reason for the visit" value={reason} onChange={(event) => setReason(event.target.value)} required />
+                <Button type="submit" disabled={booking || reason.trim().length < 3}>
                   {booking ? "Booking..." : `Confirm ${selectedLabel}`}
-                </button>
+                </Button>
               </form>
-            ) : null}
+            )}
           </div>
-        ) : null}
+        )}
       </div>
-      <form onSubmit={onSubmit} className="chat-composer">
+
+      <form onSubmit={onSubmit} className="flex gap-3 rounded-b-2xl border border-slate-200 bg-white p-3">
         <input
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder="Write a message"
           aria-label="Message"
+          className="block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600"
         />
-        <button type="submit" disabled={sending || !connected || !text.trim()} aria-label="Send">
-          <Send size={16} aria-hidden="true" />
+        <Button type="submit" disabled={sending || !connected || !text.trim()} aria-label="Send">
+          <Send className="size-4" aria-hidden="true" />
           Send
-        </button>
+        </Button>
       </form>
-      {error ? <p className="error">{error}</p> : null}
-    </section>
+      {error && (
+        <div className="mt-3">
+          <Alert message={error} />
+        </div>
+      )}
+    </main>
+  );
+}
+
+function Bubble({
+  mine,
+  name,
+  busy,
+  label,
+  children
+}: {
+  mine: boolean;
+  name: string;
+  busy?: boolean;
+  label?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+      <p
+        aria-busy={busy}
+        aria-label={label}
+        role={label ? "status" : undefined}
+        className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-6 ${
+          mine ? "rounded-br-sm bg-indigo-600 text-white" : "rounded-bl-sm bg-white text-slate-800 shadow-sm ring-1 ring-slate-200"
+        }`}
+      >
+        <span className={`block text-xs font-semibold ${mine ? "text-indigo-200" : "text-slate-400"}`}>{name}</span>
+        {children}
+      </p>
+    </div>
   );
 }

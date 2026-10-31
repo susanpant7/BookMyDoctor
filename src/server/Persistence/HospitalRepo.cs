@@ -1,38 +1,94 @@
 using BookMyDoctor.Features.Hospital;
-using static BookMyDoctor.Persistence.SeedDates;
+using BookMyDoctor.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookMyDoctor.Persistence;
 
 public sealed class HospitalRepo : IHospitalRepo
 {
-    private static readonly HospitalInfo SeedInfo = new(
-        "BookMyDoctor Hospital",
-        "1200 Riverside Medical Plaza, Austin, TX 78741",
-        "(512) 555-0140",
-        ["ECG room", "X-ray room", "Blood test lab", "Children's play area", "Breastfeeding room"],
-        "Free parking in the Riverside Medical Plaza garage for up to 2 hours.",
-        "5-minute walk from the Riverside bus stop (routes 7 and 20).");
+    private const int InfoRowId = 1;
 
-    private static readonly IReadOnlyList<HospitalHours> SeedHours =
-    [
-        .. Weekdays.Append(DayOfWeek.Saturday).Select(day => new HospitalHours(day, new TimeOnly(8, 0), new TimeOnly(19, 0)))
-    ];
+    private readonly IDbContextFactory<AppDbContext> _factory;
 
-    private static readonly IReadOnlyList<ServicePrice> SeedServicePrices =
-    [
-        new(Guid.Parse("50000001-0000-0000-0000-000000000000"), "ECG (electrocardiogram)", 45),
-        new(Guid.Parse("50000002-0000-0000-0000-000000000000"), "X-ray", 60),
-        new(Guid.Parse("50000003-0000-0000-0000-000000000000"), "Basic blood panel", 35),
-        new(Guid.Parse("50000004-0000-0000-0000-000000000000"), "Lipid profile (cholesterol)", 40),
-        new(Guid.Parse("50000005-0000-0000-0000-000000000000"), "Blood sugar (HbA1c) test", 30),
-        new(Guid.Parse("50000006-0000-0000-0000-000000000000"), "Allergy skin test", 120),
-        new(Guid.Parse("50000007-0000-0000-0000-000000000000"), "Wart or skin tag removal", 75),
-        new(Guid.Parse("50000008-0000-0000-0000-000000000000"), "Adult flu shot (September to March)", 25)
-    ];
+    public HospitalRepo(IDbContextFactory<AppDbContext> factory)
+    {
+        _factory = factory;
+    }
 
-    public HospitalInfo GetInfo() => SeedInfo;
+    public HospitalInfo GetInfo()
+    {
+        using var db = _factory.CreateDbContext();
+        var entity = db.HospitalInfo.AsNoTracking().FirstOrDefault(info => info.Id == InfoRowId);
+        return entity is null
+            ? new HospitalInfo("BookMyDoctor Hospital", "", "", [], "", "")
+            : new HospitalInfo(entity.Name, entity.Address, entity.Phone,
+                entity.Facilities.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                entity.Parking, entity.PublicTransport);
+    }
 
-    public IReadOnlyList<HospitalHours> GetHours() => SeedHours;
+    public IReadOnlyList<HospitalHours> GetHours()
+    {
+        using var db = _factory.CreateDbContext();
+        return db.HospitalHours
+            .AsNoTracking()
+            .ToList()
+            .OrderBy(hours => ((int)hours.Day + 6) % 7)   // Monday first
+            .Select(hours => new HospitalHours(hours.Day, hours.Opens, hours.Closes))
+            .ToList();
+    }
 
-    public IReadOnlyList<ServicePrice> GetServicePrices() => SeedServicePrices;
+    public IReadOnlyList<ServicePrice> GetServicePrices()
+    {
+        using var db = _factory.CreateDbContext();
+        return db.ServicePrices
+            .AsNoTracking()
+            .OrderBy(price => price.SortOrder)
+            .ToList()
+            .Select(price => new ServicePrice(price.Id, price.Name, price.Price))
+            .ToList();
+    }
+
+    public void Save(HospitalDetails details)
+    {
+        using var db = _factory.CreateDbContext();
+        using var transaction = db.Database.BeginTransaction();
+
+        var info = db.HospitalInfo.Find(InfoRowId);
+        if (info is null)
+        {
+            info = new HospitalInfoEntity { Id = InfoRowId, Name = details.Info.Name };
+            db.HospitalInfo.Add(info);
+        }
+        info.Name = details.Info.Name;
+        info.Address = details.Info.Address;
+        info.Phone = details.Info.Phone;
+        info.Facilities = string.Join('\n', details.Info.Facilities);
+        info.Parking = details.Info.Parking;
+        info.PublicTransport = details.Info.PublicTransport;
+
+        db.HospitalHours.ExecuteDelete();
+        db.HospitalHours.AddRange(details.Hours.Select(hours =>
+            new HospitalHoursEntity { Day = hours.Day, Opens = hours.Opens, Closes = hours.Closes }));
+
+        db.ServicePrices.ExecuteDelete();
+        db.ServicePrices.AddRange(details.ServicePrices.Select((price, i) => new ServicePriceEntity
+        {
+            Id = price.Id == Guid.Empty ? Guid.NewGuid() : price.Id,
+            Name = price.Name,
+            Price = price.Price,
+            SortOrder = i
+        }));
+
+        db.InsurancePlans.ExecuteDelete();
+        db.InsurancePlans.AddRange(details.InsurancePlans.Select((plan, i) => new InsurancePlanEntity
+        {
+            Id = plan.Id == Guid.Empty ? Guid.NewGuid() : plan.Id,
+            Name = plan.Name,
+            Restrictions = plan.Restrictions,
+            SortOrder = i
+        }));
+
+        db.SaveChanges();
+        transaction.Commit();
+    }
 }

@@ -1,5 +1,6 @@
 import { HubConnectionBuilder, LogLevel, type HubConnection } from "@microsoft/signalr";
-import type { ChatMessage } from "./chatApi";
+import type { ChatMessage } from "@/features/chats/chatApi";
+import { API_URL } from "@/shared/api/apiClient";
 
 // Method names must match ChatHub on the server.
 export const ChatHubEvents = {
@@ -20,7 +21,7 @@ export type BookingOptions = {
 export function createChatConnection(getToken: () => string): HubConnection {
   return new HubConnectionBuilder()
     // WebSockets can't send an Authorization header, so SignalR passes this as ?access_token=.
-    .withUrl("/hubs/chat", { accessTokenFactory: getToken })
+    .withUrl(`${API_URL}/hubs/chat`, { accessTokenFactory: getToken })
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Warning)
     .build();

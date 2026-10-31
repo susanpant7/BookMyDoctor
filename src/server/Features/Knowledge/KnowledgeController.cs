@@ -1,64 +1,92 @@
+using BookMyDoctor.Features.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookMyDoctor.Features.Knowledge;
 
-// Development-only endpoints for inspecting what the RAG pipeline sees.
+public sealed record DeleteKnowledgeResult(int Deleted);
+
 [ApiController]
+[Authorize(Roles = Roles.Admin)]
 [Route("api/knowledge")]
 public sealed class KnowledgeController : ControllerBase
 {
-    private readonly KnowledgeSources _sources;
-    private readonly IEmbedder _embedder;
-    private readonly IVectorStore _store;
-    private readonly IKnowledgeRetriever _retriever;
-    private readonly IWebHostEnvironment _environment;
+    private const long MaxFileBytes = 1_000_000;
 
-    public KnowledgeController(
-        KnowledgeSources sources,
-        IEmbedder embedder,
-        IVectorStore store,
-        IKnowledgeRetriever retriever,
-        IWebHostEnvironment environment)
+    private readonly IKnowledgeService _knowledgeService;
+
+    public KnowledgeController(IKnowledgeService knowledgeService)
     {
-        _sources = sources;
-        _embedder = embedder;
-        _store = store;
-        _retriever = retriever;
-        _environment = environment;
+        _knowledgeService = knowledgeService;
     }
 
-    // Shows which chunks a question retrieves, with their similarity scores.
+    [HttpGet("chunks")]
+    public ActionResult<IReadOnlyList<KnowledgeDocument>> GetChunks() => Ok(_knowledgeService.GetChunks());
+
+    // Shows which sections a question retrieves, with their similarity scores (before the minimum similarity is applied).
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string q, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<KnowledgeSearchResult>>> Search(
+        [FromQuery] string q, [FromQuery] int k = 5, CancellationToken cancellationToken = default)
     {
-        if (!_environment.IsDevelopment())
+        if (string.IsNullOrWhiteSpace(q) || q.Length > 500)
         {
-            return NotFound();
+            return BadRequest(new { message = "Provide a question of 1 to 500 characters in 'q'." });
         }
 
-        var results = await _retriever.SearchAsync(q, cancellationToken);
-        return Ok(new
+        try
         {
-            query = q,
-            indexedDocuments = _store.Count,
-            results = results.Select(result => new { score = Math.Round(result.Score, 3), result.Document.Id, result.Document.Text })
-        });
+            return Ok(await _knowledgeService.SearchAsync(q.Trim(), Math.Clamp(k, 1, 20), cancellationToken));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = ex.Message });
+        }
     }
 
-    [HttpGet("documents")]
-    public ActionResult<IReadOnlyList<KnowledgeDocument>> GetDocuments() =>
-        _environment.IsDevelopment() ? Ok(_sources.GetDocuments()) : NotFound();
-
-    // Shows what a query looks like as a vector: its length and first few numbers.
-    [HttpGet("embed")]
-    public async Task<IActionResult> Embed([FromQuery] string text, CancellationToken cancellationToken)
+    [HttpPost("upload")]
+    [RequestSizeLimit(20_000_000)]
+    public async Task<ActionResult<IReadOnlyList<UploadFileResult>>> Upload([FromForm] List<IFormFile> files, CancellationToken cancellationToken)
     {
-        if (!_environment.IsDevelopment())
+        if (files.Count == 0)
         {
-            return NotFound();
+            return BadRequest(new { message = "Select at least one file." });
         }
 
-        var vector = await _embedder.EmbedQueryAsync(text, cancellationToken);
-        return Ok(new { text, dimensions = vector.Length, preview = vector.Take(8) });
+        var uploaded = new List<UploadedFile>();
+        var rejected = new List<UploadFileResult>();
+        foreach (var file in files)
+        {
+            if (file.Length > MaxFileBytes)
+            {
+                rejected.Add(new UploadFileResult(Path.GetFileName(file.FileName), 0, "The file is larger than 1 MB."));
+                continue;
+            }
+
+            using var reader = new StreamReader(file.OpenReadStream());
+            uploaded.Add(new UploadedFile(Path.GetFileName(file.FileName), await reader.ReadToEndAsync(cancellationToken)));
+        }
+        return Ok((await _knowledgeService.UploadAsync(uploaded, cancellationToken)).Concat(rejected).ToList());
     }
+
+    [HttpPost("load-defaults")]
+    public async Task<ActionResult<IReadOnlyList<UploadFileResult>>> LoadDefaults(CancellationToken cancellationToken) =>
+        Ok(await _knowledgeService.LoadDefaultsAsync(cancellationToken));
+
+    [HttpPost("sync-doctors")]
+    public async Task<IActionResult> SyncDoctors(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _knowledgeService.SyncDoctorProfilesAsync(cancellationToken);
+            return NoContent();
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = $"Cannot reach Ollama ({ex.Message})." });
+        }
+    }
+
+    [HttpDelete("sources/{source}")]
+    public ActionResult<DeleteKnowledgeResult> DeleteSource(string source) =>
+        Ok(new DeleteKnowledgeResult(_knowledgeService.DeleteSource(source)));
 }

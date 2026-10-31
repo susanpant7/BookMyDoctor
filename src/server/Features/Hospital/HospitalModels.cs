@@ -24,3 +24,10 @@ public sealed record InsurancePlan(
     Guid Id,
     string Name,
     string? Restrictions);
+
+// Everything the Settings page edits in one go. Rows with an empty Id are new.
+public sealed record HospitalDetails(
+    HospitalInfo Info,
+    IReadOnlyList<HospitalHours> Hours,
+    IReadOnlyList<ServicePrice> ServicePrices,
+    IReadOnlyList<InsurancePlan> InsurancePlans);

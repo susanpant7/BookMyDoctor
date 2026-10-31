@@ -3,6 +3,7 @@ using System.Text.Json;
 using BookMyDoctor.Features.Appointments;
 using BookMyDoctor.Features.Chats.Tools;
 using BookMyDoctor.Features.Knowledge;
+using BookMyDoctor.Features.Settings;
 using BookMyDoctor.Persistence;
 using Microsoft.Extensions.Options;
 
@@ -15,6 +16,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
 
     private readonly HttpClient _http;
     private readonly OllamaOptions _options;
+    private readonly IAiSettingsProvider _settings;
     private readonly IChatService _chatService;
     private readonly IUsersRepo _usersRepo;
     private readonly IKnowledgeRetriever _retriever;
@@ -27,6 +29,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
     public OllamaChatAssistant(
         HttpClient http,
         IOptions<OllamaOptions> options,
+        IAiSettingsProvider settings,
         IChatService chatService,
         IUsersRepo usersRepo,
         IKnowledgeRetriever retriever,
@@ -38,6 +41,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
     {
         _http = http;
         _options = options.Value;
+        _settings = settings;
         _chatService = chatService;
         _usersRepo = usersRepo;
         _retriever = retriever;
@@ -52,7 +56,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
     {
         var name = _usersRepo.GetById(patientMessage.PatientId)?.Name ?? "there";
         // The patient's new message was already saved by the hub, so it's the last one here.
-        var history = RecentHistory(_chatService.GetMessages(patientMessage.PatientId), _options.MaxHistoryMessages);
+        var history = RecentHistory(_chatService.GetMessages(patientMessage.PatientId), _settings.Get().MaxHistoryMessages);
 
         // 1. Retrieve: find the knowledge chunks most related to what the patient just asked.
         var knowledge = await RetrieveAsync(patientMessage.Text);
@@ -108,7 +112,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
             }
         }
 
-        _transcripts.Save(patientMessage.PatientId, patientMessage.Id, toolMessages, _options.ToolHistoryTurns);
+        _transcripts.Save(patientMessage.PatientId, patientMessage.Id, toolMessages, _settings.Get().ToolHistoryTurns);
         return reply ?? "Sorry, I'm having trouble looking that up right now. Please try again.";
     }
 
@@ -155,9 +159,10 @@ public sealed class OllamaChatAssistant : IChatAssistant
     // line with the tool calls (if any) and timings. Text is shown in the draft as it arrives.
     private async Task<OllamaMessage> ChatAsync(IReadOnlyList<OllamaMessage> messages, IReadOnlyList<OllamaTool> tools, IReplyDraft? draft)
     {
+        var settings = _settings.Get();
         var request = new OllamaChatRequest(
-            _options.Model, messages, Stream: true, tools.Count == 0 ? null : tools,
-            new OllamaRequestOptions(_options.ContextSize, _options.Temperature), _options.KeepAlive);
+            settings.ChatModel, messages, Stream: true, tools.Count == 0 ? null : tools,
+            new OllamaRequestOptions(settings.ContextSize, settings.Temperature), _options.KeepAlive);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/chat") { Content = JsonContent.Create(request) };
         // ResponseHeadersRead: start reading as soon as Ollama starts sending, instead of waiting for the whole reply.
         using var response = await _http.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
@@ -240,7 +245,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
                 results.Count, string.Join(", ", results.Select(result => $"{result.Document.Id} ({result.Score:F3})")));
             return results;
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException)
         {
             // Still answer without knowledge rather than failing the whole reply.
             _logger.LogWarning(ex, "Knowledge retrieval failed; replying without it");
@@ -285,7 +290,8 @@ public sealed class OllamaChatAssistant : IChatAssistant
           as the reason (don't look up the times again). Then ask the patient to confirm the summary it gives you.
           When they say yes, call book_appointment with no arguments.
         - Never say an appointment is booked unless book_appointment replied "Booked", and then give the patient the reference.
-        - Never mention tools, functions or the information block to the patient; just answer naturally.
+        - Never mention tools, functions or the information block to the patient, and never describe what you are about
+          to look up; just look it up and answer naturally.
         """;
 
     // Attaches the retrieved knowledge to the patient's latest message (the "augment" step of RAG).

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Options;
+using BookMyDoctor.Features.Settings;
 
 namespace BookMyDoctor.Features.Knowledge;
 
@@ -12,13 +12,13 @@ public sealed class KnowledgeRetriever : IKnowledgeRetriever
 {
     private readonly IEmbedder _embedder;
     private readonly IVectorStore _store;
-    private readonly KnowledgeOptions _options;
+    private readonly IAiSettingsProvider _settings;
 
-    public KnowledgeRetriever(IEmbedder embedder, IVectorStore store, IOptions<KnowledgeOptions> options)
+    public KnowledgeRetriever(IEmbedder embedder, IVectorStore store, IAiSettingsProvider settings)
     {
         _embedder = embedder;
         _store = store;
-        _options = options.Value;
+        _settings = settings;
     }
 
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string text, CancellationToken cancellationToken = default)
@@ -29,9 +29,10 @@ public sealed class KnowledgeRetriever : IKnowledgeRetriever
         }
 
         var queryVector = await _embedder.EmbedQueryAsync(text, cancellationToken);
-        var results = _store.Search(queryVector, _options.Top, _options.MinScore);
+        var settings = _settings.Get();
+        var results = _store.Search(queryVector, settings.RetrievalTop, settings.RetrievalMinScore);
         return results.Count == 0
             ? results
-            : results.Where(result => result.Score >= results[0].Score - _options.MaxScoreGap).ToList();
+            : results.Where(result => result.Score >= results[0].Score - settings.RetrievalMaxScoreGap).ToList();
     }
 }

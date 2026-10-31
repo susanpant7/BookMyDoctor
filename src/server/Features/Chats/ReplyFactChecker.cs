@@ -1,21 +1,25 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using BookMyDoctor.Features.Chats.Tools;
 using BookMyDoctor.Features.Doctors;
 using BookMyDoctor.Persistence;
 
 namespace BookMyDoctor.Features.Chats;
 
-// Checks a reply before the patient sees it, for the most harmful kinds of made-up facts:
-// doctors who don't work here, prices that don't exist, and appointment times nobody looked up.
+// Checks a reply before the patient sees it, for the most harmful kinds of made-up facts (doctors who don't work
+// here, prices that don't exist, appointment times nobody looked up) and for replies that talk about the
+// assistant's internal tools or only promise to look something up instead of doing it.
 public sealed partial class ReplyFactChecker
 {
     private readonly IDoctorService _doctorService;
     private readonly IHospitalRepo _hospitalRepo;
+    private readonly IReadOnlyList<string> _toolNames;
 
-    public ReplyFactChecker(IDoctorService doctorService, IHospitalRepo hospitalRepo)
+    public ReplyFactChecker(IDoctorService doctorService, IHospitalRepo hospitalRepo, IEnumerable<IAssistantTool> tools)
     {
         _doctorService = doctorService;
         _hospitalRepo = hospitalRepo;
+        _toolNames = tools.Select(tool => tool.Name).ToList();
     }
 
     // Returns one sentence per problem found; empty when the reply looks fine.
@@ -24,6 +28,22 @@ public sealed partial class ReplyFactChecker
     public IReadOnlyList<string> FindProblems(string reply, IEnumerable<string> seenTexts)
     {
         var problems = FindNameAndPriceProblems(reply).ToList();
+
+        // Patients must never see internal names like get_available_slots, or talk of functions and tools.
+        var mentionedTools = _toolNames.Where(name => reply.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (mentionedTools.Count > 0 || ToolTalk().IsMatch(reply))
+        {
+            problems.Add(
+                "The reply talks about your internal tools" +
+                (mentionedTools.Count > 0 ? $" ({string.Join(", ", mentionedTools)})" : "") +
+                ". Never mention tools or functions to the patient.");
+        }
+
+        // "I'll check the free times…" as a final reply means nothing was looked up.
+        if (PromiseToLookUp().Match(reply) is { Success: true } promise)
+        {
+            problems.Add($"The reply says \"{promise.Value}\" but doesn't do it. Call the tool now and answer with the result.");
+        }
 
         var seenTimes = seenTexts.SelectMany(TimesIn).ToHashSet();
         foreach (var (text, time) in ClockTimes(reply))
@@ -125,6 +145,15 @@ public sealed partial class ReplyFactChecker
 
     [GeneratedRegex(@"\$\s?(?<amount>\d+(?:\.\d{1,2})?)")]
     private static partial Regex DollarAmount();
+
+    // "the function", "a tool", "function call", "call the ... function".
+    [GeneratedRegex(@"\b(?:function|functions|tool|tools|tool call)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex ToolTalk();
+
+    // "I'll look up…", "I will check…", "Let me find…", "I'm going to search…".
+    [GeneratedRegex(@"\b(?:I'll|I will|let me|I'm going to|I am going to)\s+(?:now\s+)?(?:look\s+up|look|check|call|find|search|fetch|get)\b[^.!?]*",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex PromiseToLookUp();
 
     // Either hour:minute (with an optional am/pm) or an hour with am/pm. Plain numbers like "12 years" don't match.
     [GeneratedRegex(@"\b(?<hour>[01]?\d|2[0-3])[:.](?<minute>[0-5]\d)(?:\s*(?<meridiem>[ap]\.?m\.?))?(?![\d])|\b(?<hour>1[0-2]|0?[1-9])\s*(?<meridiem>[ap]\.?m\.?)(?![a-z])", RegexOptions.IgnoreCase)]

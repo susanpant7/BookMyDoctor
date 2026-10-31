@@ -1,4 +1,4 @@
-import { api } from "../../shared/api";
+import { apiFetch } from "@/shared/api/apiClient";
 
 export type Appointment = {
   id: string;
@@ -11,9 +11,7 @@ export type Appointment = {
   bookedAt: string;
 };
 
-export function getMyAppointments() {
-  return api<Appointment[]>("/api/appointments");
-}
+export const getMyAppointments = () => apiFetch<Appointment[]>("/appointments");
 
 // Same format as BookingReference.For on the server, e.g. "BMD-61D3D31B".
 export function bookingReference(appointmentId: string) {
