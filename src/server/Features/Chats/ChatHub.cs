@@ -1,13 +1,13 @@
 using System.Text.RegularExpressions;
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Auth;
-using BookMyDoctor.Features.Chats.Tools;
-using BookMyDoctor.Features.Doctors;
-using BookMyDoctor.Features.Settings;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Chats.Tools;
+using MyHospitalAI.Features.Doctors;
+using MyHospitalAI.Features.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 [Authorize(Roles = Roles.Patient)]
 public sealed partial class ChatHub : Hub

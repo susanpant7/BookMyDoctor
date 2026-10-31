@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 /// <summary>The single row (Id 1) with the hospital's contact details.</summary>
 public class HospitalInfoEntity

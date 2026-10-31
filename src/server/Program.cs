@@ -1,14 +1,14 @@
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Auth;
-using BookMyDoctor.Features.Chats;
-using BookMyDoctor.Features.Chats.Tools;
-using BookMyDoctor.Features.Common;
-using BookMyDoctor.Features.Doctors;
-using BookMyDoctor.Features.Knowledge;
-using BookMyDoctor.Features.Settings;
-using BookMyDoctor.Features.Specialties;
-using BookMyDoctor.Features.Users;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Chats;
+using MyHospitalAI.Features.Chats.Tools;
+using MyHospitalAI.Features.Common;
+using MyHospitalAI.Features.Doctors;
+using MyHospitalAI.Features.Knowledge;
+using MyHospitalAI.Features.Settings;
+using MyHospitalAI.Features.Specialties;
+using MyHospitalAI.Features.Users;
+using MyHospitalAI.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 

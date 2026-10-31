@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Specialties;
+using MyHospitalAI.Features.Specialties;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public interface ISpecialtiesRepo
 {

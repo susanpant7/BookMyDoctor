@@ -1,10 +1,10 @@
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Doctors;
-using BookMyDoctor.Features.Hospital;
-using BookMyDoctor.Features.Specialties;
-using static BookMyDoctor.Persistence.SeedIds;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Doctors;
+using MyHospitalAI.Features.Hospital;
+using MyHospitalAI.Features.Specialties;
+using static MyHospitalAI.Persistence.SeedIds;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 // What the admin loads on Settings → Manage App Data.
 public static class DefaultData
@@ -55,7 +55,7 @@ public static class DefaultData
 
     public static HospitalDetails Hospital { get; } = new(
         new HospitalInfo(
-            "BookMyDoctor Hospital",
+            "MyHospitalAI Hospital",
             "1200 Riverside Medical Plaza, Austin, TX 78741",
             "(512) 555-0140",
             ["ECG room", "X-ray room", "Blood test lab", "Children's play area", "Breastfeeding room"],

@@ -1,6 +1,6 @@
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Auth;
+namespace MyHospitalAI.Features.Auth;
 
 public interface ITokenService
 {

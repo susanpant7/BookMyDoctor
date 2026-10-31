@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Hospital;
+namespace MyHospitalAI.Features.Hospital;
 
 public sealed record HospitalInfo(
     string Name,

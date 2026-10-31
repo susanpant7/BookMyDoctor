@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace BookMyDoctor.Features.Common;
+namespace MyHospitalAI.Features.Common;
 
 // The request is fine but clashes with existing data (a name already taken, a record still in use).
 public sealed class ConflictException(string message) : Exception(message);

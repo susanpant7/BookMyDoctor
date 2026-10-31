@@ -4,7 +4,7 @@ import { loginRequest, registerRequest, type AuthResponse } from "@/features/aut
 import { ApiError } from "@/shared/api/apiClient";
 import { clearToken, getToken, setToken } from "@/shared/api/token";
 
-const USER_KEY = "bookmydoctor.user";
+const USER_KEY = "myhospitalai.user";
 
 // Drops a saved session whose token is missing or has expired.
 function loadUser(): AuthUser | null {

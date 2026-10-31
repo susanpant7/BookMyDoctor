@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Users;
+namespace MyHospitalAI.Features.Users;
 
 public sealed record CreateUserRequest(string Name, string Email, string Password);
 

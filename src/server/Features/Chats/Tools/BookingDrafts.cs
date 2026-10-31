@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using BookMyDoctor.Features.Appointments;
+using MyHospitalAI.Features.Appointments;
 
-namespace BookMyDoctor.Features.Chats.Tools;
+namespace MyHospitalAI.Features.Chats.Tools;
 
 // Free times most recently shown to the patient for one doctor and day.
 public sealed record SlotOffer(Guid DoctorId, string DoctorName, DateOnly Date, IReadOnlyList<TimeSlot> Slots);

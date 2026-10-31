@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.Json;
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Doctors;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Doctors;
 
-namespace BookMyDoctor.Features.Chats.Tools;
+namespace MyHospitalAI.Features.Chats.Tools;
 
 public static class ToolArguments
 {

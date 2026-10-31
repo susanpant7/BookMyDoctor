@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Doctors;
+using MyHospitalAI.Features.Doctors;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public interface IDoctorsRepo
 {

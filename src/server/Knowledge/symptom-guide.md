@@ -9,7 +9,7 @@ For a headache or migraine in an adult, book General Practice. For a headache in
 For fever, cold, flu, runny nose, or cough in an adult, book General Practice. For the same symptoms in a child under 18, book Pediatrics. A fever in a baby younger than 3 months, a fever above 104°F (40°C), or a fever with difficulty breathing needs urgent care: call 911 or go to the emergency room.
 
 ## Sore throat and ear pain
-For a sore throat or ear pain in an adult, book General Practice. For a sore throat or ear infection in a child, book Pediatrics. BookMyDoctor does not offer ENT; General Practice can refer the patient if needed.
+For a sore throat or ear pain in an adult, book General Practice. For a sore throat or ear infection in a child, book Pediatrics. MyHospitalAI does not offer ENT; General Practice can refer the patient if needed.
 
 ## Stomach pain, nausea, vomiting and diarrhea
 For stomach pain, nausea, vomiting, acidity, constipation or diarrhea in an adult, book General Practice. For a child, book Pediatrics. Severe stomach pain that does not go away, vomiting blood, black stools, or signs of dehydration (very little urine, dizziness, dry mouth) need urgent care.
@@ -51,10 +51,10 @@ For seasonal allergies, sneezing or itchy eyes in an adult, book General Practic
 For any health problem in a baby, child or teenager under 18, book Pediatrics. This includes vaccinations, growth checks, school physicals, and childhood illnesses.
 
 ## Mental health, anxiety and depression
-BookMyDoctor does not offer psychiatry or psychology. For anxiety, low mood, stress or sleep problems, book General Practice, who can help and refer to a mental health specialist. If someone is thinking about harming themselves, call or text 988 (Suicide and Crisis Lifeline) or call 911 immediately.
+MyHospitalAI does not offer psychiatry or psychology. For anxiety, low mood, stress or sleep problems, book General Practice, who can help and refer to a mental health specialist. If someone is thinking about harming themselves, call or text 988 (Suicide and Crisis Lifeline) or call 911 immediately.
 
 ## Eye, teeth and women's health problems
-BookMyDoctor does not offer eye care, dentistry, or gynecology. For these problems, patients can book General Practice for initial advice and a referral to an outside specialist.
+MyHospitalAI does not offer eye care, dentistry, or gynecology. For these problems, patients can book General Practice for initial advice and a referral to an outside specialist.
 
 ## Not sure which specialty
 If the patient's symptom is not listed here or the patient is unsure, book General Practice. A general practitioner can examine the patient and refer to the right specialist.

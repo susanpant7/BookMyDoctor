@@ -1,11 +1,11 @@
 using System.Text.RegularExpressions;
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Doctors;
-using BookMyDoctor.Features.Hospital;
-using BookMyDoctor.Features.Specialties;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Doctors;
+using MyHospitalAI.Features.Hospital;
+using MyHospitalAI.Features.Specialties;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 // Where knowledge text comes from: the starting files shipped in the Knowledge folder, and three files generated from
 // the database: doctor-settings.md (a section per doctor), specialty-settings.md (a section per specialty) and
@@ -125,7 +125,7 @@ public sealed partial class KnowledgeSources
             doctor.Name,
             $"""
             ## {doctor.Name}
-            {doctor.Name} is a {doctor.Specialty} doctor at BookMyDoctor Hospital with {doctor.ExperienceYears} years of experience.
+            {doctor.Name} is a {doctor.Specialty} doctor at MyHospitalAI Hospital with {doctor.ExperienceYears} years of experience.
             Languages spoken: {string.Join(", ", doctor.Languages)}.
             Consultation fees: ${doctor.ConsultationFee:0.##} for a new visit, ${doctor.FollowUpFee:0.##} for a follow-up visit about the same problem within 30 days.
             Weekly hours: {hours} Exact free times depend on bookings and days off.
@@ -146,7 +146,7 @@ public sealed partial class KnowledgeSources
             specialty.Name,
             $"""
             ## {specialty.Name}
-            {specialty.Name} is a specialty at BookMyDoctor Hospital.{description}
+            {specialty.Name} is a specialty at MyHospitalAI Hospital.{description}
             {doctorNames}
             """);
     }

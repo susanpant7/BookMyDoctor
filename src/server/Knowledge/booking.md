@@ -1,10 +1,10 @@
 # Booking appointments
 
 ## How to book an appointment
-Patients can book an appointment in the BookMyDoctor app in two ways: by browsing doctors on the Doctors page and choosing a time, or by chatting with the Vaidya Mitra assistant, who can suggest the right doctor. A patient must be signed in to book. After booking, the appointment appears on the My Appointments page.
+Patients can book an appointment in the MyHospitalAI app in two ways: by browsing doctors on the Doctors page and choosing a time, or by chatting with the Vaidya Mitra assistant, who can suggest the right doctor. A patient must be signed in to book. After booking, the appointment appears on the My Appointments page.
 
 ## Appointment types
-BookMyDoctor offers two appointment types: a new consultation (first visit for a new problem) and a follow-up visit (for the same problem within 30 days, at a lower fee). Every appointment is in person at the hospital.
+MyHospitalAI offers two appointment types: a new consultation (first visit for a new problem) and a follow-up visit (for the same problem within 30 days, at a lower fee). Every appointment is in person at the hospital.
 
 ## How far ahead you can book
 Appointments can be booked up to 30 days in advance. The earliest appointment that can be booked online is 2 hours from the current time.
@@ -13,7 +13,7 @@ Appointments can be booked up to 30 days in advance. The earliest appointment th
 Appointment length depends on the doctor and is shown on each available slot, usually between 15 and 30 minutes. Follow-up visits are often shorter than a first consultation.
 
 ## Booking confirmation and reminders
-After booking, the patient sees a confirmation in the app with the doctor's name, date, time, and the hospital address. A reminder is sent 24 hours before the appointment and again 2 hours before. Each appointment has a booking reference number that starts with "BMD-".
+After booking, the patient sees a confirmation in the app with the doctor's name, date, time, and the hospital address. A reminder is sent 24 hours before the appointment and again 2 hours before. Each appointment has a booking reference number that starts with "MHA-".
 
 ## Rescheduling an appointment
 Patients can reschedule an appointment from the My Appointments page. Rescheduling is free if done at least 12 hours before the appointment time. An appointment can be rescheduled up to 2 times; after that, it must be cancelled and booked again.

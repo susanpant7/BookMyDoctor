@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public interface IUsersRepo
 {

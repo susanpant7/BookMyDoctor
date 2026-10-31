@@ -1,6 +1,6 @@
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Appointments;
+namespace MyHospitalAI.Features.Appointments;
 
 // Free slots = weekly schedule, minus days off, minus already-booked appointments, minus times too soon to book.
 public sealed class AvailabilityService : IAvailabilityService

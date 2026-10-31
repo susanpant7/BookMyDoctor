@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 public sealed record SearchResult(KnowledgeDocument Document, double Score);
 

@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 public sealed record ChatMessage(
     Guid Id,

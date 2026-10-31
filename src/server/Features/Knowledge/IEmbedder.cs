@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 // Turns text into vectors whose distance reflects meaning.
 // Documents and queries are embedded separately because some models (like nomic-embed-text) treat them differently.

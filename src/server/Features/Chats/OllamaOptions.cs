@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 // Where Ollama runs. The models and how they are used (prompt, temperature, history, retrieval, keep-alive) are on the
 // Settings page.

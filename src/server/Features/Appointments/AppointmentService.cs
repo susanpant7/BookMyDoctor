@@ -1,6 +1,6 @@
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Appointments;
+namespace MyHospitalAI.Features.Appointments;
 
 public sealed class AppointmentService : IAppointmentService
 {

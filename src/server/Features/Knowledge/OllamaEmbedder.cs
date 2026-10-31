@@ -1,7 +1,7 @@
-using BookMyDoctor.Features.Chats;
-using BookMyDoctor.Features.Settings;
+using MyHospitalAI.Features.Chats;
+using MyHospitalAI.Features.Settings;
 
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 public sealed class OllamaEmbedder : IEmbedder
 {

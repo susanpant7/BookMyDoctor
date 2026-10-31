@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace BookMyDoctor.Persistence.Migrations
+namespace MyHospitalAI.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class KnowledgeDocumentTitles : Migration

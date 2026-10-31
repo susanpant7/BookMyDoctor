@@ -1,8 +1,8 @@
-using BookMyDoctor.Features.Hospital;
-using BookMyDoctor.Persistence.Entities;
+using MyHospitalAI.Features.Hospital;
+using MyHospitalAI.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public sealed class HospitalRepo : IHospitalRepo
 {
@@ -26,7 +26,7 @@ public sealed class HospitalRepo : IHospitalRepo
         using var db = _factory.CreateDbContext();
         var entity = db.HospitalInfo.AsNoTracking().FirstOrDefault(info => info.Id == InfoRowId);
         return entity is null
-            ? new HospitalInfo("BookMyDoctor Hospital", "", "", [], "", "")
+            ? new HospitalInfo("MyHospitalAI Hospital", "", "", [], "", "")
             : new HospitalInfo(entity.Name, entity.Address, entity.Phone,
                 entity.Facilities.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
                 entity.Parking, entity.PublicTransport);

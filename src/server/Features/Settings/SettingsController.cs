@@ -1,8 +1,8 @@
-using BookMyDoctor.Features.Auth;
+using MyHospitalAI.Features.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BookMyDoctor.Features.Settings;
+namespace MyHospitalAI.Features.Settings;
 
 [ApiController]
 [Authorize(Roles = Roles.Admin)]

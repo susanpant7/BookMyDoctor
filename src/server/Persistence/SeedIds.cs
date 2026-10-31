@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 // Fixed ids shared by the seed data in each repo, so rows can reference each other (like foreign keys).
 public static class SeedIds

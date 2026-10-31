@@ -4,7 +4,7 @@
 Patients can cancel an appointment from the My Appointments page. Cancelling 24 hours or more before the appointment time is free and the full fee is refunded. Cancelling between 2 and 24 hours before the appointment gives a 50% refund. Cancelling less than 2 hours before the appointment, or not showing up, gives no refund.
 
 ## How refunds are paid
-Refunds are returned to the original payment method. Card refunds take 5 to 7 business days to appear on the statement. Refunds to the BookMyDoctor wallet are instant and can be used for the next booking.
+Refunds are returned to the original payment method. Card refunds take 5 to 7 business days to appear on the statement. Refunds to the MyHospitalAI wallet are instant and can be used for the next booking.
 
 ## Cancellation by the doctor or hospital
 If the doctor or hospital cancels an appointment, for example because the doctor is unwell, the patient receives a full refund automatically and is offered priority rebooking with the same doctor or another suitable doctor.

@@ -1,6 +1,6 @@
-using BookMyDoctor.Persistence.Entities;
+using MyHospitalAI.Persistence.Entities;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public interface ISettingsRepo
 {

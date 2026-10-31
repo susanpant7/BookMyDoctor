@@ -1,8 +1,8 @@
-using BookMyDoctor.Features.Auth;
+using MyHospitalAI.Features.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 public sealed record DeleteKnowledgeResult(int Deleted);
 

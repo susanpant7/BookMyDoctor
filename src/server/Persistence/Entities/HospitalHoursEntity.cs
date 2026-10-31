@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 /// <summary>Outpatient opening hours for one weekday; days without a row are closed.</summary>
 public class HospitalHoursEntity

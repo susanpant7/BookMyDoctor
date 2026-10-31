@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 // Ollama uses snake_case for tool fields, so those properties are named explicitly.
 public sealed record OllamaMessage(

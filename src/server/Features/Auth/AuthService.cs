@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
-namespace BookMyDoctor.Features.Auth;
+namespace MyHospitalAI.Features.Auth;
 
 public sealed class AuthService : IAuthService
 {

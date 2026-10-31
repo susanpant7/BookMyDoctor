@@ -1,10 +1,10 @@
-using BookMyDoctor.Features.Auth;
-using BookMyDoctor.Features.Common;
-using BookMyDoctor.Features.Knowledge;
+using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Common;
+using MyHospitalAI.Features.Knowledge;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BookMyDoctor.Features.Doctors;
+namespace MyHospitalAI.Features.Doctors;
 
 // Signed-in users only; changing doctors additionally needs the Admin role.
 [ApiController]

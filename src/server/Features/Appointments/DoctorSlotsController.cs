@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace BookMyDoctor.Features.Appointments;
+namespace MyHospitalAI.Features.Appointments;
 
 [ApiController]
 [Route("api/doctors/{doctorId:guid}/slots")]

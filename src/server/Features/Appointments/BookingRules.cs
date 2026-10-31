@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Appointments;
+namespace MyHospitalAI.Features.Appointments;
 
 // Mirrors the booking policy in Knowledge/booking.md.
 public static class BookingRules

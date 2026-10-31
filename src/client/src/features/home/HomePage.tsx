@@ -17,7 +17,7 @@ export default function HomePage() {
       <section className="text-center">
         <h1 className="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">Book your doctor, without the waiting</h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-stone-600">
-          BookMyDoctor Hospital: see our doctors, chat with an assistant that knows the hospital, and book a visit in minutes.
+          MyHospitalAI Hospital: see our doctors, chat with an assistant that knows the hospital, and book a visit in minutes.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           {user && (

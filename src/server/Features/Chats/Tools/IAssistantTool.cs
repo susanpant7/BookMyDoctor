@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace BookMyDoctor.Features.Chats.Tools;
+namespace MyHospitalAI.Features.Chats.Tools;
 
 // Who the tool is running for (from the signed-in patient's token, never from the model)
 // and which patient message this turn is answering.

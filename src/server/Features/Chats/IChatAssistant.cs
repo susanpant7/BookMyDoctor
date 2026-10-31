@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Chats.Tools;
+using MyHospitalAI.Features.Chats.Tools;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 // The final reply text, and the free times looked up for it (if any), which the chat shows as buttons.
 public sealed record AssistantReply(string Text, SlotOffer? SlotsShown = null);

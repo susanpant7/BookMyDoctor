@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Doctors;
+namespace MyHospitalAI.Features.Doctors;
 
 public sealed record Doctor(
     Guid Id,

@@ -1,8 +1,8 @@
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Persistence.Entities;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public sealed class AppointmentsRepo : IAppointmentsRepo
 {

@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 public class DoctorEntity
 {

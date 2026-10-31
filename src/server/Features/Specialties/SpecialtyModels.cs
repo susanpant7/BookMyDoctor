@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Specialties;
+namespace MyHospitalAI.Features.Specialties;
 
 public sealed record Specialty(Guid Id, string Name, string Description, int DoctorCount = 0);
 

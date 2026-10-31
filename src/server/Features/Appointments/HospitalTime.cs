@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Appointments;
+namespace MyHospitalAI.Features.Appointments;
 
 public static class HospitalTime
 {

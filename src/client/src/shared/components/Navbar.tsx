@@ -36,7 +36,7 @@ export default function Navbar() {
             <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600 text-white">
               <Stethoscope className="size-5" aria-hidden="true" />
             </span>
-            <span className="text-lg font-semibold tracking-tight text-stone-900">BookMyDoctor</span>
+            <span className="text-lg font-semibold tracking-tight text-stone-900">MyHospitalAI</span>
           </Link>
           <div className="flex items-center gap-1 overflow-x-auto">
             {links.map(({ to, label, end }) => (

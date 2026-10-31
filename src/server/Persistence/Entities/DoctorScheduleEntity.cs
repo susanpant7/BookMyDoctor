@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 /// <summary>A recurring weekly block when a doctor sees patients, in hospital-local time.</summary>
 public class DoctorScheduleEntity

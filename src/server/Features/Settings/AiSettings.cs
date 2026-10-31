@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace BookMyDoctor.Features.Settings;
+namespace MyHospitalAI.Features.Settings;
 
 // The settings the chat assistant, the embedder and the retriever read, parsed from the Settings table.
 public sealed record AiSettings(

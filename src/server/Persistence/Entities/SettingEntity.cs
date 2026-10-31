@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 /// <summary>One application setting. The value is always text.</summary>
 public class SettingEntity

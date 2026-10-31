@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 /// <summary>A patient. The admin is not a row here; it comes from configuration.</summary>
 public class UserEntity

@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Common;
+using MyHospitalAI.Features.Common;
 
-namespace BookMyDoctor.Features.Doctors;
+namespace MyHospitalAI.Features.Doctors;
 
 public interface IDoctorService
 {

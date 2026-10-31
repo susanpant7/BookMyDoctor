@@ -1,7 +1,7 @@
-using BookMyDoctor.Features.Common;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Common;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Specialties;
+namespace MyHospitalAI.Features.Specialties;
 
 public sealed class SpecialtyService : ISpecialtyService
 {

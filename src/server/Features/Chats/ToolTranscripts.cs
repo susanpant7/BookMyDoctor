@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 // The tool calls and results from each patient's recent turns. The chat history only stores what the patient
 // sees, so without this the model would forget the looked-up facts (doctors, fees, times) by the next message.

@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Appointments;
+using MyHospitalAI.Features.Appointments;
 
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 public class AppointmentEntity
 {

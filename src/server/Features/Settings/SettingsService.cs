@@ -1,8 +1,8 @@
 using System.Globalization;
-using BookMyDoctor.Persistence;
-using BookMyDoctor.Persistence.Entities;
+using MyHospitalAI.Persistence;
+using MyHospitalAI.Persistence.Entities;
 
-namespace BookMyDoctor.Features.Settings;
+namespace MyHospitalAI.Features.Settings;
 
 public sealed class SettingsService : ISettingsService
 {

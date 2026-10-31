@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Appointments;
+using MyHospitalAI.Features.Appointments;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public interface IDoctorSchedulesRepo
 {

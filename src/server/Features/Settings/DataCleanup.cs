@@ -1,9 +1,9 @@
-using BookMyDoctor.Features.Chats;
-using BookMyDoctor.Features.Chats.Tools;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Chats;
+using MyHospitalAI.Features.Chats.Tools;
+using MyHospitalAI.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookMyDoctor.Features.Settings;
+namespace MyHospitalAI.Features.Settings;
 
 // Deletes everything, leaving the database as empty as on a fresh start. The admin signs in from configuration, so
 // stays signed in, and loads the data again on Settings → Manage App Data.

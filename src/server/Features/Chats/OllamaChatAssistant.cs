@@ -1,12 +1,12 @@
 using System.Text;
 using System.Text.Json;
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Chats.Tools;
-using BookMyDoctor.Features.Knowledge;
-using BookMyDoctor.Features.Settings;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Chats.Tools;
+using MyHospitalAI.Features.Knowledge;
+using MyHospitalAI.Features.Settings;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 public sealed class OllamaChatAssistant : IChatAssistant
 {

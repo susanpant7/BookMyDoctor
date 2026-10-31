@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Auth;
+namespace MyHospitalAI.Features.Auth;
 
 public interface IAuthService
 {

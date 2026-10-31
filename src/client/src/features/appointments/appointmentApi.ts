@@ -13,7 +13,7 @@ export type Appointment = {
 
 export const getMyAppointments = () => apiFetch<Appointment[]>("/appointments");
 
-// Same format as BookingReference.For on the server, e.g. "BMD-61D3D31B".
+// Same format as BookingReference.For on the server, e.g. "MHA-61D3D31B".
 export function bookingReference(appointmentId: string) {
-  return `BMD-${appointmentId.replaceAll("-", "").slice(0, 8).toUpperCase()}`;
+  return `MHA-${appointmentId.replaceAll("-", "").slice(0, 8).toUpperCase()}`;
 }

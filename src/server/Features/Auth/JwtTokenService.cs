@@ -1,11 +1,11 @@
 using System.Security.Claims;
 using System.Text;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace BookMyDoctor.Features.Auth;
+namespace MyHospitalAI.Features.Auth;
 
 public sealed class JwtTokenService : ITokenService
 {

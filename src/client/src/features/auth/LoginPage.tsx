@@ -46,7 +46,7 @@ export default function LoginPage() {
             {registering ? "Create your account" : "Welcome back"}
           </h1>
           <p className="mt-2 text-sm text-stone-500">
-            {registering ? "Register as a patient to book doctors" : "Sign in to your BookMyDoctor account"}
+            {registering ? "Register as a patient to book doctors" : "Sign in to your MyHospitalAI account"}
           </p>
         </div>
 

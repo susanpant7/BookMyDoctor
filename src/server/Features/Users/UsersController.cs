@@ -1,9 +1,9 @@
-using BookMyDoctor.Features.Auth;
-using BookMyDoctor.Features.Common;
+using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BookMyDoctor.Features.Users;
+namespace MyHospitalAI.Features.Users;
 
 // Patients, managed by the admin.
 [ApiController]

@@ -1,5 +1,5 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/server/BookMyDoctor.csproj" />
+    <Project Path="src/server/MyHospitalAI.csproj" />
   </Folder>
 </Solution>

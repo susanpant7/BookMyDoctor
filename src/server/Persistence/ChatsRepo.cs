@@ -1,8 +1,8 @@
-using BookMyDoctor.Features.Chats;
-using BookMyDoctor.Persistence.Entities;
+using MyHospitalAI.Features.Chats;
+using MyHospitalAI.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public sealed class ChatsRepo : IChatsRepo
 {

@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Common;
+using MyHospitalAI.Features.Common;
 
-namespace BookMyDoctor.Features.Specialties;
+namespace MyHospitalAI.Features.Specialties;
 
 public interface ISpecialtyService
 {

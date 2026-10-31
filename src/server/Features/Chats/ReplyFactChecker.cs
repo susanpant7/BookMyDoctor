@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using BookMyDoctor.Features.Chats.Tools;
-using BookMyDoctor.Features.Doctors;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Chats.Tools;
+using MyHospitalAI.Features.Doctors;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 // Checks a reply before the patient sees it, for the most harmful kinds of made-up facts (doctors who don't work
 // here, prices that don't exist, appointment times nobody looked up) and for replies that talk about the
@@ -74,10 +74,10 @@ public sealed partial class ReplyFactChecker
     }
 
     // A reply may only say an appointment is booked when book_appointment booked it in this turn, or when it talks
-    // about a booking that already exists. References must be real ones (BMD-…).
+    // about a booking that already exists. References must be real ones (MHA-…).
     private static IEnumerable<string> FindBookingProblems(string reply, IReadOnlyList<string> seen, IReadOnlyList<string> turnResults)
     {
-        var bookedThisTurn = turnResults.Any(result => result.StartsWith("Booked. Reference BMD-", StringComparison.Ordinal));
+        var bookedThisTurn = turnResults.Any(result => result.StartsWith("Booked. Reference MHA-", StringComparison.Ordinal));
         var notBookedThisTurn = turnResults.Any(result =>
             result.StartsWith("NOT BOOKED YET", StringComparison.Ordinal) || result.StartsWith("Not booked:", StringComparison.Ordinal));
         var knownReferences = seen.SelectMany(text => BookingReferencePattern().Matches(text).Select(match => match.Value)).ToHashSet();
@@ -98,9 +98,9 @@ public sealed partial class ReplyFactChecker
 
         foreach (Match match in OtherReference().Matches(reply))
         {
-            if (!match.Groups["ref"].Value.StartsWith("BMD-", StringComparison.OrdinalIgnoreCase))
+            if (!match.Groups["ref"].Value.StartsWith("MHA-", StringComparison.OrdinalIgnoreCase))
             {
-                yield return $"\"{match.Groups["ref"].Value}\" is not a real booking reference. Real references look like BMD-61D3D31B and only come from book_appointment.";
+                yield return $"\"{match.Groups["ref"].Value}\" is not a real booking reference. Real references look like MHA-61D3D31B and only come from book_appointment.";
             }
         }
     }

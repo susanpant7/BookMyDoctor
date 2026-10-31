@@ -1,9 +1,9 @@
 # Preparing for your visit
 
 ## What to bring to an appointment
-For any appointment, bring a photo ID, your insurance card (if using insurance), a list of all current medicines with doses, any recent test reports, and your booking reference number (starts with "BMD-"). Arrive 10 minutes early to check in at reception.
+For any appointment, bring a photo ID, your insurance card (if using insurance), a list of all current medicines with doses, any recent test reports, and your booking reference number (starts with "MHA-"). Arrive 10 minutes early to check in at reception.
 
-## First visit at BookMyDoctor
+## First visit at MyHospitalAI
 On a first visit, the patient fills in a short health form at reception or in the app beforehand, covering medical history, allergies, current medicines, and emergency contact. Filling it in the app saves about 10 minutes at the hospital.
 
 ## Fasting before blood tests

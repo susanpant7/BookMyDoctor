@@ -1,12 +1,12 @@
 using System.Security.Claims;
 using System.Text;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace BookMyDoctor.Features.Auth;
+namespace MyHospitalAI.Features.Auth;
 
 public static class AuthSetup
 {

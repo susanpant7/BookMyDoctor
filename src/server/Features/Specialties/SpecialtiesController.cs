@@ -1,10 +1,10 @@
-using BookMyDoctor.Features.Auth;
-using BookMyDoctor.Features.Common;
-using BookMyDoctor.Features.Knowledge;
+using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Common;
+using MyHospitalAI.Features.Knowledge;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BookMyDoctor.Features.Specialties;
+namespace MyHospitalAI.Features.Specialties;
 
 [ApiController]
 [Route("api/specialties")]

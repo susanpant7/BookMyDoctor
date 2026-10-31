@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Settings;
+using MyHospitalAI.Features.Settings;
 
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 public interface IKnowledgeRetriever
 {

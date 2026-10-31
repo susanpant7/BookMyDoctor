@@ -1,8 +1,8 @@
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Common;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Common;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Doctors;
+namespace MyHospitalAI.Features.Doctors;
 
 public sealed class DoctorService : IDoctorService
 {

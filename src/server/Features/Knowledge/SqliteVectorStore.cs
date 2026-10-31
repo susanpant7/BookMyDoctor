@@ -1,10 +1,10 @@
 using System.Runtime.InteropServices;
-using BookMyDoctor.Persistence;
-using BookMyDoctor.Persistence.Entities;
+using MyHospitalAI.Persistence;
+using MyHospitalAI.Persistence.Entities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 // Keeps the documents and their vectors in the KnowledgeChunks table and searches them with sqlite-vec.
 public sealed class SqliteVectorStore : IVectorStore

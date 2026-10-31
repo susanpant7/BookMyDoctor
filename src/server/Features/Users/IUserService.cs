@@ -1,7 +1,7 @@
-using BookMyDoctor.Features.Auth;
-using BookMyDoctor.Features.Common;
+using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Common;
 
-namespace BookMyDoctor.Features.Users;
+namespace MyHospitalAI.Features.Users;
 
 public interface IUserService
 {

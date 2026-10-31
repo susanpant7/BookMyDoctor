@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 /// <summary>One section of a knowledge file (uploaded, or generated: doctor-settings.md, hospital-settings.md), with its embedding for similarity search.</summary>
 public class KnowledgeChunkEntity

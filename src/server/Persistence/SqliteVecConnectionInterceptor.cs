@@ -2,7 +2,7 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 // Loads the sqlite-vec extension into every SQLite connection EF Core opens.
 public sealed class SqliteVecConnectionInterceptor : DbConnectionInterceptor

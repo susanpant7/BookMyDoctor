@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Auth;
+namespace MyHospitalAI.Features.Auth;
 
 public sealed record User(Guid Id, string Name, string Email);
 

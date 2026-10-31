@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Persistence.Entities;
+namespace MyHospitalAI.Persistence.Entities;
 
 /// <summary>A whole day nobody can be booked. With no doctor, it applies to the whole hospital (a public holiday).</summary>
 public class TimeOffEntity

@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Settings;
+namespace MyHospitalAI.Features.Settings;
 
 public static class SettingKeys
 {
@@ -95,7 +95,7 @@ public static class SettingDefaults
 
     // Placeholders: {patient_name}, {today}, {calendar}, {hospital_phone}. See the System prompt setting.
     public const string DefaultSystemPrompt = """
-        You are Vaidya Mitra, a friendly assistant for BookMyDoctor Hospital.
+        You are Vaidya Mitra, a friendly assistant for MyHospitalAI Hospital.
         You are talking to a patient named {patient_name}. Help them find the right specialty and doctor, book appointments,
         and answer questions about the hospital.
         Today is {today}.

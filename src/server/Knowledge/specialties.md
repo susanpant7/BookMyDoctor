@@ -31,10 +31,10 @@ Before an orthopedic visit, wear loose clothing so the painful area can be exami
 General Practice (family medicine) covers everyday health problems in adults and is the first point of contact for most concerns. A general practitioner treats fever, cold and flu, cough, sore throat, headache and migraine, stomach pain, nausea, diarrhea, urinary infections, tiredness, mild allergies and minor injuries. General Practice also manages long-term conditions like diabetes and thyroid problems, does yearly health checkups, routine prescription refills and adult flu shots, writes medical certificates, and refers patients to specialists.
 
 ## General Practice – when to start here
-If a patient is not sure which specialty they need, General Practice is the best place to start. A general practitioner can examine the patient, order basic tests, and refer the patient to Cardiology, Dermatology, Orthopedics or Pediatrics if specialist care is needed. A referral is not required to book a specialist at BookMyDoctor.
+If a patient is not sure which specialty they need, General Practice is the best place to start. A general practitioner can examine the patient, order basic tests, and refer the patient to Cardiology, Dermatology, Orthopedics or Pediatrics if specialist care is needed. A referral is not required to book a specialist at MyHospitalAI.
 
 ## Choosing between General Practice and a specialist
 For a new problem that is not clearly about the heart, skin, bones or a child, start with General Practice. Go directly to a specialist when the problem clearly belongs to that specialty: a skin rash to Dermatology, knee pain after sport to Orthopedics, palpitations to Cardiology, or a sick child to Pediatrics.
 
-## Specialties BookMyDoctor does not offer
-BookMyDoctor does not offer neurology, psychiatry or psychology, gynecology, dentistry, eye care (ophthalmology), ENT (ear, nose and throat), or oncology. For these needs, patients can book General Practice for initial advice and a referral to an outside specialist.
+## Specialties MyHospitalAI does not offer
+MyHospitalAI does not offer neurology, psychiatry or psychology, gynecology, dentistry, eye care (ophthalmology), ENT (ear, nose and throat), or oncology. For these needs, patients can book General Practice for initial advice and a referral to an outside specialist.

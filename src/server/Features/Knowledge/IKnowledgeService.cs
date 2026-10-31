@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 public sealed record UploadedFile(string FileName, string Text);
 

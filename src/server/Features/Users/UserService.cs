@@ -1,10 +1,10 @@
 using System.Net.Mail;
-using BookMyDoctor.Features.Auth;
-using BookMyDoctor.Features.Common;
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Common;
+using MyHospitalAI.Persistence;
 using Microsoft.AspNetCore.Identity;
 
-namespace BookMyDoctor.Features.Users;
+namespace MyHospitalAI.Features.Users;
 
 public sealed class UserService : IUserService
 {

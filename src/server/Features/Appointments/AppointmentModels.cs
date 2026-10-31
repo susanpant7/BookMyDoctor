@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace BookMyDoctor.Features.Appointments;
+namespace MyHospitalAI.Features.Appointments;
 
 [JsonConverter(typeof(JsonStringEnumConverter<AppointmentStatus>))]
 public enum AppointmentStatus

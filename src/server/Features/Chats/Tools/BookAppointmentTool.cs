@@ -1,8 +1,8 @@
 using System.Text.Json;
-using BookMyDoctor.Features.Appointments;
-using BookMyDoctor.Features.Doctors;
+using MyHospitalAI.Features.Appointments;
+using MyHospitalAI.Features.Doctors;
 
-namespace BookMyDoctor.Features.Chats.Tools;
+namespace MyHospitalAI.Features.Chats.Tools;
 
 // Books in two steps so the patient always confirms first, whatever the model does:
 //   1. A call with a time only checks it is free, remembers it as pending, and asks the model to confirm.

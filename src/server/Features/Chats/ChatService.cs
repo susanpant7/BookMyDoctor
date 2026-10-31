@@ -1,6 +1,6 @@
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 public sealed class ChatService : IChatService
 {

@@ -1,4 +1,4 @@
-# BookMyDoctor
+# MyHospitalAI
 
 A hospital booking app. Patients browse doctors, chat with an AI assistant (Vaidya Mitra, RAG over the hospital's knowledge) and book appointments. An admin signs in to manage the data the app runs on.
 
@@ -17,10 +17,10 @@ ollama pull qwen2.5:7b
 ollama pull nomic-embed-text
 ```
 
-API (http://localhost:5080). The database is created and migrated at startup, at `src/server/data/bookmydoctor.db`:
+API (http://localhost:5080). The database is created and migrated at startup, at `src/server/data/myhospitalai.db`:
 
 ```bash
-dotnet run --project src/server/BookMyDoctor.csproj
+dotnet run --project src/server/MyHospitalAI.csproj
 ```
 
 Client (http://localhost:5173, proxies `/api` and `/hubs` to the API):

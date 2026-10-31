@@ -1,6 +1,6 @@
-using BookMyDoctor.Persistence;
+using MyHospitalAI.Persistence;
 
-namespace BookMyDoctor.Features.Chats;
+namespace MyHospitalAI.Features.Chats;
 
 // Placeholder assistant; replace with the AI booking agent later.
 public sealed class GreetingChatAssistant : IChatAssistant

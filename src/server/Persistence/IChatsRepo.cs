@@ -1,6 +1,6 @@
-using BookMyDoctor.Features.Chats;
+using MyHospitalAI.Features.Chats;
 
-namespace BookMyDoctor.Persistence;
+namespace MyHospitalAI.Persistence;
 
 public interface IChatsRepo
 {

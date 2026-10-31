@@ -1,4 +1,4 @@
-namespace BookMyDoctor.Features.Settings;
+namespace MyHospitalAI.Features.Settings;
 
 public interface ISettingsService : IAiSettingsProvider
 {

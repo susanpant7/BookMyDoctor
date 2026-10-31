@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BookMyDoctor.Features.Knowledge;
+namespace MyHospitalAI.Features.Knowledge;
 
 // One self-contained piece of text that can be embedded and retrieved for RAG.
 public sealed record KnowledgeDocument(
