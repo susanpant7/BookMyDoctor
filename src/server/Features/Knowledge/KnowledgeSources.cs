@@ -68,15 +68,46 @@ public sealed partial class KnowledgeSources
                 _hospitalRepo.GetInfo(), _hospitalRepo.GetHours(), _hospitalRepo.GetServicePrices())).ToList();
 
     // Each "## " section becomes one document. The heading stays in the text so the chunk makes sense on its own.
-    internal static IEnumerable<KnowledgeDocument> SplitMarkdown(string fileName, string markdown) =>
-        SectionStart().Split(markdown.ReplaceLineEndings("\n"))
+    // The file's "# " line, if any, is its title.
+    internal static IEnumerable<KnowledgeDocument> SplitMarkdown(string fileName, string markdown)
+    {
+        markdown = markdown.ReplaceLineEndings("\n");
+        var documentTitle = DocumentTitleLine().Match(markdown) is { Success: true } match
+            ? match.Groups["title"].Value.Trim()
+            : TitleFor(fileName);
+        return SectionStart().Split(markdown)
             .Where(part => part.StartsWith("## "))
             .Select(part => part.Trim())
-            .Select(section =>
+            .Select((section, position) =>
             {
                 var title = section[3..(section.IndexOf('\n') is var end and >= 0 ? end : section.Length)].Trim();
-                return new KnowledgeDocument($"{fileName}#{Slug(title)}", fileName, title, section);
+                return new KnowledgeDocument($"{fileName}#{Slug(title)}", fileName, title, section, documentTitle, position);
             });
+    }
+
+    // The generated files have no "# " line, so their titles are fixed here.
+    private static readonly IReadOnlyDictionary<string, string> GeneratedTitles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        [DoctorSettingsSource] = "Doctors (from settings)",
+        [SpecialtySettingsSource] = "Specialties (from settings)",
+        [HospitalSettingsSource] = "Hospital details (from settings)"
+    };
+
+    // The title of a file with no "# " line: a generated file's fixed title, otherwise its name, "visit-notes.md" -> "Visit notes".
+    public static string TitleFor(string fileName)
+    {
+        if (GeneratedTitles.TryGetValue(fileName, out var title))
+        {
+            return title;
+        }
+        var words = Path.GetFileNameWithoutExtension(fileName).Replace('-', ' ').Replace('_', ' ').Trim();
+        return words.Length == 0 ? fileName : char.ToUpperInvariant(words[0]) + words[1..];
+    }
+
+    // The file name for a new document: "Visiting hours" -> "visiting-hours.md". A title without any a–z or 0–9
+    // (e.g. written in Nepali) gets a made-up name; the title itself is stored and shown instead.
+    public static string FileNameFor(string title) =>
+        Slug(title) is { Length: > 0 } slug ? $"{slug}.md" : $"document-{Guid.NewGuid().ToString("N")[..8]}.md";
 
     internal static KnowledgeDocument DoctorSection(Doctor doctor, IReadOnlyList<DoctorSchedule> schedule)
     {
@@ -169,6 +200,9 @@ public sealed partial class KnowledgeSources
 
     [GeneratedRegex(@"\n(?=## )")]
     private static partial Regex SectionStart();
+
+    [GeneratedRegex(@"^# (?<title>.+)$", RegexOptions.Multiline)]
+    private static partial Regex DocumentTitleLine();
 
     [GeneratedRegex("[^a-z0-9]+")]
     private static partial Regex NonAlphanumeric();

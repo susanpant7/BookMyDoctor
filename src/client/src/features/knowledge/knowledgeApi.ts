@@ -6,7 +6,13 @@ export type KnowledgeChunk = {
   source: string;
   title: string;
   text: string;
+  // The whole file's title, e.g. "Cancellations and refunds".
+  documentTitle: string;
+  position: number;
 };
+
+// A section as written on the page: its name and details, without the "## " heading line.
+export type KnowledgeSection = { title: string; text: string };
 
 export type UploadFileResult = {
   fileName: string;
@@ -42,3 +48,13 @@ export const deleteKnowledgeSource = (source: string) =>
 
 export const searchKnowledge = (query: string) =>
   apiFetch<KnowledgeSearchResult[]>(`/knowledge/search?q=${encodeURIComponent(query)}&k=5`);
+
+// Saves a file written as a title and sections. fileName is null for a new file (the server makes it from the title).
+export const saveKnowledgeDocument = (document: { fileName: string | null; title: string; sections: KnowledgeSection[] }) =>
+  apiFetch<UploadFileResult>("/knowledge/documents", { method: "PUT", body: JSON.stringify(document) });
+
+// The sections of one file, in order, with the heading line taken off the text.
+export const sectionsOf = (chunks: KnowledgeChunk[], source: string): KnowledgeSection[] =>
+  chunks
+    .filter((chunk) => chunk.source === source)
+    .map((chunk) => ({ title: chunk.title, text: chunk.text.replace(/^## .*\n?/, "").trim() }));

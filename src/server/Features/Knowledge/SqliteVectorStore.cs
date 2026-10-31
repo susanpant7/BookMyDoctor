@@ -65,8 +65,9 @@ public sealed class SqliteVectorStore : IVectorStore
         using var db = _factory.CreateDbContext();
         return db.KnowledgeChunks
             .AsNoTracking()
-            .OrderBy(chunk => chunk.Source).ThenBy(chunk => chunk.IngestedAt).ThenBy(chunk => chunk.Id)
-            .Select(chunk => new KnowledgeDocument(chunk.Id, chunk.Source, chunk.Title, chunk.Text))
+            .OrderBy(chunk => chunk.Source).ThenBy(chunk => chunk.Position).ThenBy(chunk => chunk.IngestedAt).ThenBy(chunk => chunk.Id)
+            .ToList()
+            .Select(chunk => new KnowledgeDocument(chunk.Id, chunk.Source, chunk.Title, chunk.Text, chunk.DocumentTitle, chunk.Position))
             .ToList();
     }
 
@@ -108,6 +109,8 @@ public sealed class SqliteVectorStore : IVectorStore
             Title = item.Document.Title,
             Text = item.Document.Text,
             ContentHash = item.Document.Hash,
+            DocumentTitle = item.Document.DocumentTitle,
+            Position = item.Document.Position,
             Embedding = MemoryMarshal.AsBytes(item.Vector.AsSpan()).ToArray(),
             IngestedAt = now
         }));

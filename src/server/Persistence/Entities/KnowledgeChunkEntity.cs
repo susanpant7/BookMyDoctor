@@ -12,6 +12,12 @@ public class KnowledgeChunkEntity
     public required string Title { get; set; }
     public required string Text { get; set; }
 
+    /// <summary>The title of the whole file (its "# " line), e.g. "Cancellations and refunds". Empty for generated files.</summary>
+    public string DocumentTitle { get; set; } = "";
+
+    /// <summary>Where the section is in its file (0 = first), so the file can be shown and edited in its own order.</summary>
+    public int Position { get; set; }
+
     /// <summary>SHA-256 of the text, used to skip chunks that have not changed.</summary>
     public required string ContentHash { get; set; }
 

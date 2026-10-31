@@ -22,7 +22,28 @@ public sealed class KnowledgeService : IKnowledgeService
         _logger = logger;
     }
 
-    public IReadOnlyList<KnowledgeDocument> GetChunks() => _store.GetAll();
+    // Sections stored before titles and positions were saved have no title. For those, the title and order come from
+    // the file's own "# " line and sections: the bundled file of the same name, or the fixed title of a generated file.
+    public IReadOnlyList<KnowledgeDocument> GetChunks()
+    {
+        var chunks = _store.GetAll();
+        if (chunks.All(chunk => chunk.DocumentTitle.Length > 0))
+        {
+            return chunks;
+        }
+
+        var bundled = _sources.GetBundledFiles()
+            .SelectMany(file => KnowledgeSources.SplitMarkdown(file.FileName, file.Text))
+            .ToDictionary(document => document.Id);
+        return chunks
+            .Select(chunk => chunk.DocumentTitle.Length > 0
+                ? chunk
+                : bundled.TryGetValue(chunk.Id, out var original)
+                    ? chunk with { DocumentTitle = original.DocumentTitle, Position = original.Position }
+                    : chunk with { DocumentTitle = KnowledgeSources.TitleFor(chunk.Source) })
+            .OrderBy(chunk => chunk.Source).ThenBy(chunk => chunk.Position)
+            .ToList();
+    }
 
     public async Task<IReadOnlyList<UploadFileResult>> UploadAsync(IReadOnlyList<UploadedFile> files, CancellationToken cancellationToken = default)
     {
@@ -55,6 +76,40 @@ public sealed class KnowledgeService : IKnowledgeService
             _store.ReplaceSource(fileName, items);
         }
         return results;
+    }
+
+    public async Task<UploadFileResult> SaveDocumentAsync(SaveKnowledgeDocumentRequest request, CancellationToken cancellationToken = default)
+    {
+        var title = request.Title.Trim();
+        if (title.Length == 0 || title.Length > 100 || title.Contains('\n'))
+        {
+            throw new ArgumentException("The title is required, on one line, and can be up to 100 characters.");
+        }
+        if (request.Sections.Count == 0)
+        {
+            throw new ArgumentException("Add at least one section.");
+        }
+        foreach (var section in request.Sections)
+        {
+            if (section.Title.Trim().Length == 0 || section.Title.Contains('\n') || section.Text.Trim().Length == 0)
+            {
+                throw new ArgumentException("Every section needs a name (on one line) and some details.");
+            }
+            // A line starting with "## " would split the section in two when the file is read back.
+            if (section.Text.ReplaceLineEndings("\n").Split('\n').Any(line => line.StartsWith("# ") || line.StartsWith("## ")))
+            {
+                throw new ArgumentException($"The details of '{section.Title.Trim()}' have a line starting with '#'. Remove the '#'.");
+            }
+        }
+
+        var fileName = request.FileName ?? KnowledgeSources.FileNameFor(title);
+        if (request.FileName is null && _store.GetHashes(fileName).Count > 0)
+        {
+            throw new ArgumentException($"There is already a knowledge file called '{title}'. Choose another title, or edit that one.");
+        }
+
+        var markdown = $"# {title}\n\n" + string.Join("\n\n", request.Sections.Select(section => $"## {section.Title.Trim()}\n{section.Text.Trim()}"));
+        return (await UploadAsync([new UploadedFile(fileName, markdown)], cancellationToken))[0];
     }
 
     public Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default) =>

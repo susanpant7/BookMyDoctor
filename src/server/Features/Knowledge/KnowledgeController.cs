@@ -68,6 +68,11 @@ public sealed class KnowledgeController : ControllerBase
         return Ok((await _knowledgeService.UploadAsync(uploaded, cancellationToken)).Concat(rejected).ToList());
     }
 
+    // Saves a file written on the page as a title and sections (new, or an edit of an existing one).
+    [HttpPut("documents")]
+    public async Task<ActionResult<UploadFileResult>> SaveDocument(SaveKnowledgeDocumentRequest request, CancellationToken cancellationToken) =>
+        Ok(await _knowledgeService.SaveDocumentAsync(request, cancellationToken));
+
     [HttpPost("load-defaults")]
     public async Task<ActionResult<IReadOnlyList<UploadFileResult>>> LoadDefaults(CancellationToken cancellationToken) =>
         Ok(await _knowledgeService.LoadDefaultsAsync(cancellationToken));

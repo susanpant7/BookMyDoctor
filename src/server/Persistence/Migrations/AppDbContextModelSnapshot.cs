@@ -206,12 +206,19 @@ namespace BookMyDoctor.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DocumentTitle")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<byte[]>("Embedding")
                         .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<DateTime>("IngestedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Source")
                         .IsRequired()

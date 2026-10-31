@@ -5,6 +5,12 @@ public sealed record UploadedFile(string FileName, string Text);
 // Sections is how many were stored; Error is set instead when the file was rejected.
 public sealed record UploadFileResult(string FileName, int Sections, string? Error);
 
+// A knowledge file written on the Knowledge page: a title and its sections, without any Markdown.
+// FileName is set when editing an existing file, and left out for a new one (it is made from the title).
+public sealed record SaveKnowledgeDocumentRequest(string? FileName, string Title, IReadOnlyList<KnowledgeSectionInput> Sections);
+
+public sealed record KnowledgeSectionInput(string Title, string Text);
+
 public sealed record KnowledgeSearchResult(double Score, string Id, string Source, string Title, string Text);
 
 public interface IKnowledgeService
@@ -14,6 +20,10 @@ public interface IKnowledgeService
     // Stores the sections of each Markdown file, replacing the file's earlier sections. Every file is checked and
     // embedded first, so a bad file changes nothing.
     Task<IReadOnlyList<UploadFileResult>> UploadAsync(IReadOnlyList<UploadedFile> files, CancellationToken cancellationToken = default);
+
+    // Saves a file written as a title and sections, replacing its earlier sections like an upload. Throws
+    // ArgumentException for missing or clashing titles; problems from the upload checks come back in the result's Error.
+    Task<UploadFileResult> SaveDocumentAsync(SaveKnowledgeDocumentRequest request, CancellationToken cancellationToken = default);
 
     // Uploads the starting files shipped with the app.
     Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default);
