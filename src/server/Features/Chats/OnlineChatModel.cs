@@ -11,7 +11,8 @@ namespace MyHospitalAI.Features.Chats;
 
 // A model run by an online service (Gemini, Grok, Groq, OpenRouter, ...). They all accept the OpenAI chat format:
 // POST {Chat API address}/chat/completions with "Authorization: Bearer <key>", and stream the reply as server-sent
-// events. The key is AI_API_KEY from the environment (the .env file); it is never logged or stored.
+// events. The key is the .env variable named by the "Chat API key name" setting (see AiProviders.KeyNameInUse); it
+// is never logged or stored.
 public sealed class OnlineChatModel : IChatModel
 {
     private readonly HttpClient _http;
@@ -30,12 +31,13 @@ public sealed class OnlineChatModel : IChatModel
     {
         // Named by its host in the logs, e.g. api.groq.com.
         var service = new Uri(settings.ChatBaseUrl).Host;
-        var key = _configuration[AiProviders.ApiKeyName];
-        if (string.IsNullOrWhiteSpace(key))
+        var keyName = AiProviders.KeyNameInUse(_configuration, false, settings.ChatApiKeyName, settings.ChatBaseUrl);
+        var key = AiProviders.ReadKey(_configuration, keyName);
+        if (key is null)
         {
             _logger.LogWarning("The Chat API address is {Service}, but {KeyName} is not set. Add it to the .env file and restart the server.",
-                service, AiProviders.ApiKeyName);
-            throw new HttpRequestException($"{AiProviders.ApiKeyName} is not set.");
+                service, keyName);
+            throw new HttpRequestException($"{keyName} is not set in the .env file. Set it and restart the server.");
         }
 
         var body = new JsonObject
@@ -62,9 +64,11 @@ public sealed class OnlineChatModel : IChatModel
         {
             var detail = await response.Content.ReadAsStringAsync();
             _logger.LogWarning("{Service} returned {Status} for model {Model}: {Problem} {Detail}",
-                service, (int)response.StatusCode, settings.ChatModel, Explain(response.StatusCode),
+                service, (int)response.StatusCode, settings.ChatModel, Explain(response.StatusCode, detail, keyName),
                 detail.Length > 500 ? detail[..500] : detail);
-            throw new HttpRequestException($"{service} returned {(int)response.StatusCode}.", null, response.StatusCode);
+            throw new HttpRequestException(
+                $"{service} returned {(int)response.StatusCode}. {Explain(response.StatusCode, detail, keyName)} {AiProviders.ErrorDetail(detail)}".TrimEnd(),
+                null, response.StatusCode);
         }
 
         // Each event is a line "data: {json}" with the next piece of text or of a tool call; the last is "data: [DONE]".
@@ -93,7 +97,7 @@ public sealed class OnlineChatModel : IChatModel
             if (chunk.Error?.Message is { } error)
             {
                 _logger.LogWarning("{Service} failed while answering: {Error}", service, error);
-                throw new HttpRequestException($"{service} failed while answering.");
+                throw new HttpRequestException($"{service} failed while answering: {error}");
             }
 
             var delta = chunk.Choices?.FirstOrDefault()?.Delta;
@@ -147,12 +151,18 @@ public sealed class OnlineChatModel : IChatModel
                     {
                         unanswered.Enqueue(id);
                     }
-                    calls.Add(new JsonObject
+                    var entry = new JsonObject
                     {
                         ["id"] = id,
                         ["type"] = "function",
                         ["function"] = new JsonObject { ["name"] = call.Function.Name, ["arguments"] = call.Function.Arguments.GetRawText() }
-                    });
+                    };
+                    // Sent back exactly as the service gave it; Gemini refuses the conversation without its thought_signature.
+                    if (call.Extra is { } extra)
+                    {
+                        entry["extra_content"] = JsonNode.Parse(extra.GetRawText());
+                    }
+                    calls.Add(entry);
                 }
                 item["tool_calls"] = calls;
                 // Some services refuse an empty text next to tool calls.
@@ -185,13 +195,17 @@ public sealed class OnlineChatModel : IChatModel
         return added;
     }
 
-    private static string Explain(HttpStatusCode status) => status switch
+    // Gemini answers a wrong key with 400, so the reply is checked for "API key" too.
+    private static string Explain(HttpStatusCode status, string detail, string keyName) => status switch
     {
+        _ when detail.Contains("API key", StringComparison.OrdinalIgnoreCase) =>
+            $"The key was refused: check that {keyName} in the .env file is a whole, valid key for this service, then restart the server.",
         HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
-            $"The key was refused: check that {AiProviders.ApiKeyName} in the .env file is a key for this service.",
+            $"The key was refused: check that {keyName} in the .env file is a key for this service.",
         HttpStatusCode.NotFound =>
             "The model or the address was not found: check the Chat model and the Chat API address on the Settings page against the service's current list.",
         HttpStatusCode.TooManyRequests => "The rate limit or the free daily limit was reached: wait, or switch to another service.",
+        HttpStatusCode.ServiceUnavailable => "The service is overloaded (often only for a few minutes): try again later, or use another model.",
         HttpStatusCode.BadRequest => "The request was refused; the model may not support tool calling.",
         _ => ""
     };
@@ -200,6 +214,7 @@ public sealed class OnlineChatModel : IChatModel
     {
         private readonly StringBuilder _arguments = new();
         private string _name = "";
+        private JsonElement? _extra;
 
         public int? Index { get; } = index;
         public string? Id { get; private set; }
@@ -212,6 +227,10 @@ public sealed class OnlineChatModel : IChatModel
                 _name = piece.Function.Name;
             }
             _arguments.Append(piece.Function?.Arguments);
+            if (piece.ExtraContent is { ValueKind: JsonValueKind.Object } extra)
+            {
+                _extra = extra.Clone();
+            }
         }
 
         public ModelToolCall Build()
@@ -227,7 +246,7 @@ public sealed class OnlineChatModel : IChatModel
                 // Passed on as text: the tool can't read it and replies with an error the model can correct.
                 arguments = JsonSerializer.SerializeToElement(text);
             }
-            return new ModelToolCall(new ModelFunctionCall(_name, arguments), Id ?? NewCallId());
+            return new ModelToolCall(new ModelFunctionCall(_name, arguments), Id ?? NewCallId(), _extra);
         }
     }
 
@@ -239,7 +258,9 @@ public sealed class OnlineChatModel : IChatModel
         string? Content,
         [property: JsonPropertyName("tool_calls")] IReadOnlyList<StreamToolCall>? ToolCalls);
 
-    private sealed record StreamToolCall(int? Index, string? Id, StreamFunction? Function);
+    private sealed record StreamToolCall(
+        int? Index, string? Id, StreamFunction? Function,
+        [property: JsonPropertyName("extra_content")] JsonElement? ExtraContent);
 
     private sealed record StreamFunction(string? Name, string? Arguments);
 

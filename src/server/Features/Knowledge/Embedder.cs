@@ -8,8 +8,8 @@ namespace MyHospitalAI.Features.Knowledge;
 
 // Turns text into vectors with the service at the "Embedding API address" setting: Ollama's own API for an address
 // with no path (http://localhost:11434), or the OpenAI embeddings format (POST {address}/embeddings with a Bearer
-// key) for an online service such as Gemini or Mistral. The key is EMBEDDING_API_KEY, or AI_API_KEY when that is
-// not set (the same service for chat and embeddings needs only one key).
+// key) for an online service such as Gemini or Mistral. The key is the .env variable named by the "Embedding API key
+// name" setting (see AiProviders.KeyNameInUse).
 public sealed class Embedder : IEmbedder
 {
     internal const int BatchSize = 32;
@@ -27,23 +27,29 @@ public sealed class Embedder : IEmbedder
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken = default) =>
+        EmbedDocumentsAsync(texts, _settings.Get(), cancellationToken);
+
+    public async Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(
+        IReadOnlyList<string> texts, AiSettings settings, CancellationToken cancellationToken = default)
     {
-        var settings = _settings.Get();
         var vectors = new List<float[]>(texts.Count);
         foreach (var batch in texts.Chunk(BatchSize))
         {
-            vectors.AddRange(await EmbedAsync(batch.Select(text => AiSettings.WithPrefix(settings.EmbeddingDocumentPrefix, text)).ToList(), cancellationToken));
+            vectors.AddRange(await EmbedAsync(
+                settings, batch.Select(text => AiSettings.WithPrefix(settings.EmbeddingDocumentPrefix, text)).ToList(), cancellationToken));
         }
         return vectors;
     }
 
-    public async Task<float[]> EmbedQueryAsync(string text, CancellationToken cancellationToken = default) =>
-        (await EmbedAsync([AiSettings.WithPrefix(_settings.Get().EmbeddingQueryPrefix, text)], cancellationToken))[0];
-
-    private async Task<float[][]> EmbedAsync(IReadOnlyList<string> input, CancellationToken cancellationToken)
+    public async Task<float[]> EmbedQueryAsync(string text, CancellationToken cancellationToken = default)
     {
         var settings = _settings.Get();
+        return (await EmbedAsync(settings, [AiSettings.WithPrefix(settings.EmbeddingQueryPrefix, text)], cancellationToken))[0];
+    }
+
+    private async Task<float[][]> EmbedAsync(AiSettings settings, IReadOnlyList<string> input, CancellationToken cancellationToken)
+    {
         var vectors = AiProviders.IsOllamaApi(settings.EmbeddingBaseUrl)
             ? await EmbedWithOllamaAsync(settings, input, cancellationToken)
             : await EmbedOnlineAsync(settings, input, cancellationToken);
@@ -65,14 +71,10 @@ public sealed class Embedder : IEmbedder
 
     private async Task<float[][]> EmbedOnlineAsync(AiSettings settings, IReadOnlyList<string> input, CancellationToken cancellationToken)
     {
-        var key = new[] { AiProviders.EmbeddingApiKeyName, AiProviders.ApiKeyName }
-            .Select(name => _configuration[name])
-            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
-        if (key is null)
-        {
-            throw new HttpRequestException(
-                $"The Embedding API address is an online service, but neither {AiProviders.EmbeddingApiKeyName} nor {AiProviders.ApiKeyName} is set in the .env file.");
-        }
+        var keyName = AiProviders.KeyNameInUse(_configuration, true, settings.EmbeddingApiKeyName, settings.EmbeddingBaseUrl);
+        var key = AiProviders.ReadKey(_configuration, keyName)
+            ?? throw new HttpRequestException(
+                $"The Embedding API address is an online service, but {keyName} is not set in the .env file. Set it and restart the server.");
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.EmbeddingBaseUrl}/embeddings")
         {
@@ -100,7 +102,8 @@ public sealed class Embedder : IEmbedder
         _logger.LogWarning("Embedding service {Address} returned {Status} for model {Model}: {Detail}",
             settings.EmbeddingBaseUrl, (int)response.StatusCode, settings.EmbeddingModel, detail.Length > 500 ? detail[..500] : detail);
         throw new HttpRequestException(
-            $"The embedding service returned {(int)response.StatusCode} for model {settings.EmbeddingModel}. {hint}", null, response.StatusCode);
+            $"The embedding service returned {(int)response.StatusCode} for model {settings.EmbeddingModel} ({AiProviders.ErrorDetail(detail)}). {hint}",
+            null, response.StatusCode);
     }
 
     private sealed record OnlineEmbedResponse(IReadOnlyList<OnlineEmbedding>? Data);

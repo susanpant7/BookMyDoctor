@@ -17,10 +17,12 @@ public sealed record ModelMessage(
     string? ToolCallId = null);
 
 // A request from the model to run one of our tools, with the arguments it filled in. Online providers give each
-// call an id, which the tool's result must repeat.
+// call an id, which the tool's result must repeat. Extra is anything else the provider attached to the call and
+// expects back unchanged with the next request (Gemini's thought_signature, in "extra_content").
 public sealed record ModelToolCall(
     ModelFunctionCall Function,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Id = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Id = null,
+    [property: JsonIgnore] JsonElement? Extra = null);
 
 public sealed record ModelFunctionCall(string Name, JsonElement Arguments);
 

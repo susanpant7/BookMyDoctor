@@ -32,7 +32,8 @@ public sealed class OllamaChatModel : IChatModel
             var detail = await response.Content.ReadAsStringAsync();
             _logger.LogWarning("Ollama returned {Status} for model {Model}: {Detail}. If the model is missing, run: ollama pull {Model}",
                 (int)response.StatusCode, settings.ChatModel, detail, settings.ChatModel);
-            throw new HttpRequestException($"Ollama returned {(int)response.StatusCode}.", null, response.StatusCode);
+            throw new HttpRequestException(
+                $"Ollama returned {(int)response.StatusCode}. {AiProviders.ErrorDetail(detail)}".TrimEnd(), null, response.StatusCode);
         }
 
         var content = new StringBuilder();

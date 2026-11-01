@@ -51,7 +51,7 @@ const modules: Module[] = [
     id: "ai",
     title: "AI assistant settings",
     description:
-      "The system prompt, chat model, embeddings and search settings. Replaces the current settings; if the embedding settings change, load the knowledge files again afterwards.",
+      "The system prompt and search settings, with Ollama as the chat and embedding model. Replaces the current settings; your saved models are kept. If the embedding model changes, click Re-embed all knowledge on the Settings page afterwards.",
     button: "Load default AI assistant data",
     replaces: true,
     run: async () => {

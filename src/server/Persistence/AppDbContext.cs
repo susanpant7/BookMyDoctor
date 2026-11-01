@@ -18,7 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ServicePriceEntity> ServicePrices => Set<ServicePriceEntity>();
     public DbSet<KnowledgeChunkEntity> KnowledgeChunks => Set<KnowledgeChunkEntity>();
     public DbSet<SettingEntity> Settings => Set<SettingEntity>();
-    public DbSet<ChatModelEntity> ChatModels => Set<ChatModelEntity>();
+    public DbSet<AiModelEntity> AiModels => Set<AiModelEntity>();
 
     // SQLite cannot compare DateTimeOffset values in a query. Stored as UTC ticks, they compare as plain numbers.
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -79,10 +79,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<HospitalHoursEntity>().HasKey(hours => hours.Day);
         modelBuilder.Entity<KnowledgeChunkEntity>().HasIndex(chunk => chunk.Source);
         modelBuilder.Entity<SettingEntity>().HasKey(setting => setting.Key);
-        modelBuilder.Entity<ChatModelEntity>(entity =>
+        modelBuilder.Entity<AiModelEntity>(entity =>
         {
             entity.Property(model => model.Name).UseCollation("NOCASE");
-            entity.HasIndex(model => model.Name).IsUnique();
+            entity.HasIndex(model => new { model.Kind, model.Name }).IsUnique();
         });
     }
 

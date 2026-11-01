@@ -9,6 +9,7 @@ using MyHospitalAI.Features.Settings;
 using MyHospitalAI.Features.Specialties;
 using MyHospitalAI.Features.Users;
 using MyHospitalAI.Persistence;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 // The secrets (admin login, token key, AI provider keys) come from the .env file, or from real environment variables.
@@ -19,7 +20,11 @@ var clientOrigin = builder.Configuration["Cors:ClientOrigin"] ?? "http://localho
 
 builder.Services.AddControllers(options => options.Filters.Add<ServiceExceptionFilter>());
 // Detailed errors send the real exception message to the client; only safe in development.
-builder.Services.AddSignalR(options => options.EnableDetailedErrors = builder.Environment.IsDevelopment());
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.AddFilter<HubTimingFilter>();   // logs how long each chat hub call takes
+});
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddCors(options =>
 {
@@ -44,7 +49,7 @@ builder.Services.AddSingleton<IHospitalRepo, HospitalRepo>();
 builder.Services.AddSingleton<IDoctorSchedulesRepo, DoctorSchedulesRepo>();
 builder.Services.AddSingleton<IAppointmentsRepo, AppointmentsRepo>();
 builder.Services.AddSingleton<ISettingsRepo, SettingsRepo>();
-builder.Services.AddSingleton<IChatModelsRepo, ChatModelsRepo>();
+builder.Services.AddSingleton<IAiModelsRepo, AiModelsRepo>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddSingleton<IUserService, UserService>();
@@ -55,7 +60,7 @@ builder.Services.AddSingleton<IAvailabilityService, AvailabilityService>();
 builder.Services.AddSingleton<IAppointmentService, AppointmentService>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<IAiSettingsProvider>(services => services.GetRequiredService<ISettingsService>());
-builder.Services.AddSingleton<SavedChatModelsService>();
+builder.Services.AddSingleton<AiModelsService>();
 builder.Services.AddSingleton<DataCleanup>();
 builder.Services.AddSingleton<KnowledgeSources>();
 builder.Services.AddSingleton<IVectorStore, SqliteVectorStore>();
@@ -74,6 +79,7 @@ builder.Services.AddHttpClient<OnlineChatModel>(http => http.Timeout = TimeSpan.
 builder.Services.AddTransient<IChatModel, ChatModelRouter>();
 builder.Services.AddTransient<IChatAssistant, ChatAssistant>();
 builder.Services.AddHttpClient<IEmbedder, Embedder>();
+builder.Services.AddHttpClient<AiModelSwitcher>();
 
 Directory.CreateDirectory("data");
 
@@ -87,6 +93,9 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
+// Logs each request with its status and time, and the list of endpoints at startup.
+app.UseRequestTiming();
+app.LogEndpoints();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

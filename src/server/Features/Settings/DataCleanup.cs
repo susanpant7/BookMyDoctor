@@ -38,7 +38,7 @@ public sealed class DataCleanup
             await db.HospitalHours.ExecuteDeleteAsync(cancellationToken);
             await db.HospitalInfo.ExecuteDeleteAsync(cancellationToken);
             await db.Settings.ExecuteDeleteAsync(cancellationToken);
-            await db.ChatModels.ExecuteDeleteAsync(cancellationToken);
+            await db.AiModels.ExecuteDeleteAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
 

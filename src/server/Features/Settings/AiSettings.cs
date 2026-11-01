@@ -22,7 +22,9 @@ public sealed record AiSettings(
     double RetrievalMinScore,
     double RetrievalMaxScoreGap,
     string KeepAlive,
-    string EmbeddingBaseUrl)
+    string EmbeddingBaseUrl,
+    string ChatApiKeyName,
+    string EmbeddingApiKeyName)
 {
     // A value that is missing or cannot be read falls back to its default.
     public static AiSettings From(IReadOnlyDictionary<string, string> values) => new(
@@ -44,7 +46,9 @@ public sealed record AiSettings(
         Number(values, SettingKeys.RetrievalMinScore),
         Number(values, SettingKeys.RetrievalMaxScoreGap),
         Text(values, SettingKeys.ChatKeepAlive),
-        Text(values, SettingKeys.EmbeddingBaseUrl).TrimEnd('/'));
+        Text(values, SettingKeys.EmbeddingBaseUrl).TrimEnd('/'),
+        Text(values, SettingKeys.ChatApiKeyName),
+        Text(values, SettingKeys.EmbeddingApiKeyName));
 
     public static AiSettings Defaults { get; } = From(new Dictionary<string, string>());
 

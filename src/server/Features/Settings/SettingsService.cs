@@ -1,4 +1,5 @@
 using System.Globalization;
+using MyHospitalAI.Features.Chats;
 using MyHospitalAI.Persistence;
 using MyHospitalAI.Persistence.Entities;
 
@@ -55,6 +56,12 @@ public sealed class SettingsService : ISettingsService
         switch (definition.Kind)
         {
             case SettingKind.Text when definition.Key.EndsWith("_prefix"):
+                break;
+            case SettingKind.Text when definition.Key.EndsWith("api_key_name"):
+                if (value.Length > 0 && !AiProviders.IsValidKeyName(value))
+                {
+                    throw new ArgumentException($"{definition.Label} must be empty or a variable name that ends in API_KEY, e.g. GEMINI_API_KEY.");
+                }
                 break;
             case SettingKind.Text:
                 if (value.Length == 0 || value.Length > 200)

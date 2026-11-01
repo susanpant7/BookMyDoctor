@@ -16,8 +16,6 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
   const [value, setValue] = useState(setting.value);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  // Vectors made by a different model or service can't be compared with the stored ones.
-  const isEmbeddingModel = setting.key === "embedding.model" || setting.key === "embedding.base_url";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -76,13 +74,6 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
             </button>
           )}
         </p>
-
-        {isEmbeddingModel && (
-          <Alert
-            variant="warning"
-            message="Changing the embedding model or its address makes the stored knowledge unsearchable until it is embedded again: after saving, click Re-embed all knowledge under Embeddings. Vectors made by different models cannot be compared."
-          />
-        )}
 
         {error && <Alert message={error} />}
 

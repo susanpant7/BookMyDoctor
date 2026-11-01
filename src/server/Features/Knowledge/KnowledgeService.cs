@@ -148,7 +148,10 @@ public sealed class KnowledgeService : IKnowledgeService
         await SyncHospitalSettingsAsync(cancellationToken);
     }
 
-    public async Task<int> ReembedAllAsync(CancellationToken cancellationToken = default)
+    public Task<int> ReembedAllAsync(CancellationToken cancellationToken = default) =>
+        ReembedAllAsync(_settings.Get(), cancellationToken);
+
+    public async Task<int> ReembedAllAsync(AiSettings settings, CancellationToken cancellationToken = default)
     {
         // The stored text is what was embedded, so every section (bundled, uploaded, written or generated) can be
         // embedded again as it is. All vectors are made first and saved together, so a failure halfway changes nothing.
@@ -158,9 +161,9 @@ public sealed class KnowledgeService : IKnowledgeService
             return 0;
         }
 
-        var vectors = await _embedder.EmbedDocumentsAsync(documents.Select(document => document.Text).ToList(), cancellationToken);
+        var vectors = await _embedder.EmbedDocumentsAsync(documents.Select(document => document.Text).ToList(), settings, cancellationToken);
         _store.Upsert(documents.Zip(vectors).ToList());
-        _logger.LogInformation("Re-embedded {Count} knowledge sections with {Model}", documents.Count, _settings.Get().EmbeddingModel);
+        _logger.LogInformation("Re-embedded {Count} knowledge sections with {Model}", documents.Count, settings.EmbeddingModel);
         return documents.Count;
     }
 

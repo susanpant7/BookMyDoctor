@@ -1,3 +1,5 @@
+using MyHospitalAI.Features.Settings;
+
 namespace MyHospitalAI.Features.Knowledge;
 
 public sealed record UploadedFile(string FileName, string Text);
@@ -48,6 +50,9 @@ public interface IKnowledgeService
     // the old vectors can't be compared with new ones). Returns how many sections were embedded. Throws
     // HttpRequestException when the embedding service fails; the old vectors are then kept.
     Task<int> ReembedAllAsync(CancellationToken cancellationToken = default);
+
+    // The same with the given embedding settings, before they are saved: used when switching the embedding model.
+    Task<int> ReembedAllAsync(AiSettings settings, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(string query, int top, CancellationToken cancellationToken = default);
 }

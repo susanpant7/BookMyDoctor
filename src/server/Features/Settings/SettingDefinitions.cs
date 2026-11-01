@@ -16,6 +16,8 @@ public static class SettingKeys
     public const string EmbeddingBaseUrl = "embedding.base_url";
     public const string ChatBaseUrl = "chat.base_url";
     public const string ChatModel = "chat.model";
+    public const string ChatApiKeyName = "chat.api_key_name";
+    public const string EmbeddingApiKeyName = "embedding.api_key_name";
     public const string ChatTemperature = "chat.temperature";
     public const string ChatContextSize = "chat.context_size";
     public const string ChatHistoryMessages = "chat.history_messages";
@@ -61,7 +63,7 @@ public static class SettingDefaults
             "Model that converts text into vectors. Changing it means every knowledge file must be uploaded again (and the doctor profiles synced), because old and new vectors cannot be compared. Change the two prefixes below to match the new model. It must be a model of the service at the Embedding API address; on Ollama, run `ollama pull <model>` first.",
             "nomic-embed-text"),
         new(SettingKeys.EmbeddingBaseUrl, "Embedding API address",
-            "Where the embedding model runs (it can be a different service from the chat). Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API; in Docker Compose it is e.g. http://ollama:11434). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in EMBEDDING_API_KEY in the .env file, or AI_API_KEY is used when the chat uses the same service. See the list of embedding services above. Changing it means loading the knowledge again, like changing the model.",
+            "Where the embedding model runs (it can be a different service from the chat). Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API; in Docker Compose it is e.g. http://ollama:11434). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in the .env file under the Embedding API key name. See the list of embedding services above. Changing it means loading the knowledge again, like changing the model.",
             "http://localhost:11434"),
         new(SettingKeys.EmbeddingQueryPrefix, "Embedding query prefix",
             "Text put before the patient's question when it is converted to a vector, joined with one space. It depends on the embedding model: nomic-embed-text expects search_query:.",
@@ -79,11 +81,17 @@ public static class SettingDefaults
             "Sections scoring more than this below the best match are dropped too. Scores bunch together, so weak matches otherwise still pass the minimum similarity. Set 1 to turn this off.",
             "0.05", SettingKind.Number, 0, 1),
         new(SettingKeys.ChatBaseUrl, "Chat API address",
-            "Where the chat model runs. Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in AI_API_KEY in the .env file (restart the server after changing it). See the list of services above for the address, a model and where to get a key. Change the Chat model together with this. Applies to the next message.",
+            "Where the chat model runs. Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in the .env file under the Chat API key name (restart the server after changing it). See the list of services above for the address, a model and where to get a key. Change the Chat model together with this. Applies to the next message.",
             "http://localhost:11434"),
         new(SettingKeys.ChatModel, "Chat model",
             "The model that writes the answers and decides when to look things up, by the name the service at the Chat API address uses (e.g. qwen2.5:7b on Ollama, gemini-flash-latest on Gemini). It must support tool (function) calling. Can be changed without re-embedding anything. The assistant's rules were tested with qwen2.5:7b, so try a few questions after changing it. On Ollama, run `ollama pull <model>` first.",
             "qwen2.5:7b"),
+        new(SettingKeys.ChatApiKeyName, "Chat API key name",
+            "The name of the variable in the .env file that holds the chat service's key, e.g. GEMINI_API_KEY. Only the name is saved, never the key. Empty means the key of the service at the Chat API address (or ChatApi__ApiKey). Set by Use in the list of chat models.",
+            ""),
+        new(SettingKeys.EmbeddingApiKeyName, "Embedding API key name",
+            "The name of the variable in the .env file that holds the embedding service's key, e.g. GEMINI_API_KEY. Only the name is saved, never the key. Empty means the key of the service at the Embedding API address (or Embedding__ApiKey, then ChatApi__ApiKey). Set by Use in the list of embedding models.",
+            ""),
         new(SettingKeys.ChatTemperature, "Temperature",
             "Controls randomness. Lower gives focused, repeatable answers and more reliable tool calls; higher gives more varied ones. Use 0 to 0.3 for factual answers.",
             "0.2", SettingKind.Number, 0, 2),
