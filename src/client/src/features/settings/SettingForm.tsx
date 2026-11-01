@@ -16,7 +16,8 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
   const [value, setValue] = useState(setting.value);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const isEmbeddingModel = setting.key === "embedding.model";
+  // Vectors made by a different model or service can't be compared with the stored ones.
+  const isEmbeddingModel = setting.key === "embedding.model" || setting.key === "embedding.base_url";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -46,14 +47,6 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
-        ) : setting.kind === "choice" ? (
-          <SelectField label="Value" value={value} onChange={(e) => setValue(e.target.value)}>
-            {(setting.options ?? []).map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </SelectField>
         ) : setting.kind === "boolean" ? (
           <SelectField label="Value" value={value} onChange={(e) => setValue(e.target.value)}>
             <option value="true">On</option>
@@ -87,7 +80,7 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
         {isEmbeddingModel && (
           <Alert
             variant="warning"
-            message="Changing the embedding model makes the stored knowledge unsearchable until you upload the knowledge files again and click Sync settings on the Knowledge page. Vectors made by different models cannot be compared."
+            message="Changing the embedding model or its address makes the stored knowledge unsearchable until it is embedded again: after saving, click Re-embed all knowledge under Embeddings. Vectors made by different models cannot be compared."
           />
         )}
 

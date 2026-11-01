@@ -10,8 +10,8 @@ using MyHospitalAI.Features.Settings;
 namespace MyHospitalAI.Features.Chats;
 
 // A model run by an online service (Gemini, Grok, Groq, OpenRouter, ...). They all accept the OpenAI chat format:
-// POST {base url}/chat/completions with "Authorization: Bearer <key>", and stream the reply as server-sent events.
-// The key is read from the environment (the .env file) by the provider's key name; it is never logged or stored.
+// POST {Chat API address}/chat/completions with "Authorization: Bearer <key>", and stream the reply as server-sent
+// events. The key is AI_API_KEY from the environment (the .env file); it is never logged or stored.
 public sealed class OnlineChatModel : IChatModel
 {
     private readonly HttpClient _http;
@@ -28,13 +28,14 @@ public sealed class OnlineChatModel : IChatModel
     public async Task<ModelMessage> ChatAsync(
         IReadOnlyList<ModelMessage> messages, IReadOnlyList<ModelTool> tools, AiSettings settings, Func<string, Task>? onText)
     {
-        var provider = settings.ChatProvider;
-        var key = _configuration[provider.ApiKeyName!];
+        // Named by its host in the logs, e.g. api.groq.com.
+        var service = new Uri(settings.ChatBaseUrl).Host;
+        var key = _configuration[AiProviders.ApiKeyName];
         if (string.IsNullOrWhiteSpace(key))
         {
-            _logger.LogWarning("The AI provider is {Provider}, but {KeyName} is not set. Add it to the .env file and restart the server.",
-                provider.Id, provider.ApiKeyName);
-            throw new HttpRequestException($"{provider.ApiKeyName} is not set.");
+            _logger.LogWarning("The Chat API address is {Service}, but {KeyName} is not set. Add it to the .env file and restart the server.",
+                service, AiProviders.ApiKeyName);
+            throw new HttpRequestException($"{AiProviders.ApiKeyName} is not set.");
         }
 
         var body = new JsonObject
@@ -49,7 +50,7 @@ public sealed class OnlineChatModel : IChatModel
             body["tools"] = JsonSerializer.SerializeToNode(tools, JsonSerializerOptions.Web);
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{provider.BaseUrl}/chat/completions")
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.ChatBaseUrl}/chat/completions")
         {
             Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json")
         };
@@ -60,10 +61,10 @@ public sealed class OnlineChatModel : IChatModel
         if (!response.IsSuccessStatusCode)
         {
             var detail = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning("{Provider} returned {Status} for model {Model}: {Problem} {Detail}",
-                provider.Name, (int)response.StatusCode, settings.ChatModel, Explain(response.StatusCode, provider),
+            _logger.LogWarning("{Service} returned {Status} for model {Model}: {Problem} {Detail}",
+                service, (int)response.StatusCode, settings.ChatModel, Explain(response.StatusCode),
                 detail.Length > 500 ? detail[..500] : detail);
-            throw new HttpRequestException($"{provider.Name} returned {(int)response.StatusCode}.", null, response.StatusCode);
+            throw new HttpRequestException($"{service} returned {(int)response.StatusCode}.", null, response.StatusCode);
         }
 
         // Each event is a line "data: {json}" with the next piece of text or of a tool call; the last is "data: [DONE]".
@@ -91,8 +92,8 @@ public sealed class OnlineChatModel : IChatModel
 
             if (chunk.Error?.Message is { } error)
             {
-                _logger.LogWarning("{Provider} failed while answering: {Error}", provider.Name, error);
-                throw new HttpRequestException($"{provider.Name} failed while answering.");
+                _logger.LogWarning("{Service} failed while answering: {Error}", service, error);
+                throw new HttpRequestException($"{service} failed while answering.");
             }
 
             var delta = chunk.Choices?.FirstOrDefault()?.Delta;
@@ -113,8 +114,8 @@ public sealed class OnlineChatModel : IChatModel
         }
 
         _logger.LogInformation(
-            "{Provider} call ({Model}): {Messages} messages | first text {FirstText} | done in {Seconds:F1}s | {ToolCalls} tool calls",
-            provider.Name, settings.ChatModel, messages.Count, firstTextSeconds is { } first ? $"{first:F1}s" : "none",
+            "{Service} call ({Model}): {Messages} messages | first text {FirstText} | done in {Seconds:F1}s | {ToolCalls} tool calls",
+            service, settings.ChatModel, messages.Count, firstTextSeconds is { } first ? $"{first:F1}s" : "none",
             timer.Elapsed.TotalSeconds, calls.Count);
         return new ModelMessage("assistant", content.ToString(), calls.Count > 0 ? calls.Select(call => call.Build()).ToList() : null);
     }
@@ -184,11 +185,13 @@ public sealed class OnlineChatModel : IChatModel
         return added;
     }
 
-    private static string Explain(HttpStatusCode status, AiProvider provider) => status switch
+    private static string Explain(HttpStatusCode status) => status switch
     {
-        HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => $"The key was refused: check {provider.ApiKeyName} in the .env file.",
-        HttpStatusCode.NotFound => $"The model was not found: check the {provider.Name} model on the Settings page against the service's current list.",
-        HttpStatusCode.TooManyRequests => "The rate limit or the free daily limit was reached: wait, or switch to another provider.",
+        HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
+            $"The key was refused: check that {AiProviders.ApiKeyName} in the .env file is a key for this service.",
+        HttpStatusCode.NotFound =>
+            "The model or the address was not found: check the Chat model and the Chat API address on the Settings page against the service's current list.",
+        HttpStatusCode.TooManyRequests => "The rate limit or the free daily limit was reached: wait, or switch to another service.",
         HttpStatusCode.BadRequest => "The request was refused; the model may not support tool calling.",
         _ => ""
     };

@@ -1,5 +1,3 @@
-using MyHospitalAI.Features.Chats;
-
 namespace MyHospitalAI.Features.Settings;
 
 public static class SettingKeys
@@ -15,8 +13,9 @@ public static class SettingKeys
     public const string RetrievalTopK = "retrieval.top_k";
     public const string RetrievalMinScore = "retrieval.min_score";
     public const string RetrievalMaxScoreGap = "retrieval.max_score_gap";
-    public const string ChatProvider = "chat.provider";
-    public const string OllamaUrl = "ollama.url";
+    public const string EmbeddingBaseUrl = "embedding.base_url";
+    public const string ChatBaseUrl = "chat.base_url";
+    public const string ChatModel = "chat.model";
     public const string ChatTemperature = "chat.temperature";
     public const string ChatContextSize = "chat.context_size";
     public const string ChatHistoryMessages = "chat.history_messages";
@@ -30,14 +29,12 @@ public enum SettingKind
     LongText,   // several lines, e.g. the system prompt
     Integer,
     Number,
-    Boolean,    // "true" or "false"
-    Choice      // one of the definition's Options
+    Boolean     // "true" or "false"
 }
 
-// Min and Max apply to Integer and Number settings, Options to Choice settings.
+// Min and Max apply to Integer and Number settings.
 public sealed record SettingDefinition(
-    string Key, string Label, string Description, string Value, SettingKind Kind = SettingKind.Text, double Min = 0, double Max = 0,
-    IReadOnlyList<string>? Options = null);
+    string Key, string Label, string Description, string Value, SettingKind Kind = SettingKind.Text, double Min = 0, double Max = 0);
 
 // The starting value of every setting. SettingsSeeder adds the ones missing from the table and never changes a row
 // that already exists, so values edited on the Settings page are kept.
@@ -61,8 +58,11 @@ public static class SettingDefaults
             "Sent when the chat model can't be reached, takes too long, or keeps looking things up without answering.",
             "Sorry, I'm having trouble right now. Please try again in a moment."),
         new(SettingKeys.EmbeddingModel, "Embedding model",
-            "Model that converts text into vectors. Changing it means every knowledge file must be uploaded again (and the doctor profiles synced), because old and new vectors cannot be compared. Change the two prefixes below to match the new model. The model must also exist in Ollama: run `ollama pull <model>` first.",
+            "Model that converts text into vectors. Changing it means every knowledge file must be uploaded again (and the doctor profiles synced), because old and new vectors cannot be compared. Change the two prefixes below to match the new model. It must be a model of the service at the Embedding API address; on Ollama, run `ollama pull <model>` first.",
             "nomic-embed-text"),
+        new(SettingKeys.EmbeddingBaseUrl, "Embedding API address",
+            "Where the embedding model runs (it can be a different service from the chat). Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API; in Docker Compose it is e.g. http://ollama:11434). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in EMBEDDING_API_KEY in the .env file, or AI_API_KEY is used when the chat uses the same service. See the list of embedding services above. Changing it means loading the knowledge again, like changing the model.",
+            "http://localhost:11434"),
         new(SettingKeys.EmbeddingQueryPrefix, "Embedding query prefix",
             "Text put before the patient's question when it is converted to a vector, joined with one space. It depends on the embedding model: nomic-embed-text expects search_query:.",
             "search_query:"),
@@ -78,9 +78,12 @@ public static class SettingDefaults
         new(SettingKeys.RetrievalMaxScoreGap, "Maximum score gap",
             "Sections scoring more than this below the best match are dropped too. Scores bunch together, so weak matches otherwise still pass the minimum similarity. Set 1 to turn this off.",
             "0.05", SettingKind.Number, 0, 1),
-        new(SettingKeys.ChatProvider, "AI provider",
-            "Where the chat model runs: ollama (on this computer) or an online service: gemini, grok, groq, openrouter, mistral or cerebras. Each online service needs its API key in the .env file (see the provider list above); the model it uses is set below under Model for each provider. Embeddings always use Ollama. The assistant's rules were tested with qwen2.5:7b on Ollama, so try a few questions after switching. Applies to the next message.",
-            AiProviders.Ollama, SettingKind.Choice, Options: AiProviders.All.Select(provider => provider.Id).ToList()),
+        new(SettingKeys.ChatBaseUrl, "Chat API address",
+            "Where the chat model runs. Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in AI_API_KEY in the .env file (restart the server after changing it). See the list of services above for the address, a model and where to get a key. Change the Chat model together with this. Applies to the next message.",
+            "http://localhost:11434"),
+        new(SettingKeys.ChatModel, "Chat model",
+            "The model that writes the answers and decides when to look things up, by the name the service at the Chat API address uses (e.g. qwen2.5:7b on Ollama, gemini-flash-latest on Gemini). It must support tool (function) calling. Can be changed without re-embedding anything. The assistant's rules were tested with qwen2.5:7b, so try a few questions after changing it. On Ollama, run `ollama pull <model>` first.",
+            "qwen2.5:7b"),
         new(SettingKeys.ChatTemperature, "Temperature",
             "Controls randomness. Lower gives focused, repeatable answers and more reliable tool calls; higher gives more varied ones. Use 0 to 0.3 for factual answers.",
             "0.2", SettingKind.Number, 0, 2),
@@ -95,16 +98,7 @@ public static class SettingDefaults
             "3", SettingKind.Integer, 0, 20),
         new(SettingKeys.ChatKeepAlive, "Keep the model loaded for",
             "Ollama only. How long Ollama keeps the chat model in memory after a message, e.g. 30m or 1h. Loading it again takes several seconds, so short values make the first reply after a pause slow; long values keep the memory in use.",
-            "30m"),
-        new(SettingKeys.OllamaUrl, "Ollama address",
-            "Where Ollama runs, for the embeddings and for the chat when the provider is ollama. On this computer it is http://localhost:11434; in Docker Compose it is the Ollama container, e.g. http://ollama:11434.",
-            "http://localhost:11434"),
-        .. AiProviders.All.Select(provider => new SettingDefinition(
-            AiProviders.ModelSettingKey(provider), provider.Name,
-            provider.IsLocal
-                ? "The Ollama model that writes the answers and decides when to look things up. It must exist in Ollama: run `ollama pull <model>` first. Can be changed without re-embedding anything."
-                : $"The {provider.Name} model used when the AI provider is {provider.Id}. It must support tool (function) calling. Services rename and retire models, so check their current list if replies fail. Key: {provider.ApiKeyName} in the .env file. {provider.FreeTier}",
-            provider.DefaultModel))
+            "30m")
     ];
 
     // Placeholders: {patient_name}, {today}, {calendar}, {hospital_phone}. See the System prompt setting.

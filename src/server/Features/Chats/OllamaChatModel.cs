@@ -4,7 +4,7 @@ using MyHospitalAI.Features.Settings;
 
 namespace MyHospitalAI.Features.Chats;
 
-// A model run by Ollama, on this computer or wherever the "Ollama address" setting points.
+// A model run by Ollama, called with Ollama's own API at the "Chat API address" setting.
 public sealed class OllamaChatModel : IChatModel
 {
     private readonly HttpClient _http;
@@ -24,7 +24,7 @@ public sealed class OllamaChatModel : IChatModel
         var request = new OllamaChatRequest(
             settings.ChatModel, messages, Stream: true, tools.Count == 0 ? null : tools,
             new OllamaRequestOptions(settings.ContextSize, settings.Temperature), settings.KeepAlive);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{settings.OllamaUrl}/api/chat") { Content = JsonContent.Create(request) };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{settings.ChatBaseUrl}/api/chat") { Content = JsonContent.Create(request) };
         // ResponseHeadersRead: start reading as soon as Ollama starts sending, instead of waiting for the whole reply.
         using var response = await _http.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
         if (!response.IsSuccessStatusCode)

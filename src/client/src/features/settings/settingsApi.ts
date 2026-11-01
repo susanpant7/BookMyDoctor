@@ -6,20 +6,40 @@ export type Setting = {
   description: string;
   value: string;
   defaultValue: string;
-  kind: "text" | "longtext" | "integer" | "number" | "boolean" | "choice";
-  // The allowed values of a "choice" setting.
-  options?: string[] | null;
+  kind: "text" | "longtext" | "integer" | "number" | "boolean";
 };
 
-// A service the "AI provider" setting can choose. hasApiKey says whether its key is in the server's .env file.
-export type AiProviderInfo = {
-  id: string;
+// A service that can run the chat model, from the notes on the Settings page.
+export type AiProvider = {
   name: string;
-  apiKeyName: string | null;
-  hasApiKey: boolean;
-  defaultModel: string;
+  baseUrl: string;
+  exampleModel: string;
+  needsApiKey: boolean;
   freeTier: string;
   signUpUrl: string;
+};
+
+// A service that can run the embedding model, with the prefixes its model expects.
+export type EmbeddingProvider = {
+  name: string;
+  baseUrl: string;
+  exampleModel: string;
+  queryPrefix: string;
+  documentPrefix: string;
+  needsApiKey: boolean;
+  freeTier: string;
+  signUpUrl: string;
+};
+
+// The has… flags say whether the keys (AI_API_KEY, EMBEDDING_API_KEY) are set in the server's .env file. The keys
+// themselves are never sent.
+export type AiProvidersInfo = {
+  apiKeyName: string;
+  hasApiKey: boolean;
+  providers: AiProvider[];
+  embeddingApiKeyName: string;
+  hasEmbeddingApiKey: boolean;
+  embeddingProviders: EmbeddingProvider[];
 };
 
 export type HospitalInfo = {
@@ -43,7 +63,21 @@ export type HospitalDetails = {
 
 export const getSettings = () => apiFetch<Setting[]>("/settings");
 
-export const getAiProviders = () => apiFetch<AiProviderInfo[]>("/settings/ai-providers");
+export const getAiProviders = () => apiFetch<AiProvidersInfo>("/settings/ai-providers");
+
+// A chat model the admin saved to switch to later.
+export type SavedChatModel = { id: string; name: string; baseUrl: string; model: string; notes: string };
+export type SaveChatModelRequest = Omit<SavedChatModel, "id">;
+
+export const getChatModels = () => apiFetch<SavedChatModel[]>("/settings/chat-models");
+
+export const addChatModel = (request: SaveChatModelRequest) =>
+  apiFetch<SavedChatModel>("/settings/chat-models", { method: "POST", body: JSON.stringify(request) });
+
+export const updateChatModel = (id: string, request: SaveChatModelRequest) =>
+  apiFetch<SavedChatModel>(`/settings/chat-models/${id}`, { method: "PUT", body: JSON.stringify(request) });
+
+export const deleteChatModel = (id: string) => apiFetch<void>(`/settings/chat-models/${id}`, { method: "DELETE" });
 
 export const updateSetting = (key: string, value: string) =>
   apiFetch<Setting>(`/settings/${encodeURIComponent(key)}`, { method: "PUT", body: JSON.stringify({ value }) });

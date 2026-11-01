@@ -82,6 +82,37 @@ namespace MyHospitalAI.Persistence.Migrations
                     b.ToTable("ChatMessages");
                 });
 
+            modelBuilder.Entity("MyHospitalAI.Persistence.Entities.ChatModelEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BaseUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ChatModels");
+                });
+
             modelBuilder.Entity("MyHospitalAI.Persistence.Entities.DoctorEntity", b =>
                 {
                     b.Property<Guid>("Id")

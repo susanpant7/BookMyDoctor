@@ -88,7 +88,21 @@ public sealed class KnowledgeController : ControllerBase
         }
         catch (HttpRequestException ex)
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = $"Cannot reach Ollama ({ex.Message})." });
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = $"The embedding failed: {ex.Message}" });
+        }
+    }
+
+    // Embeds all the stored knowledge again with the current embedding model, e.g. after switching to another service.
+    [HttpPost("re-embed")]
+    public async Task<IActionResult> Reembed(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(new { sections = await _knowledgeService.ReembedAllAsync(cancellationToken) });
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = $"The embedding failed: {ex.Message}" });
         }
     }
 

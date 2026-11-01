@@ -41,6 +41,9 @@ export function uploadKnowledge(files: File[]) {
 
 export const loadDefaultKnowledge = () => apiFetch<UploadFileResult[]>("/knowledge/load-defaults", { method: "POST" });
 
+// Embeds all the stored knowledge again with the current embedding model.
+export const reembedKnowledge = () => apiFetch<{ sections: number }>("/knowledge/re-embed", { method: "POST" });
+
 export const syncSettings = () => apiFetch<void>("/knowledge/sync-settings", { method: "POST" });
 
 export const deleteKnowledgeSource = (source: string) =>

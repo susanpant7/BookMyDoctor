@@ -46,7 +46,7 @@ public sealed class SettingsService : ISettingsService
 
     private static void Validate(SettingDefinition definition, string value)
     {
-        if (definition.Key.EndsWith(".url") && !(Uri.TryCreate(value, UriKind.Absolute, out var url) && url.Scheme is "http" or "https"))
+        if (definition.Key.EndsWith("url") && !(Uri.TryCreate(value, UriKind.Absolute, out var url) && url.Scheme is "http" or "https"))
         {
             throw new ArgumentException($"{definition.Label} must be a web address that starts with http:// or https://.");
         }
@@ -66,12 +66,6 @@ public sealed class SettingsService : ISettingsService
                 if (value.Length == 0 || value.Length > 8000)
                 {
                     throw new ArgumentException($"{definition.Label} is required and can be up to 8000 characters.");
-                }
-                break;
-            case SettingKind.Choice:
-                if (!definition.Options!.Contains(value))
-                {
-                    throw new ArgumentException($"{definition.Label} must be one of: {string.Join(", ", definition.Options!)}.");
                 }
                 break;
             case SettingKind.Boolean:
@@ -96,8 +90,7 @@ public sealed class SettingsService : ISettingsService
     }
 
     private static Setting ToSetting(SettingDefinition definition, string value) =>
-        new(definition.Key, definition.Label, definition.Description, value, definition.Value, definition.Kind.ToString().ToLowerInvariant(),
-            definition.Options);
+        new(definition.Key, definition.Label, definition.Description, value, definition.Value, definition.Kind.ToString().ToLowerInvariant());
 
     private static SettingEntity ToEntity(SettingDefinition definition, string value) =>
         new() { Key = definition.Key, Label = definition.Label, Description = definition.Description, Value = value };

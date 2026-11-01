@@ -14,26 +14,45 @@ public sealed class SettingsController : ControllerBase
 
     private readonly DataCleanup _dataCleanup;
     private readonly IConfiguration _configuration;
+    private readonly SavedChatModelsService _chatModels;
 
-    public SettingsController(ISettingsService settingsService, DataCleanup dataCleanup, IConfiguration configuration)
+    public SettingsController(
+        ISettingsService settingsService, DataCleanup dataCleanup, IConfiguration configuration, SavedChatModelsService chatModels)
     {
         _settingsService = settingsService;
         _dataCleanup = dataCleanup;
         _configuration = configuration;
+        _chatModels = chatModels;
     }
 
     [HttpGet]
     public ActionResult<IReadOnlyList<Setting>> GetAll() => Ok(_settingsService.GetAll());
 
-    // The providers the "AI provider" setting can choose, and which of them have a key.
+    // Notes on the services that can run the chat and embedding models, and whether the API keys are set.
     [HttpGet("ai-providers")]
-    public ActionResult<IReadOnlyList<AiProviderInfo>> GetAiProviders() =>
-        Ok(AiProviders.All
-            .Select(provider => new AiProviderInfo(
-                provider.Id, provider.Name, provider.ApiKeyName,
-                provider.IsLocal || !string.IsNullOrWhiteSpace(_configuration[provider.ApiKeyName!]),
-                provider.DefaultModel, provider.FreeTier, provider.SignUpUrl))
-            .ToList());
+    public ActionResult<AiProvidersInfo> GetAiProviders() =>
+        Ok(new AiProvidersInfo(
+            AiProviders.ApiKeyName, HasKey(AiProviders.ApiKeyName), AiProviders.All,
+            AiProviders.EmbeddingApiKeyName, HasKey(AiProviders.EmbeddingApiKeyName), AiProviders.Embedding));
+
+    private bool HasKey(string name) => !string.IsNullOrWhiteSpace(_configuration[name]);
+
+    // Chat models the admin saved to switch to later.
+    [HttpGet("chat-models")]
+    public ActionResult<IReadOnlyList<SavedChatModel>> GetChatModels() => Ok(_chatModels.GetAll());
+
+    [HttpPost("chat-models")]
+    public ActionResult<SavedChatModel> AddChatModel(SaveChatModelRequest request) => Ok(_chatModels.Add(request));
+
+    [HttpPut("chat-models/{id:guid}")]
+    public ActionResult<SavedChatModel> UpdateChatModel(Guid id, SaveChatModelRequest request) => Ok(_chatModels.Update(id, request));
+
+    [HttpDelete("chat-models/{id:guid}")]
+    public IActionResult DeleteChatModel(Guid id)
+    {
+        _chatModels.Delete(id);
+        return NoContent();
+    }
 
     [HttpPut("{key}")]
     public ActionResult<Setting> Update(string key, UpdateSettingRequest request) =>

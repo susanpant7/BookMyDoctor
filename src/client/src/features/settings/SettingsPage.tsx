@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AiProviderList from "@/features/settings/AiProviderList";
+import EmbeddingServiceList from "@/features/settings/EmbeddingServiceList";
 import HospitalSettings from "@/features/settings/HospitalSettings";
 import SettingForm from "@/features/settings/SettingForm";
 import ManageAppData from "@/features/settings/ManageAppData";
@@ -19,8 +20,6 @@ const tabs = [
 const groupTitles: Record<string, string> = {
   assistant: "Assistant behaviour",
   chat: "Chat model",
-  ollama: "Ollama",
-  model: "Model for each provider",
   embedding: "Embeddings",
   retrieval: "Searching the knowledge"
 };
@@ -88,7 +87,18 @@ function AiSettingsList() {
           <section key={group} className="mb-8">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">{groupTitles[group] ?? group}</h2>
             {group === "chat" && (
-              <AiProviderList key={version} current={settings.find((s) => s.key === "chat.provider")?.value ?? "ollama"} />
+              <AiProviderList
+                baseUrl={settings.find((s) => s.key === "chat.base_url")?.value ?? ""}
+                model={settings.find((s) => s.key === "chat.model")?.value ?? ""}
+                onChanged={() => setVersion((v) => v + 1)}
+              />
+            )}
+            {group === "embedding" && (
+              <EmbeddingServiceList
+                baseUrl={settings.find((s) => s.key === "embedding.base_url")?.value ?? ""}
+                model={settings.find((s) => s.key === "embedding.model")?.value ?? ""}
+                onChanged={() => setVersion((v) => v + 1)}
+              />
             )}
             <div className="divide-y divide-stone-100 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
               {settings

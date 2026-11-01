@@ -44,5 +44,10 @@ public interface IKnowledgeService
     // All of the above.
     Task SyncSettingsAsync(CancellationToken cancellationToken = default);
 
+    // Embeds every stored section again with the current embedding model (after the model or its address changed,
+    // the old vectors can't be compared with new ones). Returns how many sections were embedded. Throws
+    // HttpRequestException when the embedding service fails; the old vectors are then kept.
+    Task<int> ReembedAllAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(string query, int top, CancellationToken cancellationToken = default);
 }

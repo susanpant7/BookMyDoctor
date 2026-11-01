@@ -44,6 +44,7 @@ builder.Services.AddSingleton<IHospitalRepo, HospitalRepo>();
 builder.Services.AddSingleton<IDoctorSchedulesRepo, DoctorSchedulesRepo>();
 builder.Services.AddSingleton<IAppointmentsRepo, AppointmentsRepo>();
 builder.Services.AddSingleton<ISettingsRepo, SettingsRepo>();
+builder.Services.AddSingleton<IChatModelsRepo, ChatModelsRepo>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddSingleton<IUserService, UserService>();
@@ -54,6 +55,7 @@ builder.Services.AddSingleton<IAvailabilityService, AvailabilityService>();
 builder.Services.AddSingleton<IAppointmentService, AppointmentService>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<IAiSettingsProvider>(services => services.GetRequiredService<ISettingsService>());
+builder.Services.AddSingleton<SavedChatModelsService>();
 builder.Services.AddSingleton<DataCleanup>();
 builder.Services.AddSingleton<KnowledgeSources>();
 builder.Services.AddSingleton<IVectorStore, SqliteVectorStore>();
@@ -71,7 +73,7 @@ builder.Services.AddHttpClient<OllamaChatModel>(http => http.Timeout = TimeSpan.
 builder.Services.AddHttpClient<OnlineChatModel>(http => http.Timeout = TimeSpan.FromMinutes(2));
 builder.Services.AddTransient<IChatModel, ChatModelRouter>();
 builder.Services.AddTransient<IChatAssistant, ChatAssistant>();
-builder.Services.AddHttpClient<IEmbedder, OllamaEmbedder>();
+builder.Services.AddHttpClient<IEmbedder, Embedder>();
 
 Directory.CreateDirectory("data");
 

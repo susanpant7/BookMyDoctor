@@ -23,7 +23,7 @@ Secrets go in a `.env` file in the repository root (it is in `.gitignore`). Copy
 cp .env.example .env
 ```
 
-The server reads `.env` at startup however it runs (`dotnet run`, `dotnet watch run`, Docker with `env_file: .env`, or a server); a real environment variable with the same name wins. It holds only secrets: the admin login, `Jwt__Key` and the API keys of the online AI providers. Restart the server after changing it.
+The server reads `.env` at startup however it runs (`dotnet run`, `dotnet watch run`, Docker with `env_file: .env`, or a server); a real environment variable with the same name wins. It holds only secrets: the admin login, `Jwt__Key`, `AI_API_KEY` (the key of the online chat service, if you use one) and `EMBEDDING_API_KEY` (only when the embeddings use a different online service). Restart the server after changing it.
 
 API (http://localhost:5080). The database is created and migrated at startup, at `src/server/data/myhospitalai.db`:
 
@@ -43,21 +43,27 @@ npm run dev
 
 The database starts empty. Sign in as the admin (the `Admin__Username` / `Admin__Password` from `.env`), then open **Settings → Manage App Data** and click *Load all default data* (or load each part on its own: hospital, AI assistant, specialties, doctors, patients, knowledge). Then adjust **Settings → Hospital** and **Settings → AI assistant**; changes apply to the next message.
 
-## AI providers
+## Chat model
 
-The chat model can run on Ollama (on this computer) or on an online service. Pick one with **Settings → AI assistant → AI provider**; each provider has its own model setting under *Model for each provider*, so switching is one change. The tab lists every provider and whether its key is set.
+The chat model is set by three things: **Settings → AI assistant → Chat API address** and **Chat model**, and for an online service its key in `AI_API_KEY` in `.env`. An address with no path (`http://localhost:11434`) uses Ollama's own API; any other address is called with the OpenAI chat format (`Features/Chats/OnlineChatModel.cs`). The Settings page lists these services with a *Use* button that fills in the address and a model:
 
-| Provider | Setting value | Key in `.env` |
+| Service | Chat API address | Example model |
 | --- | --- | --- |
-| Ollama (local, free) | `ollama` | none |
-| Google Gemini (free tier) | `gemini` | `GEMINI_API_KEY` |
-| xAI Grok | `grok` | `XAI_API_KEY` |
-| Groq (free tier) | `groq` | `GROQ_API_KEY` |
-| OpenRouter (free `:free` models) | `openrouter` | `OPENROUTER_API_KEY` |
-| Mistral (free Experiment plan) | `mistral` | `MISTRAL_API_KEY` |
-| Cerebras (free tier) | `cerebras` | `CEREBRAS_API_KEY` |
+| Ollama (local, free) | `http://localhost:11434` | `qwen2.5:7b` |
+| Google Gemini (free tier) | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-flash-latest` |
+| xAI Grok | `https://api.x.ai/v1` | `grok-4-1-fast-non-reasoning` |
+| Groq (free tier) | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` |
+| OpenRouter (free `:free` models) | `https://openrouter.ai/api/v1` | `meta-llama/llama-3.3-70b-instruct:free` |
+| Mistral (free Experiment plan) | `https://api.mistral.ai/v1` | `mistral-small-latest` |
+| Cerebras (free tier) | `https://api.cerebras.ai/v1` | `gpt-oss-120b` |
 
-The online providers are all called with the OpenAI chat format (`Features/Chats/OnlineChatModel.cs`); adding another is one line in `Features/Chats/AiProviders.cs`. The model must support tool calling. Embeddings (knowledge search) always use Ollama, at the *Ollama address* setting.
+The list is in `Features/Chats/AiProviders.cs`. The model must support tool calling.
+
+## Embedding model
+
+The knowledge search uses its own model, which can be a different service from the chat (for example Groq for the chat and Gemini for the embeddings). It is set by **Embedding API address**, **Embedding model** and the two prefixes, with the same rule: no path means Ollama, a path means the OpenAI embeddings format (`POST {address}/embeddings`). An online service's key goes in `EMBEDDING_API_KEY`; when that is empty, `AI_API_KEY` is used. The Settings page lists Ollama (`nomic-embed-text`), Gemini (`gemini-embedding-001`), Mistral (`mistral-embed`) and OpenAI (`text-embedding-3-small`) with a *Use* button. When hosting in the cloud without Ollama, use an online one.
+
+Vectors from different models can't be compared, so after switching, all the stored knowledge is embedded again: *Use* does it for you, and *Re-embed all knowledge* (under Embeddings) does it after a change by hand or a new key.
 
 ## Admin and roles
 

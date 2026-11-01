@@ -86,11 +86,11 @@ const modules: Module[] = [
   {
     id: "knowledge",
     title: "Knowledge files",
-    description: "The bundled Markdown files the assistant answers from (booking, payments, FAQ and more). Needs Ollama running.",
+    description: "The bundled Markdown files the assistant answers from (booking, payments, FAQ and more). Needs the embedding service (Ollama by default) to be running.",
     button: "Load default knowledge files",
     run: async () => {
       const results = await loadDefaultKnowledge();
-      // Usually every file fails for the same reason (Ollama not running), so each reason is shown once.
+      // Usually every file fails for the same reason (e.g. the embedding service not running), so each reason is shown once.
       const reasons = [...new Set(results.map((result) => result.error).filter(Boolean))];
       if (reasons.length > 0) {
         const failed = results.filter((result) => result.error).length;

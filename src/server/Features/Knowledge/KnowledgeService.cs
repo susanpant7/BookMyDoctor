@@ -67,7 +67,7 @@ public sealed class KnowledgeService : IKnowledgeService
             }
             catch (HttpRequestException ex)
             {
-                results.Add(new UploadFileResult(file.FileName, 0, $"Cannot reach Ollama or the embedding model ({ex.Message}). Make sure Ollama is running and the model is pulled."));
+                results.Add(new UploadFileResult(file.FileName, 0, $"The embedding failed: {ex.Message} Check the Embedding API address and Embedding model settings (for Ollama: that it is running and the model is pulled)."));
             }
         }
 
@@ -146,6 +146,22 @@ public sealed class KnowledgeService : IKnowledgeService
         await SyncDoctorSettingsAsync(cancellationToken);
         await SyncSpecialtySettingsAsync(cancellationToken);
         await SyncHospitalSettingsAsync(cancellationToken);
+    }
+
+    public async Task<int> ReembedAllAsync(CancellationToken cancellationToken = default)
+    {
+        // The stored text is what was embedded, so every section (bundled, uploaded, written or generated) can be
+        // embedded again as it is. All vectors are made first and saved together, so a failure halfway changes nothing.
+        var documents = _store.GetAll();
+        if (documents.Count == 0)
+        {
+            return 0;
+        }
+
+        var vectors = await _embedder.EmbedDocumentsAsync(documents.Select(document => document.Text).ToList(), cancellationToken);
+        _store.Upsert(documents.Zip(vectors).ToList());
+        _logger.LogInformation("Re-embedded {Count} knowledge sections with {Model}", documents.Count, _settings.Get().EmbeddingModel);
+        return documents.Count;
     }
 
     // Makes a generated file's sections match `wanted`: embeds only new or changed sections (by content hash)

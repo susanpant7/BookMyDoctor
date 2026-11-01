@@ -12,7 +12,8 @@ public interface IChatModel
         IReadOnlyList<ModelMessage> messages, IReadOnlyList<ModelTool> tools, AiSettings settings, Func<string, Task>? onText);
 }
 
-// Sends each request to the provider chosen on the Settings page, so switching applies to the next message.
+// Sends each request to Ollama's own API or to an OpenAI-format service, by the "Chat API address" setting, so a
+// change on the Settings page applies to the next message.
 public sealed class ChatModelRouter : IChatModel
 {
     private readonly OllamaChatModel _ollama;
@@ -26,5 +27,5 @@ public sealed class ChatModelRouter : IChatModel
 
     public Task<ModelMessage> ChatAsync(
         IReadOnlyList<ModelMessage> messages, IReadOnlyList<ModelTool> tools, AiSettings settings, Func<string, Task>? onText) =>
-        (settings.ChatProvider.IsLocal ? (IChatModel)_ollama : _online).ChatAsync(messages, tools, settings, onText);
+        (AiProviders.IsOllamaApi(settings.ChatBaseUrl) ? (IChatModel)_ollama : _online).ChatAsync(messages, tools, settings, onText);
 }

@@ -1,12 +1,13 @@
+using MyHospitalAI.Features.Chats;
+
 namespace MyHospitalAI.Features.Settings;
 
-// Options lists the allowed values of a "choice" setting.
-public sealed record Setting(
-    string Key, string Label, string Description, string Value, string DefaultValue, string Kind, IReadOnlyList<string>? Options = null);
+public sealed record Setting(string Key, string Label, string Description, string Value, string DefaultValue, string Kind);
 
 public sealed record UpdateSettingRequest(string Value);
 
-// An AI provider as the Settings page lists it. HasApiKey says whether its key is in the .env file; the key itself
-// is never sent.
-public sealed record AiProviderInfo(
-    string Id, string Name, string? ApiKeyName, bool HasApiKey, string DefaultModel, string FreeTier, string SignUpUrl);
+// The notes on the Settings page about the services that can run the chat and the embedding models. The Has… flags
+// say whether the keys are set in the .env file; the keys themselves are never sent.
+public sealed record AiProvidersInfo(
+    string ApiKeyName, bool HasApiKey, IReadOnlyList<AiProvider> Providers,
+    string EmbeddingApiKeyName, bool HasEmbeddingApiKey, IReadOnlyList<EmbeddingProvider> EmbeddingProviders);
