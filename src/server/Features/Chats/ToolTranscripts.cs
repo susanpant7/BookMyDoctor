@@ -6,12 +6,12 @@ namespace MyHospitalAI.Features.Chats;
 // sees, so without this the model would forget the looked-up facts (doctors, fees, times) by the next message.
 public sealed class ToolTranscripts
 {
-    private sealed record Turn(Guid PatientMessageId, IReadOnlyList<OllamaMessage> Messages);
+    private sealed record Turn(Guid PatientMessageId, IReadOnlyList<ModelMessage> Messages);
 
     private readonly ConcurrentDictionary<Guid, List<Turn>> _byPatient = new();
 
     // Remembers the tool messages produced while answering one patient message, keeping only the last `keepTurns`.
-    public void Save(Guid patientId, Guid patientMessageId, IReadOnlyList<OllamaMessage> toolMessages, int keepTurns)
+    public void Save(Guid patientId, Guid patientMessageId, IReadOnlyList<ModelMessage> toolMessages, int keepTurns)
     {
         if (toolMessages.Count == 0)
         {
@@ -30,7 +30,7 @@ public sealed class ToolTranscripts
     }
 
     // The tool messages to replay right after the given patient message, or none.
-    public IReadOnlyList<OllamaMessage> For(Guid patientId, Guid patientMessageId)
+    public IReadOnlyList<ModelMessage> For(Guid patientId, Guid patientMessageId)
     {
         if (!_byPatient.TryGetValue(patientId, out var turns))
         {

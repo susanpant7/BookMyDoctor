@@ -46,6 +46,14 @@ export default function SettingForm({ setting, onSaved, onCancel }: SettingFormP
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
+        ) : setting.kind === "choice" ? (
+          <SelectField label="Value" value={value} onChange={(e) => setValue(e.target.value)}>
+            {(setting.options ?? []).map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </SelectField>
         ) : setting.kind === "boolean" ? (
           <SelectField label="Value" value={value} onChange={(e) => setValue(e.target.value)}>
             <option value="true">On</option>

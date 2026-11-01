@@ -6,7 +6,20 @@ export type Setting = {
   description: string;
   value: string;
   defaultValue: string;
-  kind: "text" | "longtext" | "integer" | "number" | "boolean";
+  kind: "text" | "longtext" | "integer" | "number" | "boolean" | "choice";
+  // The allowed values of a "choice" setting.
+  options?: string[] | null;
+};
+
+// A service the "AI provider" setting can choose. hasApiKey says whether its key is in the server's .env file.
+export type AiProviderInfo = {
+  id: string;
+  name: string;
+  apiKeyName: string | null;
+  hasApiKey: boolean;
+  defaultModel: string;
+  freeTier: string;
+  signUpUrl: string;
 };
 
 export type HospitalInfo = {
@@ -29,6 +42,8 @@ export type HospitalDetails = {
 };
 
 export const getSettings = () => apiFetch<Setting[]>("/settings");
+
+export const getAiProviders = () => apiFetch<AiProviderInfo[]>("/settings/ai-providers");
 
 export const updateSetting = (key: string, value: string) =>
   apiFetch<Setting>(`/settings/${encodeURIComponent(key)}`, { method: "PUT", body: JSON.stringify({ value }) });

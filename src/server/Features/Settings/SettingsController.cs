@@ -1,4 +1,5 @@
 using MyHospitalAI.Features.Auth;
+using MyHospitalAI.Features.Chats;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,15 +13,27 @@ public sealed class SettingsController : ControllerBase
     private readonly ISettingsService _settingsService;
 
     private readonly DataCleanup _dataCleanup;
+    private readonly IConfiguration _configuration;
 
-    public SettingsController(ISettingsService settingsService, DataCleanup dataCleanup)
+    public SettingsController(ISettingsService settingsService, DataCleanup dataCleanup, IConfiguration configuration)
     {
         _settingsService = settingsService;
         _dataCleanup = dataCleanup;
+        _configuration = configuration;
     }
 
     [HttpGet]
     public ActionResult<IReadOnlyList<Setting>> GetAll() => Ok(_settingsService.GetAll());
+
+    // The providers the "AI provider" setting can choose, and which of them have a key.
+    [HttpGet("ai-providers")]
+    public ActionResult<IReadOnlyList<AiProviderInfo>> GetAiProviders() =>
+        Ok(AiProviders.All
+            .Select(provider => new AiProviderInfo(
+                provider.Id, provider.Name, provider.ApiKeyName,
+                provider.IsLocal || !string.IsNullOrWhiteSpace(_configuration[provider.ApiKeyName!]),
+                provider.DefaultModel, provider.FreeTier, provider.SignUpUrl))
+            .ToList());
 
     [HttpPut("{key}")]
     public ActionResult<Setting> Update(string key, UpdateSettingRequest request) =>

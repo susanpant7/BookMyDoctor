@@ -1,4 +1,5 @@
 using System.Globalization;
+using MyHospitalAI.Features.Chats;
 
 namespace MyHospitalAI.Features.Settings;
 
@@ -9,6 +10,7 @@ public sealed record AiSettings(
     int MaxToolRounds,
     string UncheckedReply,
     string UnavailableReply,
+    AiProvider ChatProvider,
     string ChatModel,
     double Temperature,
     int ContextSize,
@@ -20,27 +22,34 @@ public sealed record AiSettings(
     int RetrievalTop,
     double RetrievalMinScore,
     double RetrievalMaxScoreGap,
-    string KeepAlive)
+    string KeepAlive,
+    string OllamaUrl)
 {
     // A value that is missing or cannot be read falls back to its default.
-    public static AiSettings From(IReadOnlyDictionary<string, string> values) => new(
-        Text(values, SettingKeys.AssistantSystemPrompt),
-        Text(values, SettingKeys.AssistantFactCheck).Equals("true", StringComparison.OrdinalIgnoreCase),
-        (int)Number(values, SettingKeys.AssistantMaxToolRounds),
-        Text(values, SettingKeys.AssistantUncheckedReply),
-        Text(values, SettingKeys.AssistantUnavailableReply),
-        Text(values, SettingKeys.ChatModel),
-        Number(values, SettingKeys.ChatTemperature),
-        (int)Number(values, SettingKeys.ChatContextSize),
-        (int)Number(values, SettingKeys.ChatHistoryMessages),
-        (int)Number(values, SettingKeys.ChatToolHistoryTurns),
-        Text(values, SettingKeys.EmbeddingModel),
-        Text(values, SettingKeys.EmbeddingQueryPrefix),
-        Text(values, SettingKeys.EmbeddingDocumentPrefix),
-        (int)Number(values, SettingKeys.RetrievalTopK),
-        Number(values, SettingKeys.RetrievalMinScore),
-        Number(values, SettingKeys.RetrievalMaxScoreGap),
-        Text(values, SettingKeys.ChatKeepAlive));
+    public static AiSettings From(IReadOnlyDictionary<string, string> values)
+    {
+        var provider = AiProviders.Find(Text(values, SettingKeys.ChatProvider)) ?? AiProviders.Find(AiProviders.Ollama)!;
+        return new(
+            Text(values, SettingKeys.AssistantSystemPrompt),
+            Text(values, SettingKeys.AssistantFactCheck).Equals("true", StringComparison.OrdinalIgnoreCase),
+            (int)Number(values, SettingKeys.AssistantMaxToolRounds),
+            Text(values, SettingKeys.AssistantUncheckedReply),
+            Text(values, SettingKeys.AssistantUnavailableReply),
+            provider,
+            Text(values, AiProviders.ModelSettingKey(provider)),
+            Number(values, SettingKeys.ChatTemperature),
+            (int)Number(values, SettingKeys.ChatContextSize),
+            (int)Number(values, SettingKeys.ChatHistoryMessages),
+            (int)Number(values, SettingKeys.ChatToolHistoryTurns),
+            Text(values, SettingKeys.EmbeddingModel),
+            Text(values, SettingKeys.EmbeddingQueryPrefix),
+            Text(values, SettingKeys.EmbeddingDocumentPrefix),
+            (int)Number(values, SettingKeys.RetrievalTopK),
+            Number(values, SettingKeys.RetrievalMinScore),
+            Number(values, SettingKeys.RetrievalMaxScoreGap),
+            Text(values, SettingKeys.ChatKeepAlive),
+            Text(values, SettingKeys.OllamaUrl).TrimEnd('/'));
+    }
 
     public static AiSettings Defaults { get; } = From(new Dictionary<string, string>());
 

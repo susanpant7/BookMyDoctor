@@ -10,7 +10,9 @@ using MyHospitalAI.Features.Specialties;
 using MyHospitalAI.Features.Users;
 using MyHospitalAI.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+
+// The secrets (admin login, token key, AI provider keys) come from the .env file, or from real environment variables.
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 var clientOrigin = builder.Configuration["Cors:ClientOrigin"] ?? "http://localhost:5173";
@@ -63,18 +65,13 @@ builder.Services.AddSingleton<BookingDrafts>();
 builder.Services.AddSingleton<IAssistantTool, BookAppointmentTool>();
 builder.Services.AddSingleton<ToolTranscripts>();
 builder.Services.AddSingleton<ReplyFactChecker>();
-builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(OllamaOptions.SectionName));
-builder.Services.AddHttpClient<IChatAssistant, OllamaChatAssistant>((services, http) =>
-{
-    var options = services.GetRequiredService<IOptions<OllamaOptions>>().Value;
-    http.BaseAddress = new Uri(options.BaseUrl);
-    http.Timeout = TimeSpan.FromMinutes(2);   // a local model can be slow, especially on first load
-});
-builder.Services.AddHttpClient<IEmbedder, OllamaEmbedder>((services, http) =>
-{
-    var options = services.GetRequiredService<IOptions<OllamaOptions>>().Value;
-    http.BaseAddress = new Uri(options.BaseUrl);
-});
+// The chat model runs on Ollama or an online provider, chosen on the Settings page. The addresses come from the
+// settings, so the HTTP clients have no base address.
+builder.Services.AddHttpClient<OllamaChatModel>(http => http.Timeout = TimeSpan.FromMinutes(2));   // a local model can be slow, especially on first load
+builder.Services.AddHttpClient<OnlineChatModel>(http => http.Timeout = TimeSpan.FromMinutes(2));
+builder.Services.AddTransient<IChatModel, ChatModelRouter>();
+builder.Services.AddTransient<IChatAssistant, ChatAssistant>();
+builder.Services.AddHttpClient<IEmbedder, OllamaEmbedder>();
 
 Directory.CreateDirectory("data");
 

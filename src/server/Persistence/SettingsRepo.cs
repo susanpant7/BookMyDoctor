@@ -24,6 +24,13 @@ public sealed class SettingsRepo : ISettingsRepo
         return db.Settings.Where(setting => setting.Key == key).ExecuteUpdate(setters => setters.SetProperty(setting => setting.Value, value)) > 0;
     }
 
+    public void Add(SettingEntity setting)
+    {
+        using var db = _factory.CreateDbContext();
+        db.Settings.Add(setting);
+        db.SaveChanges();
+    }
+
     public void ReplaceAll(IReadOnlyList<SettingEntity> settings)
     {
         using var db = _factory.CreateDbContext();

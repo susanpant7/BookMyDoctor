@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using MyHospitalAI.Features.Appointments;
 using MyHospitalAI.Features.Chats.Tools;
@@ -8,13 +7,13 @@ using MyHospitalAI.Persistence;
 
 namespace MyHospitalAI.Features.Chats;
 
-public sealed class OllamaChatAssistant : IChatAssistant
+public sealed class ChatAssistant : IChatAssistant
 {
     // Sent when the model keeps claiming a booking that didn't happen.
     internal const string NotBookedReply =
         "Sorry, your appointment is not booked yet. Please pick a time from the buttons and confirm it, or ask me for free times again.";
 
-    private readonly HttpClient _http;
+    private readonly IChatModel _model;
     private readonly IAiSettingsProvider _settings;
     private readonly IChatService _chatService;
     private readonly IUsersRepo _usersRepo;
@@ -24,10 +23,10 @@ public sealed class OllamaChatAssistant : IChatAssistant
     private readonly ToolTranscripts _transcripts;
     private readonly ReplyFactChecker _factChecker;
     private readonly TimeProvider _time;
-    private readonly ILogger<OllamaChatAssistant> _logger;
+    private readonly ILogger<ChatAssistant> _logger;
 
-    public OllamaChatAssistant(
-        HttpClient http,
+    public ChatAssistant(
+        IChatModel model,
         IAiSettingsProvider settings,
         IChatService chatService,
         IUsersRepo usersRepo,
@@ -37,9 +36,9 @@ public sealed class OllamaChatAssistant : IChatAssistant
         ToolTranscripts transcripts,
         ReplyFactChecker factChecker,
         TimeProvider time,
-        ILogger<OllamaChatAssistant> logger)
+        ILogger<ChatAssistant> logger)
     {
-        _http = http;
+        _model = model;
         _settings = settings;
         _chatService = chatService;
         _usersRepo = usersRepo;
@@ -63,10 +62,10 @@ public sealed class OllamaChatAssistant : IChatAssistant
         // 1. Retrieve: find the knowledge chunks most related to what the patient just asked.
         var knowledge = await RetrieveAsync(patientMessage.Text);
 
-        // 2. Instructions for the model. Kept identical from turn to turn so Ollama can reuse its cached work
-        //    for the start of the prompt instead of re-reading it on every call.
+        // 2. Instructions for the model. Kept identical from turn to turn so the model (Ollama, or the online
+        //    provider's prompt cache) can reuse its work for the start of the prompt instead of re-reading it.
         var systemPrompt = SystemPrompt(settings.SystemPrompt, name, HospitalTime.Today(_time), _hospitalRepo.GetInfo().Phone);
-        var messages = new List<OllamaMessage> { new("system", systemPrompt) };
+        var messages = new List<ModelMessage> { new("system", systemPrompt) };
 
         // 3. Recent conversation, so the model remembers context. Earlier turns get their tool calls and results
         //    back, so the facts looked up then are still available. The retrieved knowledge is attached to the
@@ -85,8 +84,8 @@ public sealed class OllamaChatAssistant : IChatAssistant
 
         // 4. Generate, running any tools the model asks for, until it answers with text.
         var context = new ToolContext(patientMessage.PatientId, patientMessage.Id);
-        var toolMessages = new List<OllamaMessage>();
-        var reply = await GenerateAsync(messages, context, toolMessages, draft, settings.MaxToolRounds);
+        var toolMessages = new List<ModelMessage>();
+        var reply = await GenerateAsync(messages, context, toolMessages, draft, settings);
 
         // 5. Check the reply for made-up doctors, prices and times (unless turned off in Settings). If there are any,
         //    tell the model and let it try once more. What the model was given (tool results, knowledge, the
@@ -105,7 +104,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
             messages.Add(new("assistant", reply!));
             messages.Add(new("user", FactCheckCorrection(problems)));
             var toolMessagesBeforeRetry = toolMessages.Count;
-            reply = await GenerateAsync(messages, context, toolMessages, draft, settings.MaxToolRounds);
+            reply = await GenerateAsync(messages, context, toolMessages, draft, settings);
 
             // The rejected draft and the correction quote the made-up facts, so they don't count as known;
             // only what was known before plus any tools called during the retry.
@@ -128,15 +127,21 @@ public sealed class OllamaChatAssistant : IChatAssistant
     // to `messages` (for the model) and to `toolMessages` (to remember for later turns). Null if it is still calling
     // tools after `maxToolRounds`, which stops a confused model from looping.
     private async Task<string?> GenerateAsync(
-        List<OllamaMessage> messages, ToolContext context, List<OllamaMessage> toolMessages, IReplyDraft? draft, int maxToolRounds)
+        List<ModelMessage> messages, ToolContext context, List<ModelMessage> toolMessages, IReplyDraft? draft, AiSettings settings)
     {
         var toolDefinitions = _tools.Values
-            .Select(tool => new OllamaTool("function", new OllamaFunction(tool.Name, tool.Description, tool.Parameters)))
+            .Select(tool => new ModelTool("function", new ModelFunction(tool.Name, tool.Description, tool.Parameters)))
             .ToList();
 
-        for (var round = 0; round < maxToolRounds; round++)
+        for (var round = 0; round < settings.MaxToolRounds; round++)
         {
-            var reply = await ChatAsync(messages, toolDefinitions, draft);
+            var reply = await _model.ChatAsync(messages, toolDefinitions, settings, draft is null ? null : draft.ShowAsync);
+            // The model decided to call a tool after all, so whatever it wrote isn't the answer.
+            if (draft is not null && reply.ToolCalls is { Count: > 0 } && reply.Content.Length > 0)
+            {
+                await draft.ClearAsync();
+            }
+
             if (reply.ToolCalls is not { Count: > 0 })
             {
                 return string.IsNullOrWhiteSpace(reply.Content) ? "Sorry, I couldn't think of a reply." : reply.Content.Trim();
@@ -147,13 +152,13 @@ public sealed class OllamaChatAssistant : IChatAssistant
             toolMessages.Add(reply);
             foreach (var call in reply.ToolCalls)
             {
-                var result = new OllamaMessage("tool", await RunToolAsync(call.Function, context), ToolName: call.Function.Name);
+                var result = new ModelMessage("tool", await RunToolAsync(call.Function, context), ToolName: call.Function.Name, ToolCallId: call.Id);
                 messages.Add(result);
                 toolMessages.Add(result);
             }
         }
 
-        _logger.LogWarning("Model was still calling tools after {Rounds} rounds", maxToolRounds);
+        _logger.LogWarning("Model was still calling tools after {Rounds} rounds", settings.MaxToolRounds);
         return null;
     }
 
@@ -164,63 +169,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
         Use your tools to look up the correct facts, then write the reply to the patient again.
         """;
 
-    // Streams the model's answer: Ollama sends one JSON object per line, each with the next piece of text, and a final
-    // line with the tool calls (if any) and timings. Text is shown in the draft as it arrives.
-    private async Task<OllamaMessage> ChatAsync(IReadOnlyList<OllamaMessage> messages, IReadOnlyList<OllamaTool> tools, IReplyDraft? draft)
-    {
-        var settings = _settings.Get();
-        var request = new OllamaChatRequest(
-            settings.ChatModel, messages, Stream: true, tools.Count == 0 ? null : tools,
-            new OllamaRequestOptions(settings.ContextSize, settings.Temperature), settings.KeepAlive);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/chat") { Content = JsonContent.Create(request) };
-        // ResponseHeadersRead: start reading as soon as Ollama starts sending, instead of waiting for the whole reply.
-        using var response = await _http.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
-        response.EnsureSuccessStatusCode();
-
-        var content = new StringBuilder();
-        var toolCalls = new List<OllamaToolCall>();
-        OllamaChatResponse? last = null;
-        using var reader = new StreamReader(await response.Content.ReadAsStreamAsync());
-        while (await reader.ReadLineAsync() is { } line)
-        {
-            if (string.IsNullOrWhiteSpace(line) || JsonSerializer.Deserialize<OllamaChatResponse>(line, JsonSerializerOptions.Web) is not { } chunk)
-            {
-                continue;
-            }
-
-            last = chunk;
-            if (chunk.Message.ToolCalls is { Count: > 0 } calls)
-            {
-                toolCalls.AddRange(calls);
-            }
-
-            if (!string.IsNullOrEmpty(chunk.Message.Content))
-            {
-                content.Append(chunk.Message.Content);
-                if (draft is not null && toolCalls.Count == 0)
-                {
-                    await draft.ShowAsync(content.ToString());
-                }
-            }
-        }
-
-        // The model decided to call a tool after all, so whatever it wrote isn't the answer.
-        if (draft is not null && toolCalls.Count > 0 && content.Length > 0)
-        {
-            await draft.ClearAsync();
-        }
-
-        if (last is not null)
-        {
-            _logger.LogInformation(
-                "Ollama call: {Messages} messages | load {Load:F1}s | prompt {PromptTokens} tokens in {PromptSeconds:F1}s | reply {ReplyTokens} tokens in {ReplySeconds:F1}s",
-                messages.Count, last.LoadDuration / 1e9, last.PromptEvalCount, last.PromptEvalDuration / 1e9,
-                last.EvalCount, last.EvalDuration / 1e9);
-        }
-        return new OllamaMessage("assistant", content.ToString(), toolCalls.Count > 0 ? toolCalls : null);
-    }
-
-    private async Task<string> RunToolAsync(OllamaFunctionCall call, ToolContext context)
+    private async Task<string> RunToolAsync(ModelFunctionCall call, ToolContext context)
     {
         if (!_tools.TryGetValue(call.Name, out var tool))
         {
@@ -263,7 +212,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
     }
 
     // Keeps at most `max` recent messages. Trims in steps of half that size rather than one message at a time,
-    // so the start of the prompt stays the same for several turns and Ollama's cache keeps working.
+    // so the start of the prompt stays the same for several turns and the model's cache keeps working.
     internal static IReadOnlyList<ChatMessage> RecentHistory(IReadOnlyList<ChatMessage> history, int max)
     {
         if (history.Count <= max)
@@ -276,7 +225,7 @@ public sealed class OllamaChatAssistant : IChatAssistant
         return history.Skip(start).ToList();
     }
 
-    // Fills in the System prompt setting's placeholders. Same output all day, so Ollama can keep reusing its cache.
+    // Fills in the System prompt setting's placeholders. Same output all day, so the model can keep reusing its cache.
     internal static string SystemPrompt(string template, string patientName, DateOnly today, string hospitalPhone)
     {
         var calendar = string.Join("\n", Enumerable.Range(1, 7).Select(offset => today.AddDays(offset)).Select((date, i) =>

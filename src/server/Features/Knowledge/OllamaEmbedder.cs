@@ -32,7 +32,9 @@ public sealed class OllamaEmbedder : IEmbedder
 
     private async Task<float[][]> EmbedAsync(IReadOnlyList<string> input, CancellationToken cancellationToken)
     {
-        var response = await _http.PostAsJsonAsync("/api/embed", new OllamaEmbedRequest(_settings.Get().EmbeddingModel, input), cancellationToken);
+        // Always Ollama, whichever AI provider writes the answers. The address is the "Ollama address" setting.
+        var settings = _settings.Get();
+        var response = await _http.PostAsJsonAsync($"{settings.OllamaUrl}/api/embed", new OllamaEmbedRequest(settings.EmbeddingModel, input), cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<OllamaEmbedResponse>(cancellationToken);

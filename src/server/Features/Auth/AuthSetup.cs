@@ -17,7 +17,8 @@ public static class AuthSetup
         var jwt = section.Get<JwtOptions>() ?? throw new InvalidOperationException("Missing 'Jwt' configuration.");
         if (Encoding.UTF8.GetByteCount(jwt.Key) < 32)
         {
-            throw new InvalidOperationException("Jwt:Key must be at least 32 bytes.");
+            throw new InvalidOperationException(
+                "Jwt__Key must be set to at least 32 characters, in the .env file or as an environment variable. See .env.example.");
         }
 
         services.Configure<JwtOptions>(section);

@@ -9,6 +9,8 @@ public interface ISettingsRepo
     // False when no setting has the key.
     bool SetValue(string key, string value);
 
+    void Add(SettingEntity setting);
+
     // Deletes every setting and saves these instead.
     void ReplaceAll(IReadOnlyList<SettingEntity> settings);
 }
