@@ -1,6 +1,6 @@
 # How to run and use the app
 
-MyHospitalAI is a hospital booking app. Patients browse the doctors and chat with an AI assistant, **Vaidya Mitra**, which answers from the hospital's own knowledge, finds free times and books appointments. Doctors see the patients booked with them. An admin manages the data the app runs on. This page explains how to run the app, how to set it up the first time, and how to use it. How the AI works is on the [AI and RAG](/docs?tab=ai-rag) tab.
+MyHospitalAI is a hospital booking app. Patients browse the doctors and chat with an AI assistant, **Vaidya Mitra**, which answers from the hospital's own knowledge, finds free times and books appointments. Doctors see the patients booked with them. An admin manages the data the app runs on. This page explains how to run the app, how to set it up the first time, and how to use it. The ideas behind the AI are on the [AI and RAG](/docs?tab=ai-rag) tab, and how the app works step by step, with the requests and responses, is on the [Workflow](/docs?tab=workflow) tab.
 
 **The code is on GitHub:** [github.com/susanpant7/BookMyDoctor](https://github.com/susanpant7/BookMyDoctor). To get it:
 
@@ -119,7 +119,7 @@ The assistant also answers questions about the hospital: fees, opening hours, pa
 | **Specialties** | Add, edit and delete specialties. A specialty with doctors cannot be deleted |
 | **Knowledge** | Upload knowledge files, write and edit sections, test a question, and see all stored sections |
 | **Settings** | The hospital details, the AI assistant (models, prompt, search) and Manage App Data |
-| **Dev Docs** | This guide and the AI and RAG documentation (open to everyone, without signing in) |
+| **Dev Docs** | This guide, AI and RAG explained, and the app's workflow (open to everyone, without signing in) |
 
 **Knowledge files.** A file is Markdown: a `# ` title line, then sections that each start with a `## ` line:
 

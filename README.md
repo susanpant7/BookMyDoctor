@@ -2,7 +2,7 @@
 
 A hospital booking app. Patients browse doctors, chat with an AI assistant (Vaidya Mitra, RAG over the hospital's knowledge) and book appointments. An admin signs in to manage the data the app runs on.
 
-More detail: the **Dev Docs** page in the app (`/docs`, open without signing in), with two tabs: **Installation** (how to run, set up and use the app; source [how-to-run-and-use.md](src/client/src/features/docs/how-to-run-and-use.md)) and **AI and RAG** (ingestion, retrieval, the prompt, the tools, booking, the fact check, tuning and debugging; source [technical-guide.md](src/client/src/features/docs/technical-guide.md)).
+More detail: the **Dev Docs** page in the app (`/docs`, open without signing in), with three tabs: **Installation** (how to run, set up and use the app; source [how-to-run-and-use.md](src/client/src/features/docs/how-to-run-and-use.md)), **AI and RAG** (AI, fine-tuning, knowledge data, vectors, vector databases and RAG explained simply, with their pros and cons; source [ai-and-rag.md](src/client/src/features/docs/ai-and-rag.md)) and **Workflow** (how the knowledge is prepared, stored and embedded, and a chat from "hello" to a booked appointment, with the requests and responses; source [workflow.md](src/client/src/features/docs/workflow.md)).
 
 | Part | What it is |
 | --- | --- |
