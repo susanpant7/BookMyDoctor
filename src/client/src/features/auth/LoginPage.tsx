@@ -7,6 +7,10 @@ import Alert from "@/shared/components/Alert";
 import Button from "@/shared/components/Button";
 import { TextField } from "@/shared/components/Field";
 
+// Patients can't create their own account for now: the admin adds them on the Patients page. Set to true to show
+// "Create an account" again (the register form and the API are still there).
+const allowRegistration = false;
+
 export default function LoginPage() {
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -81,19 +85,21 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-stone-500">
-          {registering ? "Already have an account?" : "New patient?"}{" "}
-          <button
-            type="button"
-            className="font-semibold text-brand-600 hover:text-brand-500"
-            onClick={() => {
-              setRegistering(!registering);
-              setError("");
-            }}
-          >
-            {registering ? "Sign in" : "Create an account"}
-          </button>
-        </p>
+        {allowRegistration && (
+          <p className="mt-6 text-center text-sm text-stone-500">
+            {registering ? "Already have an account?" : "New patient?"}{" "}
+            <button
+              type="button"
+              className="font-semibold text-brand-600 hover:text-brand-500"
+              onClick={() => {
+                setRegistering(!registering);
+                setError("");
+              }}
+            >
+              {registering ? "Sign in" : "Create an account"}
+            </button>
+          </p>
+        )}
       </div>
     </main>
   );

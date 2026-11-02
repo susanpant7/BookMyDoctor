@@ -69,7 +69,7 @@ export default function UsersPage() {
         {loading ? (
           <p className="px-6 py-12 text-center text-sm text-stone-500">Loading patients...</p>
         ) : patients.length === 0 ? (
-          <p className="px-6 py-12 text-center text-sm text-stone-500">No patients yet. Patients can register themselves, and demo patients can be loaded in Settings → Manage App Data.</p>
+          <p className="px-6 py-12 text-center text-sm text-stone-500">No patients yet. Add one, or load the demo patients in Settings → Manage App Data.</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
