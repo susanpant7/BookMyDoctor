@@ -62,7 +62,7 @@ export default function DoctorsAdminPage() {
   const noSpecialties = !loading && specialties.length === 0;
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Doctors"
         description="Add, edit and remove doctors, and set the hours patients can book them."
@@ -100,32 +100,35 @@ export default function DoctorsAdminPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
-                <th className="px-6 py-3 font-medium">Doctor</th>
-                <th className="px-6 py-3 font-medium">Specialty</th>
-                <th className="hidden px-6 py-3 font-medium md:table-cell">Fees</th>
-                <th className="hidden px-6 py-3 font-medium lg:table-cell">Languages</th>
-                <th className="px-6 py-3" />
+                <th className="px-4 py-3 sm:px-6 font-medium">Doctor</th>
+                <th className="hidden px-4 py-3 sm:px-6 font-medium sm:table-cell">Specialty</th>
+                <th className="hidden px-4 py-3 sm:px-6 font-medium md:table-cell">Fees</th>
+                <th className="hidden px-4 py-3 sm:px-6 font-medium lg:table-cell">Languages</th>
+                <th className="px-4 py-3 sm:px-6" />
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {doctors.map((doctor) => (
                 <tr key={doctor.id} className="hover:bg-stone-50/60">
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4 sm:px-6">
                     <p className="font-medium text-stone-900">{doctor.name}</p>
-                    <p className="text-stone-500">
+                    <div className="mt-1 sm:hidden">
+                      <Badge name={doctor.specialty} />
+                    </div>
+                    <p className="mt-1 text-stone-500 sm:mt-0">
                       {doctor.experienceYears} years of experience
                       {doctor.username ? ` · signs in as ${doctor.username}` : " · no login"}
                     </p>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="hidden px-4 py-4 sm:table-cell sm:px-6">
                     <Badge name={doctor.specialty} />
                   </td>
-                  <td className="hidden px-6 py-4 text-stone-600 md:table-cell">
+                  <td className="hidden px-4 py-4 sm:px-6 text-stone-600 md:table-cell">
                     ${doctor.consultationFee} / ${doctor.followUpFee}
                   </td>
-                  <td className="hidden px-6 py-4 text-stone-600 lg:table-cell">{doctor.languages.join(", ")}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-1">
+                  <td className="hidden px-4 py-4 sm:px-6 text-stone-600 lg:table-cell">{doctor.languages.join(", ")}</td>
+                  <td className="px-4 py-4 sm:px-6">
+                    <div className="flex flex-col items-end gap-1 sm:flex-row sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => openForm(doctor)}>
                         Edit
                       </Button>

@@ -153,7 +153,7 @@ export default function KnowledgePage() {
   ];
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Knowledge"
         description="The assistant answers hospital questions from this knowledge base: the Markdown files uploaded here, plus doctor-settings.md, specialty-settings.md and hospital-settings.md, which the server builds from the doctors, specialties and hospital settings."
@@ -164,7 +164,7 @@ export default function KnowledgePage() {
         }
       />
 
-      <form onSubmit={handleUpload} className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+      <form onSubmit={handleUpload} className="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="font-semibold text-stone-900">Upload knowledge files</h2>
           <Button variant="secondary" size="sm" disabled={busy} onClick={() => setEditing("")}>
@@ -231,9 +231,9 @@ export default function KnowledgePage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
                 <tr>
-                  <th className="px-6 py-3 font-medium">Section</th>
-                  {selectedTab === ALL && <th className="px-6 py-3 font-medium">Knowledge</th>}
-                  <th className="px-6 py-3" />
+                  <th className="px-4 py-3 sm:px-6 font-medium">Section</th>
+                  {selectedTab === ALL && <th className="px-4 py-3 sm:px-6 font-medium">Knowledge</th>}
+                  <th className="px-4 py-3 sm:px-6" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
@@ -245,18 +245,18 @@ export default function KnowledgePage() {
                     onClick={() => setExpandedId(expandedId === chunk.id ? null : chunk.id)}
                     className="cursor-pointer align-top hover:bg-stone-50/60"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 sm:px-6">
                       <p className="font-medium text-stone-900">{chunk.title}</p>
                       <p className={`mt-1 max-w-2xl whitespace-pre-wrap text-stone-500 ${expandedId === chunk.id ? "" : "line-clamp-1"}`}>
                         {chunk.text.replace(/^## .*\n/, "")}
                       </p>
                     </td>
                     {selectedTab === ALL && (
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4 sm:px-6">
                         <Badge name={chunk.documentTitle} />
                       </td>
                     )}
-                    <td className="px-6 py-3">
+                    <td className="px-4 py-3 sm:px-6">
                       {editable(chunk.source) && (
                         <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="sm" disabled={busy} onClick={() => setEditingSection({ source: chunk.source, index })}>
@@ -355,7 +355,7 @@ function SearchTester() {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
       <h2 className="font-semibold text-stone-900">Test a question</h2>
       <p className="mt-1 text-sm text-stone-500">
         See which sections the assistant would find for a question. Use the scores to tune the minimum similarity on the Settings page.

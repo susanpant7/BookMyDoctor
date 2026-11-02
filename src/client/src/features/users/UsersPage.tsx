@@ -54,7 +54,7 @@ export default function UsersPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Patients"
         description="The people who can sign in to book appointments and chat with the assistant."
@@ -74,14 +74,14 @@ export default function UsersPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
-                <th className="px-6 py-3 font-medium">Patient</th>
-                <th className="px-6 py-3" />
+                <th className="px-4 py-3 sm:px-6 font-medium">Patient</th>
+                <th className="px-4 py-3 sm:px-6" />
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {patients.map((patient) => (
                 <tr key={patient.id} className="hover:bg-stone-50/60">
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4 sm:px-6">
                     <div className="flex items-center gap-3">
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
                         {patient.name[0]}
@@ -92,8 +92,8 @@ export default function UsersPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-1">
+                  <td className="px-4 py-4 sm:px-6">
+                    <div className="flex flex-col items-end gap-1 sm:flex-row sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => openForm(patient)}>
                         Edit
                       </Button>

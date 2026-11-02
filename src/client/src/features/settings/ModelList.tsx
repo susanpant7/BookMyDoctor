@@ -278,7 +278,7 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
   );
 
   return (
-    <div className="mb-4 rounded-2xl border border-brand-100 bg-brand-50/40 p-6 shadow-sm">
+    <div className="mb-4 rounded-2xl border border-brand-100 bg-brand-50/40 p-4 shadow-sm sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 max-w-3xl">
           <h3 className="text-base font-semibold text-stone-900">Choosing the {what} model</h3>

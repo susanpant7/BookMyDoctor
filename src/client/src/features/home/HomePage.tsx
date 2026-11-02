@@ -13,7 +13,7 @@ export default function HomePage() {
   const { user, isPatient, isAdmin, isDoctor } = useAuth();
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-16">
+    <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <section className="text-center">
         <h1 className="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">Book your doctor, without the waiting</h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-stone-600">
@@ -50,7 +50,7 @@ export default function HomePage() {
 
       <section className="mt-16 grid gap-5 sm:grid-cols-3">
         {features.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+          <div key={title} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
             <span className="flex size-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
               <Icon className="size-5" aria-hidden="true" />
             </span>

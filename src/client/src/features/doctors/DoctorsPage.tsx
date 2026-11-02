@@ -41,7 +41,7 @@ export default function DoctorsPage() {
   }, [specialtyId]);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Our doctors"
         description="Specialists you can book at Mero Aspataal."
@@ -72,7 +72,7 @@ export default function DoctorsPage() {
       ) : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doctor) => (
-            <article key={doctor.id} className="flex flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+            <article key={doctor.id} className="flex flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-start gap-3">
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-base font-semibold text-brand-700">
                   {doctor.name[0]}

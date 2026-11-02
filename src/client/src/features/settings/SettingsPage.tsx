@@ -61,7 +61,7 @@ export default function SettingsPage() {
   }, [knowledgeVersion]);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       {knowledgeCount === 0 && (
         <div role="alert" className="mb-6 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white shadow-sm">
           The app does not have any knowledge files. Select an embedding model (Settings → AI assistant) to load the
@@ -171,9 +171,11 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
                       >
                         {displayValue(setting)}
                       </p>
-                      <Button variant="ghost" size="sm" onClick={() => setEditing(setting)}>
-                        Edit
-                      </Button>
+                      <div>
+                        <Button variant="ghost" size="sm" onClick={() => setEditing(setting)}>
+                          Edit
+                        </Button>
+                      </div>
                     </div>
                   ))}
               </div>

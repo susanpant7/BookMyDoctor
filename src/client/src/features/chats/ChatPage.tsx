@@ -166,7 +166,7 @@ export default function ChatPage() {
   const selectedLabel = bookingOptions?.slots.find((slot) => slot.startsAt === selectedSlot)?.label;
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col px-4 py-6">
+    <main className="mx-auto flex h-[calc(100dvh-4rem)] max-w-3xl flex-col px-2 py-2 sm:px-4 sm:py-6">
       <header className="flex items-center gap-3 rounded-t-2xl border border-stone-200 bg-white px-4 py-3">
         <Link
           to="/book"

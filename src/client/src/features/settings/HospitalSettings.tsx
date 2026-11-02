@@ -89,8 +89,8 @@ export default function HospitalSettings() {
           {weekOrder.map((day) => {
             const open = hoursFor(day);
             return (
-              <li key={day} className="grid grid-cols-[8rem_1fr] items-center gap-3 sm:grid-cols-[8rem_9rem_9rem_1fr]">
-                <label className="flex items-center gap-2 text-sm font-medium text-stone-700">
+              <li key={day} className="grid grid-cols-2 items-center gap-x-3 gap-y-1.5 sm:grid-cols-[8rem_9rem_9rem_1fr]">
+                <label className="col-span-2 flex items-center gap-2 text-sm font-medium text-stone-700 sm:col-span-1">
                   <input type="checkbox" checked={open !== undefined} onChange={(e) => setOpen(day, e.target.checked)} />
                   {dayNames[day]}
                 </label>
@@ -102,7 +102,7 @@ export default function HospitalSettings() {
                       aria-label={`${dayNames[day]} opens`}
                       value={open.opens}
                       onChange={(e) => changeHours(day, { opens: e.target.value })}
-                      className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
+                      className="w-full min-w-0 rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
                     />
                     <input
                       type="time"
@@ -110,11 +110,11 @@ export default function HospitalSettings() {
                       aria-label={`${dayNames[day]} closes`}
                       value={open.closes}
                       onChange={(e) => changeHours(day, { closes: e.target.value })}
-                      className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
+                      className="w-full min-w-0 rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
                     />
                   </>
                 ) : (
-                  <span className="text-sm text-stone-500">Closed</span>
+                  <span className="col-span-2 text-sm text-stone-500 sm:col-span-1">Closed</span>
                 )}
               </li>
             );
@@ -125,13 +125,13 @@ export default function HospitalSettings() {
       <Section title="Extra test prices">
         <ul className="space-y-2">
           {servicePrices.map((price, index) => (
-            <li key={index} className="grid grid-cols-[1fr_7rem_auto] items-center gap-3">
+            <li key={index} className="grid grid-cols-[minmax(0,1fr)_5.5rem_auto] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_7rem_auto] sm:gap-3">
               <input
                 required
                 aria-label="Test name"
                 value={price.name}
                 onChange={(e) => change({ servicePrices: servicePrices.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)) })}
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
+                className="w-full min-w-0 rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
               />
               <input
                 required
@@ -141,7 +141,7 @@ export default function HospitalSettings() {
                 aria-label="Price"
                 value={price.price}
                 onChange={(e) => change({ servicePrices: servicePrices.map((p, i) => (i === index ? { ...p, price: Number(e.target.value) } : p)) })}
-                className="rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
+                className="w-full min-w-0 rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-stone-300"
               />
               <Button variant="dangerGhost" size="sm" onClick={() => change({ servicePrices: servicePrices.filter((_, i) => i !== index) })}>
                 Remove
@@ -168,7 +168,7 @@ export default function HospitalSettings() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <section className="space-y-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
       <h2 className="font-semibold text-stone-900">{title}</h2>
       {children}
     </section>

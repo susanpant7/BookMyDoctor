@@ -58,7 +58,7 @@ export default function SpecialtiesPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Specialties"
         description="The kinds of care the hospital offers. Every doctor belongs to one."
@@ -78,20 +78,25 @@ export default function SpecialtiesPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
-                <th className="px-6 py-3 font-medium">Specialty</th>
-                <th className="hidden px-6 py-3 font-medium md:table-cell">Description</th>
-                <th className="px-6 py-3 font-medium">Doctors</th>
-                <th className="px-6 py-3" />
+                <th className="px-4 py-3 sm:px-6 font-medium">Specialty</th>
+                <th className="hidden px-4 py-3 sm:px-6 font-medium md:table-cell">Description</th>
+                <th className="hidden px-4 py-3 sm:px-6 font-medium sm:table-cell">Doctors</th>
+                <th className="px-4 py-3 sm:px-6" />
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {specialties.map((specialty) => (
                 <tr key={specialty.id} className="hover:bg-stone-50/60">
-                  <td className="px-6 py-4 font-medium text-stone-900">{specialty.name}</td>
-                  <td className="hidden px-6 py-4 text-stone-600 md:table-cell">{specialty.description}</td>
-                  <td className="px-6 py-4 text-stone-600">{specialty.doctorCount}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-1">
+                  <td className="px-4 py-4 sm:px-6">
+                    <p className="font-medium text-stone-900">{specialty.name}</p>
+                    <p className="text-stone-500 sm:hidden">
+                      {specialty.doctorCount} {specialty.doctorCount === 1 ? "doctor" : "doctors"}
+                    </p>
+                  </td>
+                  <td className="hidden px-4 py-4 sm:px-6 text-stone-600 md:table-cell">{specialty.description}</td>
+                  <td className="hidden px-4 py-4 sm:px-6 text-stone-600 sm:table-cell">{specialty.doctorCount}</td>
+                  <td className="px-4 py-4 sm:px-6">
+                    <div className="flex flex-col items-end gap-1 sm:flex-row sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => openForm(specialty)}>
                         Edit
                       </Button>

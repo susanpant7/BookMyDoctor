@@ -28,7 +28,7 @@ export default function DoctorAppointmentsPage() {
   const past = appointments.filter((a) => new Date(a.endsAt) < now).reverse();
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader title="My appointments" description="The patients booked with you." />
 
       {error && (

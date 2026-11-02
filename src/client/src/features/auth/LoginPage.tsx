@@ -36,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
+    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12 sm:px-6">
       <div className="w-full max-w-sm">
         <div className="text-center">
           <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
@@ -52,7 +52,7 @@ export default function LoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="mt-8 space-y-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
+          className="mt-8 space-y-5 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6"
         >
           {registering && (
             <TextField label="Name" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />

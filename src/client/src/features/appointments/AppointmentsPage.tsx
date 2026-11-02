@@ -31,7 +31,7 @@ export default function AppointmentsPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Your appointments"
         action={

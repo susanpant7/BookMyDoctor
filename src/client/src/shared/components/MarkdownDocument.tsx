@@ -60,7 +60,7 @@ export default function MarkdownDocument({ markdown }: MarkdownDocumentProps) {
         </ul>
       </nav>
 
-      <article className="min-w-0 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-10">
+      <article className="min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-10">
         <div className="prose prose-stone max-w-none prose-headings:scroll-mt-24 prose-a:text-brand-700 prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-code:before:content-none prose-code:after:content-none [&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-stone-100 [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:font-medium">
           <Markdown
             remarkPlugins={[remarkGfm]}

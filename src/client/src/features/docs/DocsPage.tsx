@@ -17,7 +17,7 @@ export default function DocsPage() {
   const tab = params.get("tab") === "ai-rag" ? "ai-rag" : "installation";
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader title="Dev Docs" description="How to run, set up and use the app, and how its AI and RAG work." />
       <div className="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
         <Tabs tabs={tabs} active={tab} onChange={(id) => setParams(id === "installation" ? {} : { tab: id })} />

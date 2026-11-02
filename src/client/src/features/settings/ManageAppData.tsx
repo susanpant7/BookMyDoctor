@@ -195,7 +195,7 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-2xl">
             <h2 className="font-semibold text-stone-900">Load all default data</h2>
@@ -258,7 +258,7 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
         </div>
       </section>
 
-      <section className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-red-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-2xl">
             <h2 className="font-semibold text-red-700">Clean up data</h2>
