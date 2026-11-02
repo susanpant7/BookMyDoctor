@@ -27,12 +27,15 @@ public interface IKnowledgeService
     // ArgumentException for missing or clashing titles; problems from the upload checks come back in the result's Error.
     Task<UploadFileResult> SaveDocumentAsync(SaveKnowledgeDocumentRequest request, CancellationToken cancellationToken = default);
 
-    // Uploads the starting files shipped with the app.
+    // Uploads the starting files shipped with the app, then builds the generated ones (doctors, specialties, hospital).
     Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default);
 
     // Returns how many sections were deleted. Throws ArgumentException for the generated files
     // (doctor-settings.md, specialty-settings.md, hospital-settings.md), which follow the data they are built from.
     int DeleteSource(string source);
+
+    // Deletes every stored section, e.g. when no embedding model is selected any more. Returns how many were deleted.
+    int DeleteAll();
 
     // Makes doctor-settings.md match the doctors, embedding only the sections that changed.
     Task SyncDoctorSettingsAsync(CancellationToken cancellationToken = default);

@@ -50,7 +50,7 @@ public sealed record AiSettings(
         Text(values, SettingKeys.ChatApiKeyName),
         Text(values, SettingKeys.EmbeddingApiKeyName));
 
-    public static AiSettings Defaults { get; } = From(new Dictionary<string, string>());
+    public static AiSettings Defaults => From(new Dictionary<string, string>());
 
     // Some embedding models need a prefix on queries and on documents. An empty prefix means none.
     public static string WithPrefix(string prefix, string text) => prefix.Length == 0 ? text : $"{prefix} {text}";

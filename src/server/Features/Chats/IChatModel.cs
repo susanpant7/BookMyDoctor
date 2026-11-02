@@ -26,6 +26,13 @@ public sealed class ChatModelRouter : IChatModel
     }
 
     public Task<ModelMessage> ChatAsync(
-        IReadOnlyList<ModelMessage> messages, IReadOnlyList<ModelTool> tools, AiSettings settings, Func<string, Task>? onText) =>
-        (AiProviders.IsOllamaApi(settings.ChatBaseUrl) ? (IChatModel)_ollama : _online).ChatAsync(messages, tools, settings, onText);
+        IReadOnlyList<ModelMessage> messages, IReadOnlyList<ModelTool> tools, AiSettings settings, Func<string, Task>? onText)
+    {
+        // The chat then shows the "assistant is unavailable" reply.
+        if (settings.ChatBaseUrl.Length == 0 || settings.ChatModel.Length == 0)
+        {
+            throw new HttpRequestException("No chat model is selected yet. Choose one on Settings → AI assistant.");
+        }
+        return (AiProviders.IsOllamaApi(settings.ChatBaseUrl) ? (IChatModel)_ollama : _online).ChatAsync(messages, tools, settings, onText);
+    }
 }

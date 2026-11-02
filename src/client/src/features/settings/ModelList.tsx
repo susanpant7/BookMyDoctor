@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { reembedKnowledge } from "@/features/knowledge/knowledgeApi";
+import { loadDefaultKnowledge, reembedKnowledge } from "@/features/knowledge/knowledgeApi";
 import AvailableModelsDialog from "@/features/settings/AvailableModelsDialog";
 import ModelForm from "@/features/settings/ModelForm";
 import ModelTourDialog, { type TourProvider } from "@/features/settings/ModelTourDialog";
@@ -156,6 +156,20 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
     .filter((c, i, all) => all.findIndex((other) => sameUrl(other.baseUrl, c.baseUrl)) === i);
 
   // Chat: tested, then used. Embedding: all the knowledge is embedded with it, then it is used.
+  // After the first embedding model is chosen there is no knowledge yet, so the default knowledge files are loaded
+  // with it. A failure is a message, not an error: the model is in use either way.
+  async function loadKnowledge() {
+    try {
+      const results = await loadDefaultKnowledge();
+      const failed = results.filter((result) => result.error);
+      return failed.length > 0
+        ? `${failed.length} of ${results.length} knowledge files were not loaded. ${failed[0].error}`
+        : `The ${results.length} default knowledge files were loaded.`;
+    } catch (err) {
+      return `The knowledge files were not loaded: ${errorMessage(err, "please try again.")} Load them on the Knowledge page.`;
+    }
+  }
+
   async function apply(choice: Choice) {
     setNotice(null);
     setConfirming(null);
@@ -169,12 +183,17 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
         queryPrefix: isEmbedding ? choice.queryPrefix : "",
         documentPrefix: isEmbedding ? choice.documentPrefix : ""
       });
-      setNotice({
-        variant: "success",
-        message: isEmbedding
-          ? `Now using ${choice.model}. ${reembedded} knowledge ${reembedded === 1 ? "section was" : "sections were"} embedded with it.`
-          : `Now using ${choice.model}. It answered a test question, so it works with this key.`
-      });
+      if (isEmbedding && reembedded === 0) {
+        setNotice({ variant: "success", message: `Now using ${choice.model}. Loading the knowledge files...` });
+        setNotice({ variant: "success", message: `Now using ${choice.model}. ${await loadKnowledge()}` });
+      } else {
+        setNotice({
+          variant: "success",
+          message: isEmbedding
+            ? `Now using ${choice.model}. ${reembedded} knowledge ${reembedded === 1 ? "section was" : "sections were"} embedded with it.`
+            : `Now using ${choice.model}. It answered a test question, so it works with this key.`
+        });
+      }
       onChanged();
     } catch (err) {
       setNotice({ variant: "error", message: errorMessage(err, "Could not switch the model. Nothing was changed.") });
@@ -336,6 +355,15 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
           <span className="self-center text-sm text-stone-500">
             Tries the models of the services we have a key for, one after another, with the response time of each.
           </span>
+        </div>
+      )}
+
+      {!current.model && (
+        <div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
+          No {what} model is selected yet.{" "}
+          {isEmbedding
+            ? "Choose one below with Use: the knowledge files are then loaded with it."
+            : "Choose one below with Use, or try Next model to find one that answers."}
         </div>
       )}
 

@@ -12,11 +12,20 @@ using MyHospitalAI.Persistence;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
-// The secrets (admin login, token key, AI provider keys) come from the .env file, or from real environment variables.
-DotEnv.Load();
+// The secrets (admin login, token key, AI service keys) come from environment variables. With `dotnet run` they are
+// read from the .env file; Docker passes the same file with --env-file.
+DotEnv.LoadForDevelopment();
 
 var builder = WebApplication.CreateBuilder(args);
-var clientOrigin = builder.Configuration["Cors:ClientOrigin"] ?? "http://localhost:5173";
+
+// A client hosted on another address (for example Vercel) needs its address here: Cors:AllowedOrigins, separated by
+// commas. With no value, CORS stays off, which is right when the page and the API share an address (Vite dev server).
+var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+// The starting chat and embedding models of a new database (none unless AiDefaults__ variables are set).
+SettingDefaults.UseOverrides(
+    (builder.Configuration.GetSection(AiDefaultsOptions.SectionName).Get<AiDefaultsOptions>() ?? new()).ToOverrides());
 
 builder.Services.AddControllers(options => options.Filters.Add<ServiceExceptionFilter>());
 // Detailed errors send the real exception message to the client; only safe in development.
@@ -26,14 +35,12 @@ builder.Services.AddSignalR(options =>
     options.AddFilter<HubTimingFilter>();   // logs how long each chat hub call takes
 });
 builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddCors(options =>
+if (allowedOrigins.Length > 0)
 {
-    options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(clientOrigin)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
-});
+    // The chat hub's connection needs credentials allowed.
+    builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+}
 
 // The repositories are singletons (the chat tools and the hub are too), so each one opens a short-lived context
 // from this factory for every call.
@@ -96,9 +103,13 @@ using (var scope = app.Services.CreateScope())
 // Logs each request with its status and time, and the list of endpoints at startup.
 app.UseRequestTiming();
 app.LogEndpoints();
-app.UseCors();
+if (allowedOrigins.Length > 0)
+{
+    app.UseCors();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapGet("/api/health", () => Results.Ok(new { status = "Healthy" }));
 app.Run();

@@ -1,14 +1,18 @@
 namespace MyHospitalAI.Features.Common;
 
-// Reads the secrets (admin login, token key, AI provider keys) from a .env file into the environment variables,
-// so the same file works for `dotnet run`, Docker (env_file: .env) and a server. It looks in the current folder
-// and then each parent folder, and stops at the first .env it finds. A variable that is already set is not
-// changed, so real environment variables (e.g. set by the hosting service) win. It must run before the host is
-// built, because that is when environment variables are read into the configuration.
+// Reads the .env file into the process environment, so `dotnet run` gets the same secrets as `docker run --env-file
+// .env`. It looks in the current folder and then in each parent folder, and only runs in Development: Docker and a
+// server set their environment variables themselves. A variable that is already set is not changed. It must run
+// before the host is built, because that is when the environment variables are read into the configuration.
 public static class DotEnv
 {
-    public static void Load()
+    public static void LoadForDevelopment()
     {
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
+        {
+            return;
+        }
+
         for (var folder = new DirectoryInfo(Directory.GetCurrentDirectory()); folder is not null; folder = folder.Parent)
         {
             var file = Path.Combine(folder.FullName, ".env");

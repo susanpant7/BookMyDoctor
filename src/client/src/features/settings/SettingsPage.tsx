@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getChunks } from "@/features/knowledge/knowledgeApi";
 import HospitalSettings from "@/features/settings/HospitalSettings";
 import ModelList, { type ModelInUse } from "@/features/settings/ModelList";
 import SettingForm from "@/features/settings/SettingForm";
@@ -44,9 +45,29 @@ function displayValue(setting: Setting) {
 
 export default function SettingsPage() {
   const [tab, setTab] = useState("hospital");
+  // null until known; the knowledge is only counted to warn that there is none.
+  const [knowledgeCount, setKnowledgeCount] = useState<number | null>(null);
+  const [knowledgeVersion, setKnowledgeVersion] = useState(0);
+  const knowledgeChanged = () => setKnowledgeVersion((v) => v + 1);
+
+  useEffect(() => {
+    let ignore = false;
+    getChunks()
+      .then((chunks) => !ignore && setKnowledgeCount(chunks.length))
+      .catch(() => !ignore && setKnowledgeCount(null));
+    return () => {
+      ignore = true;
+    };
+  }, [knowledgeVersion]);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
+      {knowledgeCount === 0 && (
+        <div role="alert" className="mb-6 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white shadow-sm">
+          The app does not have any knowledge files. Select an embedding model (Settings → AI assistant) to load the
+          knowledge data.
+        </div>
+      )}
       <PageHeader
         title="Settings"
         description="The hospital details patients see, and how the assistant searches the knowledge and writes its answers."
@@ -55,13 +76,19 @@ export default function SettingsPage() {
         <Tabs tabs={tabs} active={tab} onChange={setTab} />
       </div>
       <div className="mt-6">
-        {tab === "hospital" ? <HospitalSettings /> : tab === "ai" ? <AiSettingsList /> : <ManageAppData />}
+        {tab === "hospital" ? (
+          <HospitalSettings />
+        ) : tab === "ai" ? (
+          <AiSettingsList onKnowledgeChanged={knowledgeChanged} />
+        ) : (
+          <ManageAppData onChanged={knowledgeChanged} />
+        )}
       </div>
     </main>
   );
 }
 
-function AiSettingsList() {
+function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void }) {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -80,6 +107,12 @@ function AiSettingsList() {
     return () => {
       ignore = true;
     };
+  }, [version]);
+
+  // Switching the model may have changed the knowledge.
+  useEffect(() => {
+    onKnowledgeChanged();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version]);
 
   const groups = [...new Set(settings.map((s) => groupName(s.key)))];

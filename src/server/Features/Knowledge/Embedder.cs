@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -50,15 +51,36 @@ public sealed class Embedder : IEmbedder
 
     private async Task<float[][]> EmbedAsync(AiSettings settings, IReadOnlyList<string> input, CancellationToken cancellationToken)
     {
-        var vectors = AiProviders.IsOllamaApi(settings.EmbeddingBaseUrl)
-            ? await EmbedWithOllamaAsync(settings, input, cancellationToken)
-            : await EmbedOnlineAsync(settings, input, cancellationToken);
+        if (settings.EmbeddingBaseUrl.Length == 0 || settings.EmbeddingModel.Length == 0)
+        {
+            throw new HttpRequestException(
+                "No embedding model is selected yet. Choose one on Settings → AI assistant, then load the knowledge files.");
+        }
+
+        float[][] vectors;
+        try
+        {
+            vectors = await EmbedOnceAsync(settings, input, cancellationToken);
+        }
+        catch (HttpRequestException ex) when (ex.InnerException is not null
+                                              || ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+        {
+            // A free online service drops a request now and then, or is briefly over its limit: try once more.
+            _logger.LogInformation("The embedding service failed ({Error}); trying once more", ex.Message);
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            vectors = await EmbedOnceAsync(settings, input, cancellationToken);
+        }
         if (vectors.Length != input.Count)
         {
             throw new InvalidOperationException($"The embedding service returned {vectors.Length} embeddings for {input.Count} texts.");
         }
         return vectors;
     }
+
+    private Task<float[][]> EmbedOnceAsync(AiSettings settings, IReadOnlyList<string> input, CancellationToken cancellationToken) =>
+        AiProviders.IsOllamaApi(settings.EmbeddingBaseUrl)
+            ? EmbedWithOllamaAsync(settings, input, cancellationToken)
+            : EmbedOnlineAsync(settings, input, cancellationToken);
 
     private async Task<float[][]> EmbedWithOllamaAsync(AiSettings settings, IReadOnlyList<string> input, CancellationToken cancellationToken)
     {
@@ -71,10 +93,9 @@ public sealed class Embedder : IEmbedder
 
     private async Task<float[][]> EmbedOnlineAsync(AiSettings settings, IReadOnlyList<string> input, CancellationToken cancellationToken)
     {
-        var keyName = AiProviders.KeyNameInUse(_configuration, true, settings.EmbeddingApiKeyName, settings.EmbeddingBaseUrl);
+        var keyName = AiProviders.KeyNameInUse(settings.EmbeddingApiKeyName, settings.EmbeddingBaseUrl);
         var key = AiProviders.ReadKey(_configuration, keyName)
-            ?? throw new HttpRequestException(
-                $"The Embedding API address is an online service, but {keyName} is not set in the .env file. Set it and restart the server.");
+            ?? throw new HttpRequestException($"The embedding model is an online service, but it has no key. {AiProviders.MissingKeyMessage(keyName)}");
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.EmbeddingBaseUrl}/embeddings")
         {

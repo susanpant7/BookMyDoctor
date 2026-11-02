@@ -60,14 +60,14 @@ public sealed class AiModelSwitcher
         kind = AiModelsService.CheckedKind(kind);
         baseUrl = EnsureKnown(baseUrl);
         keyName = CheckedKeyName(keyName);
-        var keyInUse = AiProviders.KeyNameInUse(_configuration, kind == AiModelKinds.Embedding, keyName, baseUrl);
+        var keyInUse = AiProviders.KeyNameInUse(keyName, baseUrl);
 
         var ollama = AiProviders.IsOllamaApi(baseUrl);
         using var request = new HttpRequestMessage(HttpMethod.Get, ollama ? $"{baseUrl}/api/tags" : $"{baseUrl}/models");
         if (!ollama)
         {
             var key = AiProviders.ReadKey(_configuration, keyInUse)
-                ?? throw new HttpRequestException($"{keyInUse} is not set in the .env file. Set it and restart the server.");
+                ?? throw new HttpRequestException(AiProviders.MissingKeyMessage(keyInUse));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
         }
 
@@ -149,6 +149,29 @@ public sealed class AiModelSwitcher
         _settings.Update(SettingKeys.EmbeddingDocumentPrefix, settings.EmbeddingDocumentPrefix);
         _logger.LogInformation("The embedding model is now {Model} at {Address}", settings.EmbeddingModel, settings.EmbeddingBaseUrl);
         return new UseModelResult(reembedded);
+    }
+
+    // "Load default AI assistant data": every setting back to its default. When that changes the embedding model, the
+    // knowledge is embedded with the default model first (a failure changes nothing), or deleted when no default
+    // embedding model is given, because its vectors can't be searched any more. The saved models are kept.
+    public async Task RestoreDefaultsAsync(CancellationToken cancellationToken)
+    {
+        var current = _settings.Get();
+        var defaults = AiSettings.Defaults;
+        var changed = current.EmbeddingBaseUrl != defaults.EmbeddingBaseUrl || current.EmbeddingModel != defaults.EmbeddingModel
+            || current.EmbeddingQueryPrefix != defaults.EmbeddingQueryPrefix
+            || current.EmbeddingDocumentPrefix != defaults.EmbeddingDocumentPrefix;
+        if (changed && defaults.EmbeddingModel.Length > 0)
+        {
+            await _knowledge.ReembedAllAsync(defaults, cancellationToken);
+        }
+        else if (changed && _knowledge.DeleteAll() is > 0 and var deleted)
+        {
+            _logger.LogInformation("No embedding model is selected any more, so the {Count} knowledge sections were deleted", deleted);
+        }
+
+        _models.RemoveServiceCopies();
+        _settings.RestoreDefaults();
     }
 
     // The current settings with the chosen model in place of the one in use.

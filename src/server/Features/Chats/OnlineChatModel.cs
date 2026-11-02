@@ -31,13 +31,12 @@ public sealed class OnlineChatModel : IChatModel
     {
         // Named by its host in the logs, e.g. api.groq.com.
         var service = new Uri(settings.ChatBaseUrl).Host;
-        var keyName = AiProviders.KeyNameInUse(_configuration, false, settings.ChatApiKeyName, settings.ChatBaseUrl);
+        var keyName = AiProviders.KeyNameInUse(settings.ChatApiKeyName, settings.ChatBaseUrl);
         var key = AiProviders.ReadKey(_configuration, keyName);
         if (key is null)
         {
-            _logger.LogWarning("The Chat API address is {Service}, but {KeyName} is not set. Add it to the .env file and restart the server.",
-                service, keyName);
-            throw new HttpRequestException($"{keyName} is not set in the .env file. Set it and restart the server.");
+            _logger.LogWarning("The chat model is at {Service}, but it has no key: {Problem}", service, AiProviders.MissingKeyMessage(keyName));
+            throw new HttpRequestException(AiProviders.MissingKeyMessage(keyName));
         }
 
         var body = new JsonObject

@@ -67,7 +67,7 @@ public sealed class KnowledgeService : IKnowledgeService
             }
             catch (HttpRequestException ex)
             {
-                results.Add(new UploadFileResult(file.FileName, 0, $"The embedding failed: {ex.Message} Check the Embedding API address and Embedding model settings (for Ollama: that it is running and the model is pulled)."));
+                results.Add(new UploadFileResult(file.FileName, 0, $"The embedding failed: {ex.Message}"));
             }
         }
 
@@ -112,8 +112,23 @@ public sealed class KnowledgeService : IKnowledgeService
         return (await UploadAsync([new UploadedFile(fileName, markdown)], cancellationToken))[0];
     }
 
-    public Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default) =>
-        UploadAsync(_sources.GetBundledFiles().Select(file => new UploadedFile(file.FileName, file.Text)).ToList(), cancellationToken);
+    // The bundled files, then the generated ones (doctors, specialties, hospital), which are skipped while no embedding
+    // model is selected and so may be missing. A failure of the generated ones is logged; "Sync settings" on the
+    // Knowledge page catches up.
+    public async Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default)
+    {
+        var results = await UploadAsync(
+            _sources.GetBundledFiles().Select(file => new UploadedFile(file.FileName, file.Text)).ToList(), cancellationToken);
+        try
+        {
+            await SyncSettingsAsync(cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning("The generated knowledge (doctors, specialties, hospital) was not built: {Error}", ex.Message);
+        }
+        return results;
+    }
 
     public int DeleteSource(string source)
     {
@@ -122,6 +137,13 @@ public sealed class KnowledgeService : IKnowledgeService
             throw new ArgumentException($"{source} follows the doctors and hospital settings. Change those instead.");
         }
         return _store.RemoveSource(source);
+    }
+
+    public int DeleteAll()
+    {
+        var ids = _store.GetAll().Select(document => document.Id).ToList();
+        _store.Remove(ids);
+        return ids.Count;
     }
 
     public async Task SyncDoctorSettingsAsync(CancellationToken cancellationToken = default)

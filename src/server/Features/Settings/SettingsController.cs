@@ -37,12 +37,10 @@ public sealed class SettingsController : ControllerBase
     public ActionResult<AiKeysInfo> GetAiKeys()
     {
         var settings = _settingsService.Get();
-        var chatKey = AiProviders.KeyNameInUse(_configuration, false, settings.ChatApiKeyName, settings.ChatBaseUrl);
-        var embeddingKey = AiProviders.KeyNameInUse(_configuration, true, settings.EmbeddingApiKeyName, settings.EmbeddingBaseUrl);
+        var chatKey = AiProviders.KeyNameInUse(settings.ChatApiKeyName, settings.ChatBaseUrl);
+        var embeddingKey = AiProviders.KeyNameInUse(settings.EmbeddingApiKeyName, settings.EmbeddingBaseUrl);
         var names = AiProviders.ChatModels.Concat(AiProviders.EmbeddingModels).Select(service => service.ApiKeyName)
             .Concat(_models.GetAll(AiModelKinds.Chat).Concat(_models.GetAll(AiModelKinds.Embedding)).Select(model => model.ApiKeyName))
-            .Append(AiProviders.ApiKeyName)
-            .Append(AiProviders.EmbeddingApiKeyName)
             .Where(name => AiProviders.ReadKey(_configuration, name) is not null)
             .Distinct()
             .Order()
@@ -107,13 +105,15 @@ public sealed class SettingsController : ControllerBase
     public ActionResult<Setting> Update(string key, UpdateSettingRequest request) =>
         Ok(_settingsService.Update(key, request.Value));
 
-    // The default settings. The admin's saved models are kept.
+    // The default settings, with no chat or embedding model selected unless AiDefaults__ variables give them. The
+    // admin's saved models are kept.
     [HttpPost("restore-defaults")]
-    public ActionResult<IReadOnlyList<Setting>> RestoreDefaults()
-    {
-        _models.RemoveServiceCopies();
-        return Ok(_settingsService.RestoreDefaults());
-    }
+    public Task<IActionResult> RestoreDefaults(CancellationToken cancellationToken) =>
+        FromService(async () =>
+        {
+            await _switcher.RestoreDefaultsAsync(cancellationToken);
+            return Ok(_settingsService.GetAll());
+        });
 
     // Deletes all data and starts again from the defaults a first start creates.
     [HttpPost("clean-up")]

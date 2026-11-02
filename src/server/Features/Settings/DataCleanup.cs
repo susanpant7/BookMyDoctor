@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MyHospitalAI.Features.Settings;
 
-// Deletes everything, leaving the database as empty as on a fresh start. The admin signs in from configuration, so
-// stays signed in, and loads the data again on Settings → Manage App Data.
+// Deletes all data, leaving the database as empty as on a fresh start: specialties, doctors, patients, appointments,
+// chats, knowledge, hospital details and settings. The saved chat and embedding models are kept (they are setup, not
+// data). The admin signs in from configuration, so stays signed in, and loads the data again on Settings → Manage
+// App Data. Missing settings fall back to their defaults meanwhile.
 public sealed class DataCleanup
 {
     private readonly IDbContextFactory<AppDbContext> _factory;
@@ -38,7 +40,6 @@ public sealed class DataCleanup
             await db.HospitalHours.ExecuteDeleteAsync(cancellationToken);
             await db.HospitalInfo.ExecuteDeleteAsync(cancellationToken);
             await db.Settings.ExecuteDeleteAsync(cancellationToken);
-            await db.AiModels.ExecuteDeleteAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
 

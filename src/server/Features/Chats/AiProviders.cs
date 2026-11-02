@@ -11,11 +11,7 @@ public sealed record AiModelDefault(
 // file (GEMINI_API_KEY, GROQ_API_KEY, ...); a model stores only the NAME of that variable, never the key.
 public static class AiProviders
 {
-    // Used when a model names no key and no service at its address has one set: the variables of the first version.
-    public const string ApiKeyName = "ChatApi__ApiKey";
-    public const string EmbeddingApiKeyName = "Embedding__ApiKey";
-
-    // Reads a key by its .env name. In the configuration a double underscore is a colon (ChatApi:ApiKey).
+    // Reads a key by its .env name. In the configuration a double underscore is a colon (Some__ApiKey is Some:ApiKey).
     // Null when it is not set or the name is not a key name.
     public static string? ReadKey(IConfiguration configuration, string name) =>
         IsValidKeyName(name) && configuration[name.Replace("__", ":")] is { } key && !string.IsNullOrWhiteSpace(key) ? key : null;
@@ -28,30 +24,23 @@ public static class AiProviders
         && name.All(c => char.IsAsciiLetterOrDigit(c) || c == '_')
         && (name.EndsWith("API_KEY", StringComparison.Ordinal) || name.EndsWith("ApiKey", StringComparison.Ordinal));
 
-    // The variable a model really reads: the name it stores; else the key of the service at the same address, when
-    // that is set (a model at Gemini's address reads GEMINI_API_KEY); else Embedding__ApiKey (embeddings, when set)
-    // or ChatApi__ApiKey.
-    public static string KeyNameInUse(IConfiguration configuration, bool embedding, string? keyName, string baseUrl)
+    // The variable a model reads: the name it stores, else the key name of the service at the same address (a model at
+    // Gemini's address reads GEMINI_API_KEY). Empty when neither has one.
+    public static string KeyNameInUse(string? keyName, string baseUrl)
     {
         if (!string.IsNullOrWhiteSpace(keyName))
         {
             return keyName.Trim();
         }
-
-        var service = ChatModels.Concat(EmbeddingModels).FirstOrDefault(service =>
+        return ChatModels.Concat(EmbeddingModels).FirstOrDefault(service =>
             service.ApiKeyName.Length > 0
-            && string.Equals(service.BaseUrl, baseUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)
-            && ReadKey(configuration, service.ApiKeyName) is not null);
-        if (service is not null)
-        {
-            return service.ApiKeyName;
-        }
-        return embedding && ReadKey(configuration, EmbeddingApiKeyName) is not null ? EmbeddingApiKeyName : ApiKeyName;
+            && string.Equals(service.BaseUrl, baseUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))?.ApiKeyName ?? "";
     }
 
-    // The key a model reads (see KeyNameInUse), or null when it is not set.
-    public static string? KeyFor(IConfiguration configuration, bool embedding, string? keyName, string baseUrl) =>
-        ReadKey(configuration, KeyNameInUse(configuration, embedding, keyName, baseUrl));
+    // What to tell the admin when an online model has no key to send.
+    public static string MissingKeyMessage(string keyName) => keyName.Length == 0
+        ? "This model has no API key name: edit it on the Settings page and give the name of the .env variable with its key."
+        : $"{keyName} is not set in the .env file. Set it and restart the server.";
 
     // Any other service that speaks the OpenAI chat format works too. The model must support tool calling.
     public static IReadOnlyList<AiModelDefault> ChatModels { get; } =
