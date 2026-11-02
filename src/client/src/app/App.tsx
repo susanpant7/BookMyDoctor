@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import MainLayout from "@/app/MainLayout";
 import AppointmentsPage from "@/features/appointments/AppointmentsPage";
@@ -16,6 +17,9 @@ import SettingsPage from "@/features/settings/SettingsPage";
 import SpecialtiesPage from "@/features/specialties/SpecialtiesPage";
 import UsersPage from "@/features/users/UsersPage";
 
+// Loaded only when the page is opened, because the Markdown renderer is large.
+const DocsPage = lazy(() => import("@/features/docs/DocsPage"));
+
 // The admin manages the doctors; everyone else just sees them.
 function Doctors() {
   const { isAdmin } = useAuth();
@@ -30,6 +34,14 @@ export default function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/docs"
+              element={
+                <Suspense fallback={<p className="mt-8 text-center text-sm text-stone-500">Loading...</p>}>
+                  <DocsPage />
+                </Suspense>
+              }
+            />
             <Route element={<ProtectedRoute />}>
               <Route path="/doctors" element={<Doctors />} />
             </Route>

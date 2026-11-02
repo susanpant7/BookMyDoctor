@@ -6,7 +6,10 @@ import { buttonClass } from "@/shared/components/buttonStyles";
 
 type NavItem = { to: string; label: string; end?: boolean };
 
-const publicLinks: NavItem[] = [{ to: "/", label: "Home", end: true }];
+const publicLinks: NavItem[] = [
+  { to: "/", label: "Home", end: true },
+  { to: "/docs", label: "Dev Docs" }
+];
 const signedInLinks: NavItem[] = [{ to: "/doctors", label: "Doctors" }];
 const patientLinks: NavItem[] = [
   { to: "/appointments", label: "Appointments" },

@@ -2,6 +2,8 @@
 
 A hospital booking app. Patients browse doctors, chat with an AI assistant (Vaidya Mitra, RAG over the hospital's knowledge) and book appointments. An admin signs in to manage the data the app runs on.
 
+More detail: the **Dev Docs** page in the app (`/docs`, open without signing in), with two tabs: **Installation** (how to run, set up and use the app; source [how-to-run-and-use.md](src/client/src/features/docs/how-to-run-and-use.md)) and **AI and RAG** (ingestion, retrieval, the prompt, the tools, booking, the fact check, tuning and debugging; source [technical-guide.md](src/client/src/features/docs/technical-guide.md)).
+
 | Part | What it is |
 | --- | --- |
 | `src/client/` | React + TypeScript (Vite, Tailwind) |
