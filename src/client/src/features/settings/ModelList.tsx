@@ -9,6 +9,7 @@ import {
   getAiModels,
   getAiServices,
   switchAiModel,
+  withModel,
   type AiKeysInfo,
   type AiModel,
   type AiModelKind,
@@ -63,9 +64,9 @@ function linkify(text: string): ReactNode {
   );
 }
 
-// Choosing the chat or embedding model: the model in use, the admin's saved models and the known services. "Use"
-// tests a chat model before switching to it; for an embedding model it embeds all the knowledge with it first. A
-// failure changes nothing. "View models" asks a service which models our key can use.
+// Choosing the chat or embedding model: the model in use, the admin's saved models and the known services. "View
+// models" asks a service which models our key can use, and Select switches to one: a chat model is tested first; for
+// an embedding model all the knowledge is cleaned and inserted again with it first. A failure changes nothing.
 export default function ModelList({ kind, current, onChanged }: ModelListProps) {
   const isEmbedding = kind === "embedding";
   const what = isEmbedding ? "embedding" : "chat";
@@ -86,6 +87,7 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
   const [confirming, setConfirming] = useState<Choice | null>(null);
   const [viewing, setViewing] = useState<Choice | null>(null);
   const [tour, setTour] = useState<"current" | "beginning" | null>(null);
+  const [confirmingSearch, setConfirmingSearch] = useState(false);
 
   // Loaded again when the model in use or the saved models change, since they decide which keys are read.
   useEffect(() => {
@@ -190,7 +192,7 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
         setNotice({
           variant: "success",
           message: isEmbedding
-            ? `Now using ${choice.model}. ${reembedded} knowledge ${reembedded === 1 ? "section was" : "sections were"} embedded with it.`
+            ? `Now using ${choice.model}. The knowledge was cleaned and reinserted: ${reembedded} ${reembedded === 1 ? "section was" : "sections were"} embedded again.`
             : `Now using ${choice.model}. It answered a test question, so it works with this key.`
         });
       }
@@ -244,9 +246,6 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
 
   const rowActions = (choice: Choice) => (
     <>
-      <Button variant="secondary" size="sm" disabled={working !== ""} onClick={() => choose(choice)}>
-        {working === choice.key ? (isEmbedding ? "Converting..." : "Testing...") : "Use"}
-      </Button>
       <Button variant="ghost" size="sm" disabled={working !== ""} onClick={() => setViewing(choice)}>
         View models
       </Button>
@@ -288,15 +287,19 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
               <p>
                 The knowledge search turns text into vectors with this model. It can be a different service from the chat;
                 when hosting in the cloud without Ollama, use an online one.{" "}
-                <span className="font-medium text-stone-800">Use embeds all the knowledge with the new model</span> (it can
-                take a minute), and only switches when that worked.
+                <span className="font-medium text-stone-800">
+                  Selecting a model cleans the stored knowledge and inserts it again with the new model
+                </span>{" "}
+                (about a minute), and is only saved when that worked.
               </p>
             ) : (
               <p>
                 The model writes the answers and decides when to look things up, so it must support tool calling. An address
                 with no path, such as <span className="font-mono">http://localhost:11434</span>, is Ollama on this computer
-                (free, private, slower); one with a path is an online service (fast, but the chats are sent to it).{" "}
-                <span className="font-medium text-stone-800">Use tests the model first</span> and only switches when it answers.
+                (free, private, slower); one with a path is an online service (fast, but the chats are sent to it). The model
+                list can include models this key can't use, so{" "}
+                <span className="font-medium text-stone-800">Select tests the model first</span> and only switches when it
+                answers.
               </p>
             )}
             <p>
@@ -339,31 +342,27 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
         </div>
       )}
 
-      {!isEmbedding && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button size="sm" disabled={working !== "" || tourProviders.length === 0} onClick={() => setTour("current")}>
-            Next model
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={working !== "" || tourProviders.length === 0}
-            onClick={() => setTour("beginning")}
-          >
-            Start from the beginning
-          </Button>
-          <span className="self-center text-sm text-stone-500">
-            Tries the models of the services we have a key for, one after another, with the response time of each.
-          </span>
-        </div>
-      )}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button size="sm" disabled={working !== "" || tourProviders.length === 0} onClick={() => setTour("current")}>
+          Next model
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={working !== "" || tourProviders.length === 0}
+          onClick={() => setConfirmingSearch(true)}
+        >
+          Search model from the beginning
+        </Button>
+        <span className="self-center text-sm text-stone-500">
+          Tries the {what} models of the services we have a key for, one after another, with the response time of each.
+        </span>
+      </div>
 
       {!current.model && (
         <div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
-          No {what} model is selected yet.{" "}
-          {isEmbedding
-            ? "Choose one below with Use: the knowledge files are then loaded with it."
-            : "Choose one below with Use, or try Next model to find one that answers."}
+          No {what} model is selected yet. Choose one below with View models and Select, or try Next model.
+          {isEmbedding && " The knowledge files are then loaded with it."}
         </div>
       )}
 
@@ -391,11 +390,6 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
                 <Button variant="ghost" size="sm" disabled={working !== ""} onClick={() => setViewing(inUseChoice)}>
                   View models
                 </Button>
-                {!savedInUse && !serviceInUse && (
-                  <Button variant="ghost" size="sm" onClick={() => setForm({ model: null, initial: blank })}>
-                    Save to the list
-                  </Button>
-                )}
               </>
             }
           />
@@ -434,12 +428,13 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
 
       {tour && (
         <ModelTourDialog
+          kind={kind}
           providers={tourProviders}
           current={current}
           start={tour}
           onSelect={(provider, model) => {
             setTour(null);
-            choose({ ...provider, model, notes: "" });
+            choose({ ...provider, ...withModel(provider, model), notes: "" });
           }}
           onClose={() => setTour(null)}
         />
@@ -453,7 +448,7 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
           onSelect={(model) => {
             const chosen = viewing;
             setViewing(null);
-            choose({ ...chosen, model });
+            choose({ ...chosen, ...withModel(chosen, model) });
           }}
           onClose={() => setViewing(null)}
         />
@@ -489,11 +484,24 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
         />
       )}
 
+      {confirmingSearch && (
+        <ConfirmDialog
+          title="Search model from the beginning?"
+          message={`Every ${what} model of the services we have a key for is tested one after another, from the first one. It stops at the first model that answers, and nothing is changed until we select it.`}
+          confirmLabel="Start searching"
+          onConfirm={() => {
+            setConfirmingSearch(false);
+            setTour("beginning");
+          }}
+          onCancel={() => setConfirmingSearch(false)}
+        />
+      )}
+
       {confirming && (
         <ConfirmDialog
-          title="Embed the knowledge with this model?"
-          message={`Every knowledge section will be embedded again with ${confirming.model}, because vectors from different models can't be compared. This can take a minute. If it fails (for example a wrong key), nothing is changed.`}
-          confirmLabel="Convert and use"
+          title="Clean and reinsert the knowledge?"
+          message={`The stored knowledge will be cleaned and reinserted with ${confirming.model}: every section is embedded again, because vectors from different models can't be compared. This can take a minute. If it fails (for example a wrong key), nothing is changed.`}
+          confirmLabel="Clean, reinsert and use"
           onConfirm={() => apply(confirming)}
           onCancel={() => setConfirming(null)}
         />

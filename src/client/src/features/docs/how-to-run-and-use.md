@@ -65,7 +65,7 @@ docker run -p 5080:8080 --env-file .env -v myhospitalai-data:/app/data myhospita
 
 The health check is http://localhost:5080/api/health. Inside the container, Ollama on our own computer is `http://host.docker.internal:11434`.
 
-**Host it online.** The API runs on a server such as Render (a Docker web service with Dockerfile Path `./src/server/Dockerfile` and Health Check Path `/api/health`), with the same variables as `.env` plus `Cors__AllowedOrigins` set to the client's address. The client runs on Vercel with Root Directory `src/client` and `VITE_API_URL` set to the API's https address. The README has the details.
+**Host it online.** The API runs on a server such as Render (a Docker web service with Dockerfile Path `./src/server/Dockerfile` and Health Check Path `/api/health`), with the same variables as `.env` plus `Cors__AllowedOrigins` set to the client's address and `PORT=8080` (the port the API listens on in the image). The client runs on Vercel with Root Directory `src/client` and `VITE_API_URL` set to the API's https address. The README has the details.
 
 ## 2. Set up the app for the first time
 
@@ -77,7 +77,7 @@ A new database is empty and no chat or embedding model is selected. We sign in a
    - **To use the AI models with APIs,** we get a key from the service and put it in the `.env` file under the variable name shown on the **AI assistant** tab (for example `GEMINI_API_KEY`), then restart the API.
 3. **Select an embedding model.** On the **AI assistant** tab, in the Embedding part, we click **View models** on a service and **Select** a model. The first time, the default knowledge files are loaded with it, together with the sections built from the doctors, specialties and hospital details. A red message at the top of the Settings page says there is no knowledge until that is done.
 4. **Select a chat model.** In the chat part of the same tab, we click **View models** and **Select** a model.
-5. **If the chat model does not work,** we click **Next model** or **Start from the beginning**. This tests the models one after another and shows the response time of each, so we can select the next one that works.
+5. **If the chat model does not work,** we click **Next model** or **Search model from the beginning**. This tests the models one after another and shows the response time of each, so we can select the next one that works.
 
 Now everything is set up. Section 5 has more about the model settings.
 
@@ -142,14 +142,16 @@ Refunds are returned to the original payment method...
 
 Everything about the AI is on the **AI assistant** tab of the Settings page: the chat model, the embedding model, the system prompt, how the knowledge is searched, and the replies used when something goes wrong. Each model part shows the model in use, our saved models, and the built-in services, with the name of the API key each one reads and whether it is set in `.env`.
 
-**Next model and Start from the beginning.** A model can stop working (the service retired it, a limit was reached, the key cannot use it). These buttons find another model that works:
+**Next model and Search model from the beginning.** A model can stop working (the service retired it, a limit was reached, the key cannot use it). These buttons find another model that works:
 
 - **Next model** tests the models one after another, starting after the model in use, and stops at the first one that answers a small test question. It shows how long the answer took.
-- **Start from the beginning** does the same from the first model of the first service.
+- **Search model from the beginning** does the same from the first model of the first service (after a confirmation).
+
+Both buttons are in the chat part and in the Embedding part.
 
 Only the services we have a key for are tried. When a model answers, we click **Select** to use it, or look further.
 
-**View models, Test and Select.** **View models** lists the models a service offers for our key. **Test** sends one small request and shows the answer time or the error; nothing is saved. **Select** (or **Use**) tests the model first and switches from the next message, without a restart, so a model that does not work is never saved. The chat model must support tool calling.
+**View models, Test and Select.** **View models** lists the models a service offers for our key. **Test** sends one small request and shows the answer time or the error; nothing is saved. **Select** tests the model first and switches from the next message, without a restart, so a model that does not work is never saved. The chat model must support tool calling.
 
 **The embedding model.** Numbers from two different embedding models cannot be compared, so selecting another embedding model **embeds all the stored knowledge again** with it first. The change is only saved when that worked, so a wrong key changes nothing. **Re-embed all knowledge** does it by hand.
 

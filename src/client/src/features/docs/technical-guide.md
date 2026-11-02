@@ -431,11 +431,11 @@ All on Settings, AI assistant. They apply to the next message, with no restart.
 
 ## 10. Changing models
 
-**The chat model** can change at any time: nothing is stored with it. **Use** and **Select** send it a short test question first, and only switch when it answers. It must support tool calling.
+**The chat model** can change at any time: nothing is stored with it. **Select** sends it a short test question first, and only switch when it answers. It must support tool calling.
 
-**The embedding model** is different, because the stored vectors belong to it. **Use** embeds all the stored knowledge with the new model first and only switches when every section worked (`AiModelSwitcher.cs`). If a key is wrong or a limit is reached, nothing changes. Restoring the default AI settings either embeds the knowledge again with the default model or, when there is none, deletes it.
+**The embedding model** is different, because the stored vectors belong to it. **Select** cleans the stored knowledge and inserts it again with the new model first and only switches when every section worked (`AiModelSwitcher.cs`). If a key is wrong or a limit is reached, nothing changes. Restoring the default AI settings either embeds the knowledge again with the default model or, when there is none, deletes it.
 
-**Next model** and **Start from the beginning** send the same test question to the models of each service we have a key for, one after another, and show how long each took. A service that answers 429 (rate limit) is waited for and tried again.
+**Next model** and **Search model from the beginning** (for both kinds) send a small test request to the models of each service we have a key for, one after another, and show how long each took. A service that answers 429 (rate limit) is waited for and tried again.
 
 ## 11. Debugging a wrong answer
 

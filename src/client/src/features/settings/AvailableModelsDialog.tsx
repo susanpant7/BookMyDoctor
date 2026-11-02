@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { formatTime } from "@/features/settings/formatTime";
-import { getAvailableModels, testAiModel, type ModelChoice } from "@/features/settings/settingsApi";
+import { getAvailableModels, testAiModel, withModel, type ModelChoice } from "@/features/settings/settingsApi";
 import { errorMessage } from "@/shared/api/errorMessage";
 import Alert from "@/shared/components/Alert";
 import Button from "@/shared/components/Button";
@@ -38,7 +38,7 @@ export default function AvailableModelsDialog({ choice, current, busy, onSelect,
   async function test(model: string) {
     setResults((r) => ({ ...r, [model]: "testing" }));
     try {
-      const { milliseconds } = await testAiModel({ ...choice, model });
+      const { milliseconds } = await testAiModel(withModel(choice, model));
       setResults((r) => ({ ...r, [model]: milliseconds }));
     } catch (err) {
       setResults(({ [model]: _removed, ...rest }) => rest);

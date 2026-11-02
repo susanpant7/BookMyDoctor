@@ -76,6 +76,17 @@ export type AiService = Omit<AiModel, "id" | "kind">;
 // A model to list, test or switch to.
 export type ModelChoice = Pick<AiModel, "kind" | "baseUrl" | "model" | "apiKeyName" | "queryPrefix" | "documentPrefix">;
 
+// Another model of the same service. An embedding service's prefixes belong to its own model, so another model gets none.
+export function withModel(choice: ModelChoice, model: string): ModelChoice {
+  const ownPrefixes = choice.kind === "embedding" && model === choice.model;
+  return {
+    ...choice,
+    model,
+    queryPrefix: ownPrefixes ? choice.queryPrefix : "",
+    documentPrefix: ownPrefixes ? choice.documentPrefix : ""
+  };
+}
+
 export const getAiServices = (kind: AiModelKind) => apiFetch<AiService[]>(`/settings/models/services?kind=${kind}`);
 
 // Asks the service at a known address which models it offers for our key.

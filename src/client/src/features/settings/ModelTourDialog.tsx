@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { formatTime } from "@/features/settings/formatTime";
-import { getAvailableModels, testAiModel, type ModelChoice } from "@/features/settings/settingsApi";
+import { getAvailableModels, testAiModel, withModel, type AiModelKind, type ModelChoice } from "@/features/settings/settingsApi";
 import { errorMessage } from "@/shared/api/errorMessage";
 import Button from "@/shared/components/Button";
+import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import Modal from "@/shared/components/Modal";
 
 // A service (or saved model) the tour goes through: its address and key name are used for every model of it.
 export type TourProvider = ModelChoice & { key: string; name: string };
 
 type ModelTourDialogProps = {
+  // The chat models or the embedding models.
+  kind: AiModelKind;
   providers: TourProvider[];
   // The model in use. "Next" starts after it; "from the beginning" starts at the first model of the first service.
   current: { baseUrl: string; model: string };
@@ -29,13 +32,15 @@ const sameUrl = (a: string, b: string) => a.replace(/\/+$/, "") === b.replace(/\
 // A service allows only a few requests a minute on a free plan, so the tests are spaced out.
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Goes through the chat models one after another: for each service we have a key for, each of its models. Every
+// Goes through the chat models (or the embedding models) one after another: for each service we have a key for, each of its models. Every
 // model is tested with a tiny request, and the dialog stops at the first one that answers, showing how long it took.
 // Select uses it, Next goes on to the next one. A model that fails (an error, no answer) is skipped by itself, and
 // the reason is kept in the list below.
-export default function ModelTourDialog({ providers, current, start, onSelect, onClose }: ModelTourDialogProps) {
+export default function ModelTourDialog({ kind, providers, current, start, onSelect, onClose }: ModelTourDialogProps) {
+  const label = kind === "embedding" ? "embedding" : "chat";
   const [status, setStatus] = useState<Status>({ kind: "working", text: "Starting..." });
   const [log, setLog] = useState<LogLine[]>([]);
+  const [confirmingSearch, setConfirmingSearch] = useState(false);
 
   // Each run has its own token, so closing the dialog (or starting over) stops the run that is going on.
   const token = useRef({ cancelled: false });
@@ -49,7 +54,7 @@ export default function ModelTourDialog({ providers, current, start, onSelect, o
   async function listOf(provider: TourProvider) {
     if (lists.current[provider.key]) return lists.current[provider.key];
     try {
-      const { models } = await getAvailableModels("chat", provider.baseUrl, provider.apiKeyName);
+      const { models } = await getAvailableModels(kind, provider.baseUrl, provider.apiKeyName);
 
       // The model the service is listed with first, then the others, newest names first: the old ones are the ones a
       // service retires.
@@ -96,14 +101,7 @@ export default function ModelTourDialog({ providers, current, start, onSelect, o
 
       setStatus({ kind: "working", text: `Testing ${provider.name} · ${model}...` });
       try {
-        const { milliseconds } = await testAiModel({
-          kind: "chat",
-          baseUrl: provider.baseUrl,
-          model,
-          apiKeyName: provider.apiKeyName,
-          queryPrefix: "",
-          documentPrefix: ""
-        });
+        const { milliseconds } = await testAiModel(withModel(provider, model));
         if (run.cancelled) return;
         addLog(true, `${provider.name} · ${model}: answered in ${formatTime(milliseconds)}`);
         cursor.current = { p, m };
@@ -172,13 +170,15 @@ export default function ModelTourDialog({ providers, current, start, onSelect, o
   const working = status.kind === "working";
 
   return (
-    <Modal title="Find a chat model" onClose={onClose} maxWidth="max-w-2xl">
+    <Modal title={`Find ${kind === "embedding" ? "an embedding" : "a chat"} model`} onClose={onClose} maxWidth="max-w-2xl">
       <p className="text-sm text-stone-600">
-        This goes through the chat models of the services we have a key for, one after another, and stops at the first one
-        that answers a small test question, showing how long it took.{" "}
-        <span className="font-medium text-stone-800">Select</span> uses it,{" "}
+        This goes through the {label} models of the services we have a key for, one after another, and stops at the first
+        one that answers a small test {kind === "embedding" ? "request" : "question"}, showing how long it took.{" "}
+        <span className="font-medium text-stone-800">Select</span> uses it
+        {kind === "embedding" ? " (after asking, because it converts the stored knowledge)" : ""},{" "}
         <span className="font-medium text-stone-800">Next</span> tries the next one. A model that gives an error or no answer
-        is skipped by itself. The test has no tools, so check a few questions in the chat after switching.
+        is skipped by itself.
+        {kind === "chat" && " The test has no tools, so check a few questions in the chat after switching."}
       </p>
 
       <div className="mt-4 rounded-xl bg-stone-50 p-4 ring-1 ring-stone-200">
@@ -210,8 +210,8 @@ export default function ModelTourDialog({ providers, current, start, onSelect, o
         <Button variant="secondary" size="sm" disabled={working} onClick={() => begin("current")}>
           Next after the model in use
         </Button>
-        <Button variant="secondary" size="sm" disabled={working} onClick={() => begin("beginning")}>
-          Start from the beginning
+        <Button variant="secondary" size="sm" disabled={working} onClick={() => setConfirmingSearch(true)}>
+          Search model from the beginning
         </Button>
       </div>
 
@@ -230,6 +230,19 @@ export default function ModelTourDialog({ providers, current, start, onSelect, o
           Close
         </Button>
       </div>
+
+      {confirmingSearch && (
+        <ConfirmDialog
+          title="Search model from the beginning?"
+          message={`The ${label} models are tested again from the first one, until one answers. Nothing is changed until we select it.`}
+          confirmLabel="Start searching"
+          onConfirm={() => {
+            setConfirmingSearch(false);
+            void begin("beginning");
+          }}
+          onCancel={() => setConfirmingSearch(false)}
+        />
+      )}
     </Modal>
   );
 }

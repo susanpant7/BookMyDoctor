@@ -69,7 +69,7 @@ The server needs only the API and its SQLite file; with online models there is n
 2. **Start it** with the Dockerfile above (it listens on port 8080 in the container), or with `dotnet run`.
 3. **Keep the database:** mount a disk at `/app/data`. A disk that is wiped on every deploy (Render's free plan) loses the data; *Load all default data* puts the demo data back.
 
-On **Render**: a Docker web service with Root Directory empty, Dockerfile Path `./src/server/Dockerfile`, build context `.`, Health Check Path `/api/health`, the environment variables of step 1 (Render can import a `.env` file), and on a paid plan a disk at `/app/data`.
+On **Render**: a Docker web service with Root Directory empty, Dockerfile Path `./src/server/Dockerfile`, build context `.`, Health Check Path `/api/health`, the environment variables of step 1, plus `PORT=8080` (the port the API listens on in the image, so Render knows where to send the traffic) (Render can import a `.env` file), and on a paid plan a disk at `/app/data`.
 
 ## Host the client on Vercel
 
@@ -80,7 +80,7 @@ The client is a static site. In Vercel, import the repository with Root Director
 The database starts empty and no chat or embedding model is selected. Sign in as the admin, then:
 
 1. **Settings → Manage App Data → Load all default data**: hospital details, AI assistant settings, specialties, doctors and demo patients.
-2. **Settings → AI assistant**: choose the chat model (*Next model* finds one that answers, or *Use* on a service) and the embedding model. Using the first embedding model loads the default knowledge files with it.
+2. **Settings → AI assistant**: choose the chat model (*Next model* finds one that answers, or *View models* and *Select* on a service) and the embedding model. Selecting the first embedding model loads the default knowledge files with it.
 3. Adjust **Settings → Hospital** and the other AI settings; changes apply to the next message.
 
 **Clean up data** deletes all data and settings, as on a fresh start (your saved models are kept). **Load default AI assistant data** resets the settings with no model selected (unless `AiDefaults__` variables are set); if that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
@@ -90,10 +90,11 @@ The database starts empty and no chat or embedding model is selected. Sign in as
 **Settings → AI assistant** has a picker for the **chat model** (it writes the answers) and one for the **embedding model** (it turns the knowledge and the questions into vectors for the search; this can be a different service). Each shows:
 
 - **The model in use**, with *Edit* (change the address or model and use it) and *View models*.
-- **Saved models**: your own, with *Use*, *View models*, *Edit* and *Delete*. *Add chat/embedding model* adds one.
-- **Services we can use**: the built-in services below, with *Use*, *View models*, and *Edit* (saves a copy to change).
+- **Saved models**: your own, with *View models*, *Edit* and *Delete*. *Add chat/embedding model* adds one.
+- **Services we can use**: the built-in services below, with *View models* and *Edit* (saves a copy to change).
+- **Next model** and **Search model from the beginning** (both pickers): test the models of the services you have a key for, one after another, with the response time of each.
 
-*View models* asks the service which models your key can use, with *Test* (one tiny request, nothing saved) and *Select* for each. *Use* on a chat model sends it a short test question first and only switches when it answers; on an embedding model it embeds all the knowledge with it first and only switches when that worked. A failure shows the service's own reason (a wrong key, an unknown model, a busy service) and changes nothing. A key is only sent to an address that is already known (in use, saved, or a built-in service).
+*View models* asks the service which models your key can use, with *Test* (one tiny request, nothing saved) and *Select* for each. *Select* on a chat model sends it a short test question first and only switches when it answers; on an embedding model it cleans the stored knowledge and inserts it again with the new model first and only switches when that worked. A failure shows the service's own reason (a wrong key, an unknown model, a busy service) and changes nothing. A key is only sent to an address that is already known (in use, saved, or a built-in service).
 
 | Chat models | API address | Model |
 | --- | --- | --- |

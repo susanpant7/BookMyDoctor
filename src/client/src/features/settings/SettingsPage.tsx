@@ -26,7 +26,7 @@ const groupTitles: Record<string, string> = {
 
 const groupName = (key: string) => key.split(".")[0];
 
-// Set with "Use" in the Chat models and Embedding models lists, so they are not shown as rows.
+// Set with Select in the Chat models and Embedding models lists, so they are not shown as rows.
 const setByModelLists = new Set([
   "chat.base_url",
   "chat.model",
@@ -92,6 +92,7 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState<Setting | null>(null);
   const [version, setVersion] = useState(0);
   useEffect(() => {
@@ -136,7 +137,10 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
 
   return (
     <>
-      {error && <Alert message={error} />}
+      <div className="space-y-3">
+        {notice && <Alert variant="success" message={notice} />}
+        {error && <Alert message={error} />}
+      </div>
       {loading ? (
         <p className="mt-8 text-center text-sm text-stone-500">Loading settings...</p>
       ) : settings.length === 0 && !error ? (
@@ -183,6 +187,7 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
           key={editing.key}
           setting={editing}
           onSaved={() => {
+            setNotice(`Saved "${editing.label}". It applies from the next message.`);
             setEditing(null);
             setVersion((v) => v + 1);
           }}
