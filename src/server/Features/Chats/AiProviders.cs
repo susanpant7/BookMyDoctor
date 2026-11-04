@@ -37,6 +37,22 @@ public static class AiProviders
             && string.Equals(service.BaseUrl, baseUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))?.ApiKeyName ?? "";
     }
 
+    // Cloudflare's address has the account id in it. The id stays in the .env file (CLOUDFLARE_ACCOUNT_ID), and
+    // <ACCOUNT_ID> in an address is replaced by it for the call. An address without the placeholder is used as it is.
+    public const string AccountIdName = "CLOUDFLARE_ACCOUNT_ID";
+    public const string AccountIdPlaceholder = "<ACCOUNT_ID>";
+
+    public static string ResolveAddress(IConfiguration configuration, string baseUrl) =>
+        configuration[AccountIdName] is { } accountId && !string.IsNullOrWhiteSpace(accountId)
+            ? baseUrl.Replace(AccountIdPlaceholder, accountId.Trim())
+            : baseUrl;
+
+    // True when a placeholder is still in the address after ResolveAddress, so it can't be called.
+    public static bool IsIncomplete(string resolvedAddress) => resolvedAddress.Contains('<');
+
+    public const string IncompleteAddressMessage =
+        "The address still has <ACCOUNT_ID> in it. Set CLOUDFLARE_ACCOUNT_ID in the .env file and restart the server, or put the account id in the address.";
+
     // What to tell the admin when an online model has no key to send.
     public static string MissingKeyMessage(string keyName) => keyName.Length == 0
         ? "This model has no API key name: edit it on the Settings page and give the name of the .env variable with its key."
@@ -63,7 +79,7 @@ public static class AiProviders
             "Free tier with a daily token limit. Very fast. Key: https://cloud.cerebras.ai"),
         new("Cloudflare Workers AI – Llama 3.3 70B", "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1",
             "@cf/meta/llama-3.3-70b-instruct-fp8-fast", "CLOUDFLARE_API_KEY",
-            "A free daily allowance. Edit a copy: replace <ACCOUNT_ID> in the address with your account id, and use an API token with Workers AI access. Key: https://dash.cloudflare.com/profile/api-tokens")
+            "A free daily allowance. Put an API token with Workers AI access in CLOUDFLARE_API_KEY and the account id in CLOUDFLARE_ACCOUNT_ID (in .env): <ACCOUNT_ID> in the address is filled in from it. Key: https://dash.cloudflare.com/profile/api-tokens")
     ];
 
     // Services with an embeddings endpoint. Most chat-only services (Groq, Grok, Cerebras) have none.
@@ -78,9 +94,9 @@ public static class AiProviders
             "Free \"Experiment\" plan with rate limits. The same key as Mistral chat works. Key: https://console.mistral.ai/api-keys"),
         new("OpenAI Embedding Small", "https://api.openai.com/v1", "text-embedding-3-small", "OPENAI_API_KEY",
             "Paid, but very cheap: embedding all the knowledge costs a fraction of a cent. Key: https://platform.openai.com/api-keys"),
-        new("Cloudflare Workers AI – BGE M3", "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1",
-            "@cf/baai/bge-m3", "CLOUDFLARE_API_KEY",
-            "A free daily allowance. Edit a copy: replace <ACCOUNT_ID> in the address with your account id. Key: https://dash.cloudflare.com/profile/api-tokens")
+        new("Cloudflare Workers AI – BGE Base", "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1",
+            "@cf/baai/bge-base-en-v1.5", "CLOUDFLARE_API_KEY",
+            "A free daily allowance, and nothing to run ourselves. The same CLOUDFLARE_API_KEY and CLOUDFLARE_ACCOUNT_ID (in .env) as for the chat: <ACCOUNT_ID> in the address is filled in from it. Also listed: bge-small-en-v1.5, bge-large-en-v1.5 and the multilingual bge-m3. Key: https://dash.cloudflare.com/profile/api-tokens")
     ];
 
     // The service's own reason from an error reply, shortened, to show to the admin: {"error":{"message":…}} (Gemini

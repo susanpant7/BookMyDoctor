@@ -93,11 +93,17 @@ public sealed class Embedder : IEmbedder
 
     private async Task<float[][]> EmbedOnlineAsync(AiSettings settings, IReadOnlyList<string> input, CancellationToken cancellationToken)
     {
+        var address = AiProviders.ResolveAddress(_configuration, settings.EmbeddingBaseUrl);
+        if (AiProviders.IsIncomplete(address))
+        {
+            throw new HttpRequestException(AiProviders.IncompleteAddressMessage);
+        }
+
         var keyName = AiProviders.KeyNameInUse(settings.EmbeddingApiKeyName, settings.EmbeddingBaseUrl);
         var key = AiProviders.ReadKey(_configuration, keyName)
             ?? throw new HttpRequestException($"The embedding model is an online service, but it has no key. {AiProviders.MissingKeyMessage(keyName)}");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.EmbeddingBaseUrl}/embeddings")
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{address}/embeddings")
         {
             // Sent whole (with a Content-Length) rather than streamed, which every service accepts.
             Content = new StringContent(JsonSerializer.Serialize(new { model = settings.EmbeddingModel, input }), Encoding.UTF8, "application/json")

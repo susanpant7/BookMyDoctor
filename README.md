@@ -77,13 +77,13 @@ The client is a static site. In Vercel, import the repository with Root Director
 
 ## First-time setup
 
-The database starts empty and no chat or embedding model is selected. Sign in as the admin, then:
+The database starts empty. The chat model starts as Groq (put `GROQ_API_KEY` in `.env`) and no embedding model is selected. Sign in as the admin, then:
 
 1. **Settings → Manage App Data → Load all default data**: hospital details, AI assistant settings, specialties, doctors and demo patients.
-2. **Settings → AI assistant**: choose the chat model (*Next model* finds one that answers, or *View models* and *Select* on a service) and the embedding model. Selecting the first embedding model loads the default knowledge files with it.
+2. **Settings → AI assistant**: choose the embedding model (*View models* and *Select* on a service, for example Cloudflare Workers AI with `CLOUDFLARE_API_KEY` and `CLOUDFLARE_ACCOUNT_ID`). Selecting the first embedding model loads the default knowledge files with it, and a dialog shows the progress. The chat model can be changed the same way (*Next model* finds one that answers). Ollama on this computer is offered only when the API runs in development, not on a server.
 3. Adjust **Settings → Hospital** and the other AI settings; changes apply to the next message.
 
-**Clean up data** deletes all data and settings, as on a fresh start (your saved models are kept). **Load default AI assistant data** resets the settings with no model selected (unless `AiDefaults__` variables are set); if that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
+**Clean up data** deletes all data and settings, as on a fresh start (your saved models are kept). **Load default AI assistant data** resets the settings (the chat model is Groq, no embedding model; unless `AiDefaults__` variables are set); if that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
 
 ## Chat and embedding models
 

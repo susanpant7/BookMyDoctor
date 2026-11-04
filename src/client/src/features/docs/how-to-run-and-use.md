@@ -69,14 +69,14 @@ The health check is http://localhost:5080/api/health. Inside the container, Olla
 
 ## 2. Set up the app for the first time
 
-A new database is empty and no chat or embedding model is selected. We sign in as the admin and open **Settings**, then the **Manage App Data** tab.
+A new database is empty. The chat model starts as Groq (its key is `GROQ_API_KEY` in `.env`) and no embedding model is selected. We sign in as the admin and open **Settings**, then the **Manage App Data** tab.
 
 1. **Load all the default data.** We click **Load all default data**. It loads the hospital details, the AI assistant settings, the specialties, one doctor per specialty and two demo patients. It asks for the passwords they sign in with (`doctor` and `user` by default). It does not load the knowledge files, because they need an embedding model first.
 2. **Choose how the AI models run.**
    - **To use the AI models locally,** we run them on our own computer with Ollama (see section 1).
    - **To use the AI models with APIs,** we get a key from the service and put it in the `.env` file under the variable name shown on the **AI assistant** tab (for example `GEMINI_API_KEY`), then restart the API.
 3. **Select an embedding model.** On the **AI assistant** tab, in the Embedding part, we click **View models** on a service and **Select** a model. The first time, the default knowledge files are loaded with it, together with the sections built from the doctors, specialties and hospital details. A red message at the top of the Settings page says there is no knowledge until that is done.
-4. **Select a chat model.** In the chat part of the same tab, we click **View models** and **Select** a model.
+4. **Change the chat model, only if we want another one.** The chat model starts as Groq. In the chat part of the same tab, we click **View models** and **Select** a model.
 5. **If the chat model does not work,** we click **Next model** or **Search model from the beginning**. This tests the models one after another and shows the response time of each, so we can select the next one that works.
 
 Now everything is set up. Section 5 has more about the model settings.
@@ -84,7 +84,7 @@ Now everything is set up. Section 5 has more about the model settings.
 **Reset buttons on the Manage App Data tab.**
 
 - **Clean up data** deletes all data and settings, as on a fresh start. Our saved models are kept.
-- **Load default AI assistant data** puts the AI settings back, with no model selected (unless the `AiDefaults__` variables in `.env` give starting ones). If that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
+- **Load default AI assistant data** puts the AI settings back (the chat model is Groq, no embedding model; unless the `AiDefaults__` variables in `.env` give starting ones). If that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
 
 ## 3. Use the app as a patient
 
@@ -153,9 +153,11 @@ Only the services we have a key for are tried. When a model answers, we click **
 
 **View models, Test and Select.** **View models** lists the models a service offers for our key. **Test** sends one small request and shows the answer time or the error; nothing is saved. **Select** tests the model first and switches from the next message, without a restart, so a model that does not work is never saved. The chat model must support tool calling.
 
-**The embedding model.** Numbers from two different embedding models cannot be compared, so selecting another embedding model **embeds all the stored knowledge again** with it first. The change is only saved when that worked, so a wrong key changes nothing. **Re-embed all knowledge** does it by hand.
+**The embedding model.** Numbers from two different embedding models cannot be compared, so selecting another embedding model **embeds all the stored knowledge again** with it first. A dialog stays open and shows how many sections are done. The change is only saved when that worked, so a wrong key changes nothing. **Re-embed all knowledge** does it by hand.
 
-**Keys.** Each online service has its own key in `.env` (`GEMINI_API_KEY`, `GROQ_API_KEY`, ...). The Settings page saves only the **name** of the variable, never the key. Ollama needs no key. The questions and the knowledge are sent to an online service, so we avoid real patient data on a free tier.
+**Cloudflare Workers AI (free, nothing to run ourselves).** It hosts chat and embedding models and has a free daily allowance. In the Cloudflare dashboard we copy the **Account ID** and create an **API token** with the permission **Account, Workers AI** (Read and Edit; it is shown only once). In `.env`, and in the environment variables of the server, we set `CLOUDFLARE_API_KEY=<the token>` and `CLOUDFLARE_ACCOUNT_ID=<the account id>`, and restart the API. The `<ACCOUNT_ID>` in the Cloudflare address is filled in from `CLOUDFLARE_ACCOUNT_ID`. Then on the Settings page, **View models** on "Cloudflare Workers AI" lists its models, and we **Select** one (for the embeddings, for example `@cf/baai/bge-base-en-v1.5`). The questions and the knowledge go to Cloudflare, so we avoid real patient data on a free plan.
+
+**Keys.** Each online service has its own key in `.env` (`GEMINI_API_KEY`, `GROQ_API_KEY`, ...). The Settings page saves only the **name** of the variable, never the key. Ollama needs no key, and it is offered only when the API runs in development, not on a server. The questions and the knowledge are sent to an online service, so we avoid real patient data on a free tier.
 
 **Saved models.** **Add chat model** and **Add embedding model** save a model we use often, with its address, model name and API key name. **Edit** on a built-in service saves a copy to change.
 

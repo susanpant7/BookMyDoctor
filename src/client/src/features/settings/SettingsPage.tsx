@@ -17,11 +17,12 @@ const tabs = [
   { id: "data", label: "Manage App Data" }
 ];
 
+// The AI tab shows one group at a time, so the page stays short. These are the names on the buttons.
 const groupTitles: Record<string, string> = {
-  assistant: "Assistant behaviour",
+  assistant: "Assistant",
   chat: "Chat model",
   embedding: "Embeddings",
-  retrieval: "Searching the knowledge"
+  retrieval: "Searching"
 };
 
 const groupName = (key: string) => key.split(".")[0];
@@ -48,6 +49,8 @@ export default function SettingsPage() {
   // null until known; the knowledge is only counted to warn that there is none.
   const [knowledgeCount, setKnowledgeCount] = useState<number | null>(null);
   const [knowledgeVersion, setKnowledgeVersion] = useState(0);
+  // Whether a chat model and an embedding model are selected (null until known). A setting that is missing counts as not selected.
+  const [selected, setSelected] = useState<{ chat: boolean; embedding: boolean } | null>(null);
   const knowledgeChanged = () => setKnowledgeVersion((v) => v + 1);
 
   useEffect(() => {
@@ -55,6 +58,12 @@ export default function SettingsPage() {
     getChunks()
       .then((chunks) => !ignore && setKnowledgeCount(chunks.length))
       .catch(() => !ignore && setKnowledgeCount(null));
+    getSettings()
+      .then((all) => {
+        const has = (key: string) => (all.find((s) => s.key === key)?.value ?? "") !== "";
+        if (!ignore) setSelected({ chat: has("chat.model"), embedding: has("embedding.model") });
+      })
+      .catch(() => !ignore && setSelected(null));
     return () => {
       ignore = true;
     };
@@ -62,10 +71,27 @@ export default function SettingsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      {selected && (!selected.chat || !selected.embedding) && (
+        <div className="mb-6 space-y-3">
+          {!selected.chat && (
+            <Alert
+              variant="warning"
+              message="No chat model is selected, so the assistant cannot answer. Choose one on the AI assistant tab (Chat model)."
+            />
+          )}
+          {!selected.embedding && (
+            <Alert
+              variant="warning"
+              message="No embedding model is selected, so the assistant cannot search the knowledge. Choose one on the AI assistant tab (Embeddings)."
+            />
+          )}
+        </div>
+      )}
       {knowledgeCount === 0 && (
         <div role="alert" className="mb-6 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white shadow-sm">
-          The app does not have any knowledge files. Select an embedding model (Settings → AI assistant) to load the
-          knowledge data.
+          {selected?.embedding === false
+            ? "The app does not have any knowledge files. Select an embedding model to load the knowledge data."
+            : "The app does not have any knowledge files. Load them with Manage App Data (Knowledge files)."}
         </div>
       )}
       <PageHeader
@@ -73,7 +99,7 @@ export default function SettingsPage() {
         description="The hospital details patients see, and how the assistant searches the knowledge and writes its answers."
       />
       <div className="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-        <Tabs tabs={tabs} active={tab} onChange={setTab} />
+        <Tabs fill tabs={tabs} active={tab} onChange={setTab} />
       </div>
       <div className="mt-6">
         {tab === "hospital" ? (
@@ -95,6 +121,7 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState<Setting | null>(null);
   const [version, setVersion] = useState(0);
+  const [section, setSection] = useState("chat");
   useEffect(() => {
     let ignore = false;
     getSettings()
@@ -117,6 +144,7 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
   }, [version]);
 
   const groups = [...new Set(settings.map((s) => groupName(s.key)))];
+  const current = groups.includes(section) ? section : (groups[0] ?? "chat");
   const value = (key: string) => settings.find((s) => s.key === key)?.value ?? "";
   const inUse: Record<string, ModelInUse> = {
     chat: {
@@ -148,21 +176,43 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
           No AI settings are saved yet. Load them on the Manage App Data tab; until then the assistant uses the built-in defaults.
         </p>
       ) : (
-        groups.map((group) => (
-          <section key={group} className="mb-8">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">{groupTitles[group] ?? group}</h2>
-            {(group === "chat" || group === "embedding") && (
-              <ModelList kind={group} current={inUse[group]} onChanged={() => setVersion((v) => v + 1)} />
+        <>
+          <nav aria-label="Parts of the AI assistant settings" className="flex flex-wrap gap-2">
+            {groups.map((group) => (
+              <button
+                key={group}
+                type="button"
+                aria-current={group === current ? "page" : undefined}
+                onClick={() => setSection(group)}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                  group === current
+                    ? "bg-brand-600 text-white shadow-sm"
+                    : "bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 hover:text-stone-900"
+                }`}
+              >
+                {groupTitles[group] ?? group}
+                {(group === "chat" || group === "embedding") && !value(`${group}.model`) && (
+                  <span className="ml-2 inline-block size-2 rounded-full bg-amber-400" title="No model is selected" />
+                )}
+              </button>
+            ))}
+          </nav>
+
+          <section className="mt-4 space-y-4">
+            {(current === "chat" || current === "embedding") && (
+              <ModelList kind={current} current={inUse[current]} onChanged={() => setVersion((v) => v + 1)} />
             )}
-            {settings.some((s) => groupName(s.key) === group && !setByModelLists.has(s.key)) && (
+            {settings.some((s) => groupName(s.key) === current && !setByModelLists.has(s.key)) && (
               <div className="divide-y divide-stone-100 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
                 {settings
-                  .filter((s) => groupName(s.key) === group && !setByModelLists.has(s.key))
+                  .filter((s) => groupName(s.key) === current && !setByModelLists.has(s.key))
                   .map((setting) => (
-                    <div key={setting.key} className="grid gap-3 px-6 py-5 sm:grid-cols-[1fr_14rem_auto] sm:items-start">
+                    <div key={setting.key} className="grid gap-2 px-4 py-3 sm:px-5 lg:grid-cols-[1fr_16rem_auto] lg:items-center">
                       <div className="min-w-0">
                         <p className="font-medium text-stone-900">{setting.label}</p>
-                        <p className="mt-1 text-sm text-stone-500">{setting.description}</p>
+                        <p className="mt-0.5 line-clamp-2 text-sm text-stone-500" title={setting.description}>
+                          {setting.description}
+                        </p>
                       </div>
                       <p
                         className={`break-words rounded-lg bg-stone-50 px-3 py-2 font-mono text-sm text-stone-700 ${
@@ -181,7 +231,7 @@ function AiSettingsList({ onKnowledgeChanged }: { onKnowledgeChanged: () => void
               </div>
             )}
           </section>
-        ))
+        </>
       )}
 
       {editing && (

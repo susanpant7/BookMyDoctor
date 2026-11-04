@@ -39,6 +39,12 @@ public sealed class OnlineChatModel : IChatModel
             throw new HttpRequestException(AiProviders.MissingKeyMessage(keyName));
         }
 
+        var address = AiProviders.ResolveAddress(_configuration, settings.ChatBaseUrl);
+        if (AiProviders.IsIncomplete(address))
+        {
+            throw new HttpRequestException(AiProviders.IncompleteAddressMessage);
+        }
+
         var body = new JsonObject
         {
             ["model"] = settings.ChatModel,
@@ -51,7 +57,7 @@ public sealed class OnlineChatModel : IChatModel
             body["tools"] = JsonSerializer.SerializeToNode(tools, JsonSerializerOptions.Web);
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.ChatBaseUrl}/chat/completions")
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{address}/chat/completions")
         {
             Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json")
         };

@@ -62,8 +62,18 @@ public sealed class AiModelSwitcher
         keyName = CheckedKeyName(keyName);
         var keyInUse = AiProviders.KeyNameInUse(keyName, baseUrl);
 
-        var ollama = AiProviders.IsOllamaApi(baseUrl);
-        using var request = new HttpRequestMessage(HttpMethod.Get, ollama ? $"{baseUrl}/api/tags" : $"{baseUrl}/models");
+        // <ACCOUNT_ID> in a known address is filled in from the .env file, for the call only.
+        var address = AiProviders.ResolveAddress(_configuration, baseUrl);
+        if (AiProviders.IsIncomplete(address))
+        {
+            throw new HttpRequestException(AiProviders.IncompleteAddressMessage);
+        }
+
+        var ollama = AiProviders.IsOllamaApi(address);
+        var cloudflare = IsCloudflare(address);
+        // Cloudflare's OpenAI-style address has no /models list. Its model search lists the models of one kind of task.
+        var url = cloudflare ? CloudflareSearchUrl(address, kind) : ollama ? $"{address}/api/tags" : $"{address}/models";
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
         if (!ollama)
         {
             var key = AiProviders.ReadKey(_configuration, keyInUse)
@@ -81,7 +91,7 @@ public sealed class AiModelSwitcher
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
             throw new HttpRequestException(
-                $"Can't reach {baseUrl}." + (ollama ? " Is Ollama running?" : ""), ex);
+                $"Can't reach {address}." + (ollama ? " Is Ollama running?" : ""), ex);
         }
 
         using (response)
@@ -96,7 +106,7 @@ public sealed class AiModelSwitcher
                         : $"The service answered {(int)response.StatusCode}. ") + AiProviders.ErrorDetail(body),
                     null, response.StatusCode);
             }
-            return new AvailableAiModels(baseUrl, ReadNames(body, ollama, kind));
+            return new AvailableAiModels(baseUrl, cloudflare ? ReadCloudflareNames(body) : ReadNames(body, ollama, kind));
         }
     }
 
@@ -127,7 +137,8 @@ public sealed class AiModelSwitcher
 
     // Chat: tests the model, then saves it. Embedding: tests it, embeds all the knowledge with it, then saves it.
     // When anything fails, the model in use is not changed.
-    public async Task<UseModelResult> UseAsync(ModelChoice choice, CancellationToken cancellationToken)
+    public async Task<UseModelResult> UseAsync(
+        ModelChoice choice, CancellationToken cancellationToken, Func<int, int, Task>? onProgress = null)
     {
         var (kind, settings) = Checked(choice);
         await TestAsync(choice, cancellationToken);
@@ -141,7 +152,7 @@ public sealed class AiModelSwitcher
             return new UseModelResult(0);
         }
 
-        var reembedded = await _knowledge.ReembedAllAsync(settings, cancellationToken);
+        var reembedded = await _knowledge.ReembedAllAsync(settings, cancellationToken, onProgress);
         _settings.Update(SettingKeys.EmbeddingBaseUrl, settings.EmbeddingBaseUrl);
         _settings.Update(SettingKeys.EmbeddingModel, settings.EmbeddingModel);
         _settings.Update(SettingKeys.EmbeddingApiKeyName, settings.EmbeddingApiKeyName);
@@ -219,6 +230,38 @@ public sealed class AiModelSwitcher
         return keyName.Length == 0 || AiProviders.IsValidKeyName(keyName)
             ? keyName
             : throw new ArgumentException("API key name must be empty or a variable name that ends in API_KEY, e.g. GEMINI_API_KEY.");
+    }
+
+    private const string CloudflarePrefix = "https://api.cloudflare.com/client/v4/accounts/";
+
+    private static bool IsCloudflare(string address) =>
+        address.StartsWith(CloudflarePrefix, StringComparison.OrdinalIgnoreCase)
+        && address.TrimEnd('/').EndsWith("/ai/v1", StringComparison.OrdinalIgnoreCase);
+
+    // https://api.cloudflare.com/client/v4/accounts/{id}/ai/v1 becomes .../accounts/{id}/ai/models/search?task=...
+    private static string CloudflareSearchUrl(string address, string kind)
+    {
+        var account = address.TrimEnd('/')[..^"/ai/v1".Length];
+        var task = kind == AiModelKinds.Embedding ? "Text Embeddings" : "Text Generation";
+        return $"{account}/ai/models/search?task={Uri.EscapeDataString(task)}&per_page=100";
+    }
+
+    // {"result":[{"name":"@cf/baai/bge-base-en-v1.5", …}], …}
+    private static List<string> ReadCloudflareNames(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        if (!document.RootElement.TryGetProperty("result", out var items) || items.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return items.EnumerateArray()
+            .Select(item => item.TryGetProperty("name", out var name) ? name.GetString() : null)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name!)
+            .Distinct()
+            .Order()
+            .ToList();
     }
 
     // Ollama: {"models":[{"name":"qwen2.5:7b"}]}. OpenAI format: {"data":[{"id":"…"}]}; Gemini puts "models/" before each name.

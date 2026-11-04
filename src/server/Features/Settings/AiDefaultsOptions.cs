@@ -4,8 +4,8 @@ namespace MyHospitalAI.Features.Settings;
 
 // The starting chat and embedding models, from configuration (environment variables AiDefaults__ChatBaseUrl,
 // AiDefaults__ChatModel, AiDefaults__EmbeddingBaseUrl and AiDefaults__EmbeddingModel). They are what a new database
-// uses until the settings are saved, and what "Load default AI assistant data" saves. Without them no chat or
-// embedding model is selected, and an admin chooses them on the Settings page. Changing them later does not change
+// uses until the settings are saved, and what "Load default AI assistant data" saves. Without them the chat model
+// is Groq and no embedding model is selected: an admin chooses one on the Settings page. Changing them later does not change
 // saved settings: use the Settings page for that.
 // When an address is one of the services on the Settings page (see AiProviders), the rest of that service is filled
 // in too: its key name, its model (unless one is given) and, for embeddings, its prefixes.

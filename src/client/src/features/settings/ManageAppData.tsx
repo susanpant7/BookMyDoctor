@@ -53,7 +53,7 @@ const modules: Module[] = [
     id: "ai",
     title: "AI assistant settings",
     description:
-      "The system prompt and the search settings. Replaces every setting; your saved models are kept. No chat or embedding model is selected: they are chosen on the Settings page. If an embedding model was selected, the stored knowledge is deleted.",
+      "The system prompt and the search settings. Replaces every setting; your saved models are kept. The chat model starts as Groq (its key is in .env). No embedding model is selected: it is chosen on the Settings page. If an embedding model was selected, the stored knowledge is deleted.",
     button: "Load default AI assistant data",
     replaces: true,
     run: async () => {
@@ -188,7 +188,7 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
       }
     }
     setNotice(
-      "The default data is loaded, without the knowledge files. No chat or embedding model is selected: choose them on the Settings page (AI assistant tab). After an embedding model is selected, load the knowledge files on the Knowledge page or below."
+      "The default data is loaded, without the knowledge files. The chat model is Groq. No embedding model is selected: choose one on the Settings page (AI assistant tab), which also loads the knowledge files."
     );
     setBusy(false);
   }
@@ -276,7 +276,7 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
       {confirming === "all" && (
         <ConfirmDialog
           title="Load all default data"
-          message="This first deletes everything (specialties, doctors, patients, appointments, chats, knowledge files, hospital details and AI settings), then loads the defaults (without the knowledge files and without a chat or embedding model). Your own changes cannot be recovered. Patients who registered themselves will have to register again."
+          message="This first deletes everything (specialties, doctors, patients, appointments, chats, knowledge files, hospital details and AI settings), then loads the defaults (without the knowledge files and without an embedding model). Your own changes cannot be recovered. Patients who registered themselves will have to register again."
           confirmLabel="Load all default data"
           busy={busy}
           busyLabel="Loading..."

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { loadDefaultKnowledge, reembedKnowledge } from "@/features/knowledge/knowledgeApi";
 import AvailableModelsDialog from "@/features/settings/AvailableModelsDialog";
+import EmbeddingSwitchDialog, { type EmbeddingSwitch } from "@/features/settings/EmbeddingSwitchDialog";
 import ModelForm from "@/features/settings/ModelForm";
 import ModelTourDialog, { type TourProvider } from "@/features/settings/ModelTourDialog";
 import {
@@ -84,7 +85,8 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
   } | null>(null);
   const [deleting, setDeleting] = useState<AiModel | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [confirming, setConfirming] = useState<Choice | null>(null);
+  // The dialog for changing the embedding model: the question, then the progress, then the result.
+  const [switching, setSwitching] = useState<(EmbeddingSwitch & { choice: Choice }) | null>(null);
   const [viewing, setViewing] = useState<Choice | null>(null);
   const [tour, setTour] = useState<"current" | "beginning" | null>(null);
   const [confirmingSearch, setConfirmingSearch] = useState(false);
@@ -149,53 +151,44 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
   const isSet = (name: string) => (keys ? keys.setKeyNames.includes(name) : true);
 
   // The services the tour goes through: the ones we have a key for (Ollama needs none), then the saved models at
-  // other addresses. The service at the address in use is tested with the key the chat really reads. An address
-  // still to be filled in (Cloudflare's <ACCOUNT_ID>) is left out.
+  // other addresses. The service at the address in use is tested with the key the chat really reads. Cloudflare's
+  // <ACCOUNT_ID> is filled in by the server from CLOUDFLARE_ACCOUNT_ID; without it the tour says why it skipped it.
   const tourProviders: TourProvider[] = [...serviceChoices, ...savedChoices]
     .map((c) => (sameUrl(c.baseUrl, current.baseUrl) && !isOllama(c.baseUrl) ? { ...c, apiKeyName: keyInUse } : c))
-    .filter((c) => !c.baseUrl.includes("<"))
     .filter((c) => isOllama(c.baseUrl) || (c.apiKeyName !== "" && isSet(c.apiKeyName)))
     .filter((c, i, all) => all.findIndex((other) => sameUrl(other.baseUrl, c.baseUrl)) === i);
 
-  // Chat: tested, then used. Embedding: all the knowledge is embedded with it, then it is used.
-  // After the first embedding model is chosen there is no knowledge yet, so the default knowledge files are loaded
-  // with it. A failure is a message, not an error: the model is in use either way.
-  async function loadKnowledge() {
+  // After the first embedding model is chosen there is no knowledge yet, so the default knowledge files are loaded with
+  // it. A failure is a message, not an error: the model is in use either way.
+  async function loadKnowledge(onProgress: (done: number, total: number) => void) {
     try {
-      const results = await loadDefaultKnowledge();
+      const results = await loadDefaultKnowledge(onProgress);
       const failed = results.filter((result) => result.error);
       return failed.length > 0
-        ? `${failed.length} of ${results.length} knowledge files were not loaded. ${failed[0].error}`
-        : `The ${results.length} default knowledge files were loaded.`;
+        ? { ok: false, text: `${failed.length} of ${results.length} knowledge files were not loaded. ${failed[0].error}` }
+        : { ok: true, text: `The ${results.length} default knowledge files were loaded.` };
     } catch (err) {
-      return `The knowledge files were not loaded: ${errorMessage(err, "please try again.")} Load them on the Knowledge page.`;
+      return {
+        ok: false,
+        text: `The knowledge files were not loaded: ${errorMessage(err, "please try again.")} Load them on the Knowledge page.`
+      };
     }
   }
 
-  async function apply(choice: Choice) {
+  // Chat: tested, then used.
+  async function applyChat(choice: Choice) {
     setNotice(null);
-    setConfirming(null);
     setWorking(choice.key);
     try {
-      const { reembedded } = await switchAiModel({
+      await switchAiModel({
         kind,
         baseUrl: choice.baseUrl,
         model: choice.model,
         apiKeyName: choice.apiKeyName,
-        queryPrefix: isEmbedding ? choice.queryPrefix : "",
-        documentPrefix: isEmbedding ? choice.documentPrefix : ""
+        queryPrefix: "",
+        documentPrefix: ""
       });
-      if (isEmbedding && reembedded === 0) {
-        setNotice({ variant: "success", message: `Now using ${choice.model}. Loading the knowledge files...` });
-        setNotice({ variant: "success", message: `Now using ${choice.model}. ${await loadKnowledge()}` });
-      } else {
-        setNotice({
-          variant: "success",
-          message: isEmbedding
-            ? `Now using ${choice.model}. The knowledge was cleaned and reinserted: ${reembedded} ${reembedded === 1 ? "section was" : "sections were"} embedded again.`
-            : `Now using ${choice.model}. It answered a test question, so it works with this key.`
-        });
-      }
+      setNotice({ variant: "success", message: `Now using ${choice.model}. It answered a test question, so it works with this key.` });
       onChanged();
     } catch (err) {
       setNotice({ variant: "error", message: errorMessage(err, "Could not switch the model. Nothing was changed.") });
@@ -204,7 +197,49 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
     }
   }
 
-  const choose = (choice: Choice) => (isEmbedding ? setConfirming(choice) : apply(choice));
+  // Embedding: all the knowledge is embedded with it, then it is used. The dialog stays open the whole time and shows
+  // how far it is.
+  async function switchEmbedding(choice: Choice) {
+    setNotice(null);
+    setWorking(choice.key);
+    const show = (step: string, done = 0, total = 0) =>
+      setSwitching({ state: "running", model: choice.model, step, done, total, choice });
+    const finish = (ok: boolean, message: string) => setSwitching({ state: "finished", model: choice.model, ok, message, choice });
+
+    show("Starting...");
+    try {
+      const { reembedded } = await switchAiModel(
+        {
+          kind,
+          baseUrl: choice.baseUrl,
+          model: choice.model,
+          apiKeyName: choice.apiKeyName,
+          queryPrefix: choice.queryPrefix,
+          documentPrefix: choice.documentPrefix
+        },
+        (done, total) => show("Embedding the stored sections again with the new model...", done, total)
+      );
+      if (reembedded === 0) {
+        // There was no knowledge, so the default knowledge files are loaded with the new model.
+        show("Loading the default knowledge files...");
+        const loaded = await loadKnowledge((done, total) => show("Loading the default knowledge files...", done, total));
+        finish(loaded.ok, `Now using ${choice.model}. ${loaded.text}`);
+      } else {
+        finish(
+          true,
+          `Now using ${choice.model}. The knowledge was cleaned and reinserted: ${reembedded} ${reembedded === 1 ? "section was" : "sections were"} embedded again.`
+        );
+      }
+      onChanged();
+    } catch (err) {
+      finish(false, errorMessage(err, "Could not switch the model. Nothing was changed."));
+    } finally {
+      setWorking("");
+    }
+  }
+
+  const choose = (choice: Choice) =>
+    isEmbedding ? setSwitching({ state: "confirm", model: choice.model, choice }) : applyChat(choice);
 
   async function reembed() {
     setNotice(null);
@@ -278,43 +313,36 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
   );
 
   return (
-    <div className="mb-4 rounded-2xl border border-brand-100 bg-brand-50/40 p-4 shadow-sm sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 max-w-3xl">
-          <h3 className="text-base font-semibold text-stone-900">Choosing the {what} model</h3>
-          <div className="mt-1 space-y-1 text-sm text-stone-600">
-            {isEmbedding ? (
-              <p>
-                The knowledge search turns text into vectors with this model. It can be a different service from the chat;
-                when hosting in the cloud without Ollama, use an online one.{" "}
-                <span className="font-medium text-stone-800">
-                  Selecting a model cleans the stored knowledge and inserts it again with the new model
-                </span>{" "}
-                (about a minute), and is only saved when that worked.
-              </p>
-            ) : (
-              <p>
-                The model writes the answers and decides when to look things up, so it must support tool calling. An address
-                with no path, such as <span className="font-mono">http://localhost:11434</span>, is Ollama on this computer
-                (free, private, slower); one with a path is an online service (fast, but the chats are sent to it). The model
-                list can include models this key can't use, so{" "}
-                <span className="font-medium text-stone-800">Select tests the model first</span> and only switches when it
-                answers.
-              </p>
-            )}
-            <p>
-              Each online service's key goes in the server's <span className="font-mono">.env</span> file under the{" "}
-              <span className="font-medium text-stone-800">API key name</span> on its row (for example{" "}
-              <span className="font-mono">GEMINI_API_KEY</span>), then a server restart. Only the name is saved here, never the
-              key. Ollama needs no key.
-            </p>
-          </div>
-        </div>
-        {isEmbedding && (
-          <Button variant="secondary" size="sm" disabled={working !== ""} onClick={reembed}>
-            {working === "reembed" ? "Embedding the knowledge..." : "Re-embed all knowledge"}
+    <div className="mb-4 rounded-2xl border border-brand-100 bg-brand-50/40 p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-base font-semibold text-stone-900">{isEmbedding ? "Embedding" : "Chat"} model in use</h3>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            disabled={working !== "" || tourProviders.length === 0}
+            onClick={() => setTour("current")}
+            title={`Tests the ${what} models after the one in use, one by one, and stops at the first that answers`}
+          >
+            Next model
           </Button>
-        )}
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={working !== "" || tourProviders.length === 0}
+            onClick={() => setConfirmingSearch(true)}
+            title={`Tests the ${what} models from the first one, and stops at the first that answers`}
+          >
+            Search model from the beginning
+          </Button>
+          <Button variant="secondary" size="sm" disabled={working !== ""} onClick={() => setForm({ model: null })}>
+            Add {what} model
+          </Button>
+          {isEmbedding && (
+            <Button variant="secondary" size="sm" disabled={working !== ""} onClick={reembed}>
+              {working === "reembed" ? "Embedding the knowledge..." : "Re-embed all knowledge"}
+            </Button>
+          )}
+        </div>
       </div>
 
       {missingKey && (
@@ -324,16 +352,9 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
           />
         </div>
       )}
-      {working !== "" && working !== "reembed" && (
+      {working !== "" && working !== "reembed" && !isEmbedding && (
         <div className="mt-3">
-          <Alert
-            variant="warning"
-            message={
-              isEmbedding
-                ? "Embedding the knowledge with the new model. This can take a minute, please keep this page open."
-                : "Testing the model with a short question before switching. It is only used when it answers."
-            }
-          />
+          <Alert variant="warning" message="Testing the model with a short question before switching. It is only used when it answers." />
         </div>
       )}
       {notice && (
@@ -342,32 +363,13 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" disabled={working !== "" || tourProviders.length === 0} onClick={() => setTour("current")}>
-          Next model
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={working !== "" || tourProviders.length === 0}
-          onClick={() => setConfirmingSearch(true)}
-        >
-          Search model from the beginning
-        </Button>
-        <span className="self-center text-sm text-stone-500">
-          Tries the {what} models of the services we have a key for, one after another, with the response time of each.
-        </span>
-      </div>
-
-      {!current.model && (
-        <div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
+      {!current.model ? (
+        <div className="mt-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
           No {what} model is selected yet. Choose one below with View models and Select, or try Next model.
           {isEmbedding && " The knowledge files are then loaded with it."}
         </div>
-      )}
-
-      {current.model && (
-        <ul className="mt-5 rounded-xl bg-white px-4 ring-1 ring-brand-100">
+      ) : (
+        <ul className="mt-3 rounded-xl bg-white px-4 ring-1 ring-brand-100">
           <Row
             choice={inUseChoice}
             isEmbedding={isEmbedding}
@@ -396,34 +398,54 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
         </ul>
       )}
 
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-stone-700">Saved {what} models</p>
-        <Button variant="secondary" size="sm" onClick={() => setForm({ model: null })}>
-          Add {what} model
-        </Button>
-      </div>
-      {savedNotInUse.length === 0 ? (
-        <p className="mt-2 text-sm text-stone-500">
-          None yet. Add a model (its address and name), or edit a copy of a service below, to switch to it later with one
-          click.
-        </p>
-      ) : (
-        <ul className="mt-2 divide-y divide-stone-200">
-          {savedNotInUse.map((c) => (
-            <Row key={c.key} choice={c} isEmbedding={isEmbedding} isSet={isSet} inUse={false} actions={rowActions(c)} />
-          ))}
-        </ul>
-      )}
+      <details className="mt-3 text-sm text-stone-600">
+        <summary className="cursor-pointer font-medium text-brand-700">How choosing a {what} model works</summary>
+        <div className="mt-2 space-y-1">
+          {isEmbedding ? (
+            <p>
+              The knowledge search turns text into vectors with this model. It can be a different service from the chat; when
+              hosting in the cloud without Ollama, use an online one.{" "}
+              <span className="font-medium text-stone-800">
+                Selecting a model cleans the stored knowledge and inserts it again with the new model
+              </span>{" "}
+              (about a minute), and is only saved when that worked.
+            </p>
+          ) : (
+            <p>
+              The model writes the answers and decides when to look things up, so it must support tool calling. An address with
+              no path, such as <span className="font-mono">http://localhost:11434</span>, is Ollama on this computer (free,
+              private, slower); one with a path is an online service (fast, but the chats are sent to it). The model list can
+              include models this key can't use, so <span className="font-medium text-stone-800">Select tests the model first</span>{" "}
+              and only switches when it answers.
+            </p>
+          )}
+          <p>
+            Each online service's key goes in the server's <span className="font-mono">.env</span> file under the{" "}
+            <span className="font-medium text-stone-800">API key name</span> on its row (for example{" "}
+            <span className="font-mono">GEMINI_API_KEY</span>), then a server restart. Only the name is saved here, never the
+            key. Ollama needs no key. <span className="font-medium text-stone-800">Next model</span> and{" "}
+            <span className="font-medium text-stone-800">Search model from the beginning</span> try the {what} models of the
+            services we have a key for, one after another, with the response time of each, and stop at the first that answers.
+          </p>
+        </div>
+      </details>
+
+      <ModelGroup title={`Saved ${what} models`} count={savedNotInUse.length} defaultOpen={savedNotInUse.length > 0}>
+        {savedNotInUse.length === 0 ? (
+          <li className="py-3 text-sm text-stone-500">
+            None yet. Add a model (its address and name), or edit a copy of a service below, to switch to it later with one click.
+          </li>
+        ) : (
+          savedNotInUse.map((c) => <CompactRow key={c.key} choice={c} isSet={isSet} actions={rowActions(c)} />)
+        )}
+      </ModelGroup>
 
       {servicesShown.length > 0 && (
-        <>
-          <p className="mt-6 text-sm font-semibold text-stone-700">Services we can use</p>
-          <ul className="mt-2 divide-y divide-stone-200">
-            {servicesShown.map((c) => (
-              <Row key={c.key} choice={c} isEmbedding={isEmbedding} isSet={isSet} inUse={false} actions={rowActions(c)} />
-            ))}
-          </ul>
-        </>
+        <ModelGroup title="Services we can use" count={servicesShown.length}>
+          {servicesShown.map((c) => (
+            <CompactRow key={c.key} choice={c} isSet={isSet} actions={rowActions(c)} />
+          ))}
+        </ModelGroup>
       )}
 
       {tour && (
@@ -497,14 +519,8 @@ export default function ModelList({ kind, current, onChanged }: ModelListProps) 
         />
       )}
 
-      {confirming && (
-        <ConfirmDialog
-          title="Clean and reinsert the knowledge?"
-          message={`The stored knowledge will be cleaned and reinserted with ${confirming.model}: every section is embedded again, because vectors from different models can't be compared. This can take a minute. If it fails (for example a wrong key), nothing is changed.`}
-          confirmLabel="Clean, reinsert and use"
-          onConfirm={() => apply(confirming)}
-          onCancel={() => setConfirming(null)}
-        />
+      {switching && (
+        <EmbeddingSwitchDialog value={switching} onConfirm={() => switchEmbedding(switching.choice)} onClose={() => setSwitching(null)} />
       )}
     </div>
   );
@@ -559,6 +575,69 @@ function Row({ choice, isEmbedding, isSet, inUse, actions }: RowProps) {
         {choice.notes && <p className="break-words text-sm text-stone-500">{linkify(choice.notes)}</p>}
       </div>
       <div className="flex flex-wrap gap-2">{actions}</div>
+    </li>
+  );
+}
+
+// A list that can be folded away, with how many items it holds.
+function ModelGroup({
+  title,
+  count,
+  defaultOpen = false,
+  children
+}: {
+  title: string;
+  count: number;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details open={defaultOpen} className="group mt-3 rounded-xl bg-white ring-1 ring-stone-200">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-stone-700">
+        <span>
+          {title} <span className="ml-1 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">{count}</span>
+        </span>
+        <span className="text-stone-400 transition group-open:rotate-180" aria-hidden="true">
+          &#9662;
+        </span>
+      </summary>
+      <ul className="divide-y divide-stone-100 border-t border-stone-100 px-4">{children}</ul>
+    </details>
+  );
+}
+
+// One saved model or service in a short form: its name, model and key status. The address and the notes are under Details.
+function CompactRow({ choice, isSet, actions }: { choice: Choice; isSet: (keyName: string) => boolean; actions: ReactNode }) {
+  return (
+    <li className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 py-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-stone-800">
+          {choice.name}
+          {choice.apiKeyName ? (
+            isSet(choice.apiKeyName) ? (
+              <span className="ml-2 text-xs font-normal text-emerald-700">&#10003; key set</span>
+            ) : (
+              <span className="ml-2 text-xs font-normal text-amber-700">key not set in .env</span>
+            )
+          ) : isOllama(choice.baseUrl) ? (
+            <span className="ml-2 text-xs font-normal text-stone-400">no key needed</span>
+          ) : null}
+        </p>
+        <p className="break-all font-mono text-xs text-stone-500">{choice.model}</p>
+        <details className="mt-1 text-xs text-stone-500">
+          <summary className="cursor-pointer text-brand-600">Details</summary>
+          <p className="mt-1 break-all">
+            Address: <span className="font-mono">{choice.baseUrl}</span>
+          </p>
+          {choice.apiKeyName && (
+            <p>
+              API key name: <span className="font-mono">{choice.apiKeyName}</span>
+            </p>
+          )}
+          {choice.notes && <p className="mt-1 break-words">{linkify(choice.notes)}</p>}
+        </details>
+      </div>
+      <div className="flex flex-wrap gap-1">{actions}</div>
     </li>
   );
 }

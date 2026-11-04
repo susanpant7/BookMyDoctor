@@ -1,4 +1,5 @@
-import { apiFetch } from "@/shared/api/apiClient";
+import { apiFetch, ApiError } from "@/shared/api/apiClient";
+import { streamEvents } from "@/shared/api/streamClient";
 
 export type Setting = {
   key: string;
@@ -100,9 +101,26 @@ export const testAiModel = (choice: ModelChoice) =>
   apiFetch<{ milliseconds: number }>("/settings/models/test", { method: "POST", body: JSON.stringify(choice) });
 
 // Chat: tests the model, then uses it. Embedding: embeds all the knowledge with it, then uses it. On a failure
-// nothing is changed.
-export const switchAiModel = (choice: ModelChoice) =>
-  apiFetch<{ reembedded: number }>("/settings/models/use", { method: "POST", body: JSON.stringify(choice) });
+// nothing is changed. The server answers while it works, so onProgress is told how many sections are done of how many.
+export async function switchAiModel(
+  choice: ModelChoice,
+  onProgress?: (done: number, total: number) => void
+): Promise<{ reembedded: number }> {
+  let result: { reembedded: number } | null = null;
+  let failure = "";
+  await streamEvents<{ progress?: { done: number; total: number }; result?: { reembedded: number }; error?: string }>(
+    "/settings/models/use",
+    { method: "POST", body: JSON.stringify(choice) },
+    (event) => {
+      if (event.progress) onProgress?.(event.progress.done, event.progress.total);
+      if (event.result) result = event.result;
+      if (event.error) failure = event.error;
+    }
+  );
+  if (failure) throw new ApiError(502, failure);
+  if (!result) throw new ApiError(502, "The conversion was cut off. Nothing was changed. Please try again.");
+  return result;
+}
 
 export const updateSetting = (key: string, value: string) =>
   apiFetch<Setting>(`/settings/${encodeURIComponent(key)}`, { method: "PUT", body: JSON.stringify({ value }) });

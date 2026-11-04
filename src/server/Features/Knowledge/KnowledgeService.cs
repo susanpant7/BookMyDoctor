@@ -115,10 +115,24 @@ public sealed class KnowledgeService : IKnowledgeService
     // The bundled files, then the generated ones (doctors, specialties, hospital), which are skipped while no embedding
     // model is selected and so may be missing. A failure of the generated ones is logged; "Sync settings" on the
     // Knowledge page catches up.
-    public async Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(
+        CancellationToken cancellationToken = default, Func<int, int, Task>? onProgress = null)
     {
-        var results = await UploadAsync(
-            _sources.GetBundledFiles().Select(file => new UploadedFile(file.FileName, file.Text)).ToList(), cancellationToken);
+        // One file at a time, so the page can show how far it is (a file is still added or rejected as a whole).
+        var files = _sources.GetBundledFiles().Select(file => new UploadedFile(file.FileName, file.Text)).ToList();
+        var results = new List<UploadFileResult>();
+        if (onProgress is not null)
+        {
+            await onProgress(0, files.Count);
+        }
+        foreach (var file in files)
+        {
+            results.AddRange(await UploadAsync([file], cancellationToken));
+            if (onProgress is not null)
+            {
+                await onProgress(results.Count, files.Count);
+            }
+        }
         try
         {
             await SyncSettingsAsync(cancellationToken);
@@ -170,10 +184,13 @@ public sealed class KnowledgeService : IKnowledgeService
         await SyncHospitalSettingsAsync(cancellationToken);
     }
 
+    private const int ReembedBatchSize = 16;
+
     public Task<int> ReembedAllAsync(CancellationToken cancellationToken = default) =>
         ReembedAllAsync(_settings.Get(), cancellationToken);
 
-    public async Task<int> ReembedAllAsync(AiSettings settings, CancellationToken cancellationToken = default)
+    public async Task<int> ReembedAllAsync(
+        AiSettings settings, CancellationToken cancellationToken = default, Func<int, int, Task>? onProgress = null)
     {
         // The stored text is what was embedded, so every section (bundled, uploaded, written or generated) can be
         // embedded again as it is. All vectors are made first and saved together, so a failure halfway changes nothing.
@@ -183,7 +200,21 @@ public sealed class KnowledgeService : IKnowledgeService
             return 0;
         }
 
-        var vectors = await _embedder.EmbedDocumentsAsync(documents.Select(document => document.Text).ToList(), settings, cancellationToken);
+        // In batches, so the page can show how far it is. Nothing is saved before all the vectors are made.
+        var texts = documents.Select(document => document.Text).ToList();
+        var vectors = new List<float[]>(texts.Count);
+        if (onProgress is not null)
+        {
+            await onProgress(0, texts.Count);
+        }
+        foreach (var batch in texts.Chunk(ReembedBatchSize))
+        {
+            vectors.AddRange(await _embedder.EmbedDocumentsAsync(batch, settings, cancellationToken));
+            if (onProgress is not null)
+            {
+                await onProgress(vectors.Count, texts.Count);
+            }
+        }
         _store.Upsert(documents.Zip(vectors).ToList());
         _logger.LogInformation("Re-embedded {Count} knowledge sections with {Model}", documents.Count, settings.EmbeddingModel);
         return documents.Count;

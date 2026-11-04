@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MyHospitalAI.Features.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -73,9 +74,30 @@ public sealed class KnowledgeController : ControllerBase
     public async Task<ActionResult<UploadFileResult>> SaveDocument(SaveKnowledgeDocumentRequest request, CancellationToken cancellationToken) =>
         Ok(await _knowledgeService.SaveDocumentAsync(request, cancellationToken));
 
+    // Loads the starting files. It takes a while, so the answer is sent as it goes, one JSON object per line:
+    // {"progress":{"done":5,"total":37}} lines, then {"result":[…one item per file…]} or {"error":"…"}.
     [HttpPost("load-defaults")]
-    public async Task<ActionResult<IReadOnlyList<UploadFileResult>>> LoadDefaults(CancellationToken cancellationToken) =>
-        Ok(await _knowledgeService.LoadDefaultsAsync(cancellationToken));
+    public async Task LoadDefaults(CancellationToken cancellationToken)
+    {
+        Response.ContentType = "application/x-ndjson";
+        async Task Send(object line)
+        {
+            await Response.WriteAsync(JsonSerializer.Serialize(line, Json) + "\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
+
+        try
+        {
+            var results = await _knowledgeService.LoadDefaultsAsync(cancellationToken, (done, total) => Send(new { progress = new { done, total } }));
+            await Send(new { result = results });
+        }
+        catch (HttpRequestException ex)
+        {
+            await Send(new { error = ex.Message });
+        }
+    }
+
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     // Rebuilds doctor-settings.md, specialty-settings.md and hospital-settings.md from the database, e.g. after edits made while Ollama was down.
     [HttpPost("sync-settings")]

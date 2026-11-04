@@ -39,8 +39,9 @@ public sealed record SettingDefinition(
     string Key, string Label, string Description, string Value, SettingKind Kind = SettingKind.Text, double Min = 0, double Max = 0);
 
 // The starting value of every setting: what "Load default AI assistant data" saves, and what the assistant uses while
-// a setting is not saved. No chat or embedding model is selected by default (an admin chooses them on the Settings
-// page), unless the AiDefaults__ variables give starting ones (see AiDefaultsOptions).
+// a setting is not saved. The chat model starts as Groq (a free online service: its key is GROQ_API_KEY in the .env
+// file). No embedding model is selected by default: an admin chooses one on the Settings page, which also loads the
+// knowledge. The AiDefaults__ variables can give other starting ones (see AiDefaultsOptions).
 public static class SettingDefaults
 {
     private static IReadOnlyDictionary<string, string> _overrides = new Dictionary<string, string>();
@@ -93,13 +94,13 @@ public static class SettingDefaults
             "0.05", SettingKind.Number, 0, 1),
         new(SettingKeys.ChatBaseUrl, "Chat API address",
             "Where the chat model runs. Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in the .env file under the Chat API key name (restart the server after changing it). See the list of services above for the address, a model and where to get a key. Change the Chat model together with this. Applies to the next message.",
-            ""),
+            "https://api.groq.com/openai/v1"),
         new(SettingKeys.ChatModel, "Chat model",
             "The model that writes the answers and decides when to look things up, by the name the service at the Chat API address uses (e.g. qwen2.5:7b on Ollama, gemini-flash-latest on Gemini). It must support tool (function) calling. Can be changed without re-embedding anything. The assistant's rules were tested with qwen2.5:7b, so try a few questions after changing it. On Ollama, run `ollama pull <model>` first.",
-            ""),
+            "openai/gpt-oss-20b"),
         new(SettingKeys.ChatApiKeyName, "Chat API key name",
             "The name of the variable in the .env file that holds the chat service's key, e.g. GEMINI_API_KEY. Only the name is saved, never the key. Empty means the key of the service at the Chat API address. Set by Select in the list of chat models.",
-            ""),
+            "GROQ_API_KEY"),
         new(SettingKeys.EmbeddingApiKeyName, "Embedding API key name",
             "The name of the variable in the .env file that holds the embedding service's key, e.g. GEMINI_API_KEY. Only the name is saved, never the key. Empty means the key of the service at the Embedding API address. Set by Select in the list of embedding models.",
             ""),

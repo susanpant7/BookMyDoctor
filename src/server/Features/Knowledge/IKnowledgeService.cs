@@ -28,7 +28,8 @@ public interface IKnowledgeService
     Task<UploadFileResult> SaveDocumentAsync(SaveKnowledgeDocumentRequest request, CancellationToken cancellationToken = default);
 
     // Uploads the starting files shipped with the app, then builds the generated ones (doctors, specialties, hospital).
-    Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default);
+    // onProgress is told how many bundled files are done of how many (one file at a time).
+    Task<IReadOnlyList<UploadFileResult>> LoadDefaultsAsync(CancellationToken cancellationToken = default, Func<int, int, Task>? onProgress = null);
 
     // Returns how many sections were deleted. Throws ArgumentException for the generated files
     // (doctor-settings.md, specialty-settings.md, hospital-settings.md), which follow the data they are built from.
@@ -55,7 +56,8 @@ public interface IKnowledgeService
     Task<int> ReembedAllAsync(CancellationToken cancellationToken = default);
 
     // The same with the given embedding settings, before they are saved: used when switching the embedding model.
-    Task<int> ReembedAllAsync(AiSettings settings, CancellationToken cancellationToken = default);
+    // onProgress is told how many sections are done of how many, before the first batch and after each one.
+    Task<int> ReembedAllAsync(AiSettings settings, CancellationToken cancellationToken = default, Func<int, int, Task>? onProgress = null);
 
     Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(string query, int top, CancellationToken cancellationToken = default);
 }
