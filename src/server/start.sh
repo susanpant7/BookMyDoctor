@@ -31,7 +31,18 @@ export LITESTREAM_RETENTION="${LITESTREAM_RETENTION:-24h}"
 mkdir -p "$(dirname "$LITESTREAM_DB_PATH")"
 
 if [ "${LITESTREAM_RESTORE:-true}" = "true" ]; then
-  litestream restore -config /app/litestream.yml -if-db-not-exists -if-replica-exists "$LITESTREAM_DB_PATH"
+  # An empty bucket (the first deploy) can answer "NoSuchKey" instead of "no copy", which -if-replica-exists doesn't catch:
+  # then there is nothing to restore, and the app starts with a new database. Any other error stops the start, so a copy that
+  # exists but can't be read is never replaced by an empty database.
+  if ! output=$(litestream restore -config /app/litestream.yml -if-db-not-exists -if-replica-exists "$LITESTREAM_DB_PATH" 2>&1); then
+    printf '%s\n' "$output"
+    case "$output" in
+      *NoSuchKey*) echo "No copy of the database in the bucket yet: starting with a new database." ;;
+      *) exit 1 ;;
+    esac
+  elif [ -n "$output" ]; then
+    printf '%s\n' "$output"
+  fi
 else
   echo "LITESTREAM_RESTORE is false: starting without restoring the database."
 fi
