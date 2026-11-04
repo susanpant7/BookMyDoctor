@@ -1,0 +1,12 @@
+# Copies the SQLite database to a bucket (Backblaze B2, Cloudflare R2 or any S3-compatible storage) while the app runs, and start.sh
+# restores it from there when the container starts. The ${...} values come from the environment (start.sh sets the defaults).
+dbs:
+  - path: ${LITESTREAM_DB_PATH}
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: ${LITESTREAM_PATH}
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: ${LITESTREAM_REGION}
+        # How long older copies are kept. Data that was deleted can still be in them until they expire.
+        retention: ${LITESTREAM_RETENTION}

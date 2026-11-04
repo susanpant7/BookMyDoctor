@@ -67,9 +67,39 @@ The server needs only the API and its SQLite file; with online models there is n
 
 1. **Set the environment variables** (the same names as in `.env`): `Admin__Username`, `Admin__Password`, `Jwt__Key`, the key of each service you use (for example `GEMINI_API_KEY`), and `Cors__AllowedOrigins` with the client's address. Optionally `AiDefaults__ChatBaseUrl` and `AiDefaults__EmbeddingBaseUrl` so a new database starts with those models.
 2. **Start it** with the Dockerfile above (it listens on port 8080 in the container), or with `dotnet run`.
-3. **Keep the database:** mount a disk at `/app/data`. A disk that is wiped on every deploy (Render's free plan) loses the data; *Load all default data* puts the demo data back.
+3. **Keep the database:** mount a disk at `/app/data`, or use Litestream (next section). A disk that is wiped on every deploy (Render's free plan) loses the data; *Load all default data* puts the demo data back.
 
 On **Render**: a Docker web service with Root Directory empty, Dockerfile Path `./src/server/Dockerfile`, build context `.`, Health Check Path `/api/health`, the environment variables of step 1, plus `PORT=8080` (the port the API listens on in the image, so Render knows where to send the traffic) (Render can import a `.env` file), and on a paid plan a disk at `/app/data`.
+
+## Keep the data on Render's free plan (Litestream)
+
+The image can run [Litestream](https://litestream.io) around the app. It reads the changes SQLite writes to its log and copies them to a bucket about once a second. When the container starts again, the database is restored from the bucket before the app starts. The app itself does not change.
+
+1. **Make a bucket** at a provider with S3-compatible storage. **Backblaze B2** has a free 10 GB (check whether it asks for a card), and Cloudflare R2 has a free allowance but asks for a payment method. Use a bucket of its own for this app.
+   - **Backblaze B2:** Buckets, **Create a Bucket** (private). Then App Keys, **Add a New Application Key**, limited to that bucket. Note the **keyID**, the **applicationKey** (shown once) and the bucket's **S3 endpoint**, for example `s3.us-west-004.backblazeb2.com`: the region is the middle part (`us-west-004`).
+   - **Cloudflare R2:** R2, **Create bucket**, then **Manage R2 API Tokens**: a token with **Object Read & Write** for that bucket. Note the Access Key ID, the Secret Access Key and the address `https://<account id>.r2.cloudflarestorage.com`.
+2. **Set these environment variables on the server** (Render: Environment):
+
+   | Variable | Value |
+   | --- | --- |
+   | `LITESTREAM_ENABLED` | `true`. Anything else runs the app alone, as before |
+   | `LITESTREAM_BUCKET` | the bucket name |
+   | `LITESTREAM_ENDPOINT` | B2: `https://s3.<region>.backblazeb2.com`. R2: `https://<account id>.r2.cloudflarestorage.com` |
+   | `LITESTREAM_REGION` | B2: the region of the endpoint, for example `us-west-004`. R2: leave it out (default `auto`) |
+   | `LITESTREAM_ACCESS_KEY_ID` | B2: the keyID. R2: the access key id |
+   | `LITESTREAM_SECRET_ACCESS_KEY` | B2: the applicationKey. R2: the secret (a secret: only here, never in git) |
+   | `LITESTREAM_PATH` | optional, the folder in the bucket (default `myhospitalai`) |
+   | `LITESTREAM_RETENTION` | optional, how long older copies are kept (default `24h`) |
+   | `LITESTREAM_RESTORE` | optional, `false` starts with an empty database and does not restore (the old copy stays in the bucket). Set it back to `true` afterwards |
+
+3. **Deploy.** `src/server/start.sh` restores the database when the file is missing and a copy exists, then starts the app with Litestream. The log shows the restore and then the replication.
+
+Things to know:
+- **Run one copy of the app only.** Two copies writing to the same bucket path would corrupt the copy.
+- **A crash can lose the last second or so of writes.** A restore adds a few seconds to a cold start.
+- **A fresh database:** use **Settings**, **Manage App Data**, **Clean up data**. The deletion is copied too, so a restore brings back the empty state. Older copies that still hold the removed data stay in the bucket until the retention time has passed.
+- **Memory:** Litestream is small (tens of MB for a database of this size). Check Render's metrics on the 512 MB plan.
+- **Local runs** do not use it: `dotnet run` and `docker run` without `LITESTREAM_ENABLED=true` behave as before.
 
 ## Host the client on Vercel
 
