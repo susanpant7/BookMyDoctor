@@ -13,6 +13,9 @@ public static class SettingKeys
     public const string RetrievalTopK = "retrieval.top_k";
     public const string RetrievalMinScore = "retrieval.min_score";
     public const string RetrievalMaxScoreGap = "retrieval.max_score_gap";
+    public const string RetrievalFollowUpMaxWords = "retrieval.follow_up_max_words";
+    public const string RetrievalRewrite = "retrieval.rewrite_follow_ups";
+    public const string RetrievalRewritePrompt = "retrieval.rewrite_prompt";
     public const string EmbeddingBaseUrl = "embedding.base_url";
     public const string ChatBaseUrl = "chat.base_url";
     public const string ChatModel = "chat.model";
@@ -92,6 +95,15 @@ public static class SettingDefaults
         new(SettingKeys.RetrievalMaxScoreGap, "Maximum score gap",
             "Sections scoring more than this below the best match are dropped too. Scores bunch together, so weak matches otherwise still pass the minimum similarity. Set 1 to turn this off.",
             "0.05", SettingKind.Number, 0, 1),
+        new(SettingKeys.RetrievalFollowUpMaxWords, "Follow-up message length (words)",
+            "A patient message with this many words or fewer may be a follow-up that only makes sense with the earlier messages (\"does he speak Spanish?\"). Such a message is made into a complete question before the knowledge is searched (see Rewrite follow-ups). Set 0 to search every message as it is.",
+            "8", SettingKind.Integer, 0, 50),
+        new(SettingKeys.RetrievalRewrite, "Rewrite follow-ups",
+            "On: the chat model turns a short follow-up (see Follow-up message length) into one complete question, using the last messages, before the knowledge is searched, so \"does he speak Spanish?\" becomes \"Does Dr. Rai speak Spanish?\". The message itself is searched too, and the better score of each section counts. It adds a short model call to those messages, and if it fails the message is searched as it is. Off: only the message itself is searched.",
+            "true", SettingKind.Boolean),
+        new(SettingKeys.RetrievalRewritePrompt, "Rewrite prompt",
+            "The instruction for that model call. The conversation and the last message are added to it. The reply must be only the question.",
+            "Rewrite the patient's last message as one complete question for searching the hospital's information. Use the conversation only to fill in what the message leaves out, such as which doctor or topic it is about. If the message already stands alone, repeat it unchanged. Do not answer it. Reply with the question only.", SettingKind.LongText),
         new(SettingKeys.ChatBaseUrl, "Chat API address",
             "Where the chat model runs. Ollama on this computer is http://localhost:11434 (an address with no path uses Ollama's own API). An online service is its OpenAI-compatible address, e.g. https://generativelanguage.googleapis.com/v1beta/openai for Gemini; its key goes in the .env file under the Chat API key name (restart the server after changing it). See the list of services above for the address, a model and where to get a key. Change the Chat model together with this. Applies to the next message.",
             "https://api.groq.com/openai/v1"),

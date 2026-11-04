@@ -254,6 +254,8 @@ The vectors are put back in the order of `index`, turned into bytes and written 
 
 **Changing the embedding model.** Vectors of two models can't be compared, so **Select** on a new embedding model embeds every stored section again with it (from the stored `Text`), and only saves the new model when all of them worked.
 
+**Testing a conversation.** Ask a first message and then a second, and check what the second one finds. For example: "Which doctor treats skin problems?" then "does he speak Spanish?" (a follow-up, which needs the doctor from the first message), and "How do I cancel an appointment?" then "what are your visiting hours?" (a new question, which must not be pulled towards cancellations).
+
 **Testing the search on its own.** **Test a question** on the Knowledge page shows what a question would retrieve, with the scores and without the chat model:
 
 ```http
@@ -512,7 +514,26 @@ I have an itchy rash on my arm. Which doctor should I see and how much does it c
 
 **The fact check** (section 12) finds a doctor's name and two amounts in the reply. Doctor Chhaalarog Bisesagya is a real doctor, and $140 and $90 are real fees, so it passes. Had the model written "$120", the reply would have been rewritten.
 
-**Follow-up questions** such as *"does he speak Spanish?"* work because the model sees the whole recent conversation. The search itself uses only the latest message: searching with the whole conversation kept finding the previous topic.
+**Follow-up questions** such as *"does he speak Spanish?"* need the earlier messages, but searching with the whole conversation kept finding the previous topic, and the previous answers are long and pull the search back. So the search starts from the latest message, and only a **short** one (`retrieval.follow_up_max_words` words or fewer, 8 by default) with a conversation before it is rewritten first (setting `retrieval.rewrite_follow_ups`, on by default):
+
+1. The chat model gets the last 4 messages (each cut to 300 characters) and the message, with the instruction in `retrieval.rewrite_prompt`:
+
+   ```
+   Conversation:
+   Patient: Which doctor treats skin problems?
+   Assistant: Dr. Rai is our dermatologist.
+
+   Last message: does he speak Spanish?
+   ```
+
+   ```
+   Does Dr. Rai speak Spanish?
+   ```
+
+2. The rewritten question and the message itself are both searched, and a section found by both counts with its better score. A message that already stands alone comes back unchanged, so a new question is never pulled towards the previous topic.
+3. The rewrite has a 15 second limit. If it fails or the setting is off, only the message is searched. The server log has a line for each rewrite.
+
+The model still sees the whole recent conversation when it answers.
 
 ## 11. Booking a doctor
 

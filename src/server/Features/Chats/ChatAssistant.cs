@@ -60,7 +60,7 @@ public sealed class ChatAssistant : IChatAssistant
         var history = RecentHistory(_chatService.GetMessages(patientMessage.PatientId), settings.MaxHistoryMessages);
 
         // 1. Retrieve: find the knowledge chunks most related to what the patient just asked.
-        var knowledge = await RetrieveAsync(patientMessage.Text);
+        var knowledge = await RetrieveAsync(patientMessage, history, settings);
 
         // 2. Instructions for the model. Kept identical from turn to turn so the model (Ollama, or the online
         //    provider's prompt cache) can reuse its work for the start of the prompt instead of re-reading it.
@@ -191,14 +191,45 @@ public sealed class ChatAssistant : IChatAssistant
         }
     }
 
-    // Searches with the patient's latest message only. Earlier messages, and especially the assistant's long
-    // replies, would pull the search back to the previous topic. The model still sees the whole conversation,
-    // so it can resolve follow-ups like "how much does that doctor charge?".
-    private async Task<IReadOnlyList<SearchResult>> RetrieveAsync(string query)
+    // Searches with the patient's latest message. Earlier messages, and especially the assistant's long replies, would
+    // pull the search back to the previous topic, so they are not added to it. But a short message can be a follow-up
+    // that means nothing alone ("does he speak Spanish?"), so then the chat model first writes it as one complete
+    // question from the last messages (a message that stands alone comes back unchanged), and both are searched.
+    // A section found by both counts with its better score.
+    private async Task<IReadOnlyList<SearchResult>> RetrieveAsync(ChatMessage latest, IReadOnlyList<ChatMessage> history, AiSettings settings)
     {
+        var queries = new List<string> { latest.Text };
+        var earlier = history.Where(message => message.Id != latest.Id).ToList();
+        var isShort = latest.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= settings.RetrievalFollowUpMaxWords;
+        if (settings.RewriteFollowUps && isShort && earlier.Any(message => message.Sender == "patient"))
+        {
+            var rewritten = await RewriteAsync(latest.Text, earlier, settings);
+            if (rewritten is not null && !rewritten.Equals(latest.Text, StringComparison.OrdinalIgnoreCase))
+            {
+                queries.Insert(0, rewritten);
+            }
+        }
+
         try
         {
-            var results = await _retriever.SearchAsync(query);
+            var best = new Dictionary<string, SearchResult>();
+            foreach (var query in queries)
+            {
+                foreach (var result in await _retriever.SearchAsync(query))
+                {
+                    if (!best.TryGetValue(result.Document.Id, out var seen) || result.Score > seen.Score)
+                    {
+                        best[result.Document.Id] = result;
+                    }
+                }
+            }
+
+            var results = best.Values.OrderByDescending(result => result.Score).ToList();
+            if (results.Count > 0)
+            {
+                results = results.Where(result => result.Score >= results[0].Score - settings.RetrievalMaxScoreGap)
+                    .Take(settings.RetrievalTop).ToList();
+            }
             _logger.LogInformation("Retrieved {Count} knowledge chunks: {Ids}",
                 results.Count, string.Join(", ", results.Select(result => $"{result.Document.Id} ({result.Score:F3})")));
             return results;
@@ -208,6 +239,48 @@ public sealed class ChatAssistant : IChatAssistant
             // Still answer without knowledge rather than failing the whole reply.
             _logger.LogWarning(ex, "Knowledge retrieval failed; replying without it");
             return [];
+        }
+    }
+
+    private const int RewriteContextMessages = 4;
+    private const int RewriteContextChars = 300;
+    private static readonly TimeSpan RewriteTimeout = TimeSpan.FromSeconds(15);
+
+    // Asks the chat model to write the message as one complete question, from the last messages (each cut short: a
+    // reply can be long, and only its topic matters here). Null when that did not work (a failure, a timeout, or a
+    // reply that is not a question), so the message is searched as it is.
+    private async Task<string?> RewriteAsync(string text, IReadOnlyList<ChatMessage> earlier, AiSettings settings)
+    {
+        var conversation = string.Join("\n", earlier.TakeLast(RewriteContextMessages).Select(message =>
+        {
+            var shown = message.Text.Length > RewriteContextChars ? message.Text[..RewriteContextChars] + "..." : message.Text;
+            return $"{(message.Sender == "patient" ? "Patient" : "Assistant")}: {shown}";
+        }));
+        var messages = new List<ModelMessage>
+        {
+            new("system", settings.RewritePrompt),
+            new("user", $"Conversation:\n{conversation}\n\nLast message: {text}")
+        };
+
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            var reply = await _model.ChatAsync(messages, [], settings with { Temperature = 0 }, null).WaitAsync(RewriteTimeout);
+
+            // Only the first line, without quotes: the instruction asks for the question alone.
+            var question = reply.Content.Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim().Trim('"', '\'', '`') ?? "";
+            if (question.Length is 0 or > 300)
+            {
+                return null;
+            }
+
+            _logger.LogInformation("Search query rewritten in {Ms} ms: \"{Message}\" -> \"{Question}\"", clock.ElapsedMilliseconds, text, question);
+            return question;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TimeoutException)
+        {
+            _logger.LogWarning("The follow-up was not rewritten ({Error}); it is searched as it is", ex.Message);
+            return null;
         }
     }
 
