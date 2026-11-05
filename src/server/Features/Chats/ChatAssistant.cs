@@ -83,7 +83,7 @@ public sealed class ChatAssistant : IChatAssistant
         }
 
         // 4. Generate, running any tools the model asks for, until it answers with text.
-        var context = new ToolContext(patientMessage.PatientId, patientMessage.Id);
+        var context = new ToolContext(patientMessage.PatientId, patientMessage.Id, patientMessage.Text);
         var toolMessages = new List<ModelMessage>();
         var reply = await GenerateAsync(messages, context, toolMessages, draft, settings);
 
@@ -116,11 +116,15 @@ public sealed class ChatAssistant : IChatAssistant
                 reply = stillWrong.Any(problem => problem.StartsWith(ReplyFactChecker.FalseBookingProblem, StringComparison.Ordinal))
                     ? NotBookedReply
                     : settings.UncheckedReply;
+                // The free times belonged to the rejected reply, so no time buttons under the safe one.
+                context.SlotsShown = null;
             }
         }
 
         _transcripts.Save(patientMessage.PatientId, patientMessage.Id, toolMessages, settings.ToolHistoryTurns);
-        return new AssistantReply(reply ?? settings.UnavailableReply, context.SlotsShown);
+        return reply is null
+            ? new AssistantReply(settings.UnavailableReply)
+            : new AssistantReply(reply, context.SlotsShown);
     }
 
     // Calls the model, running any tools it asks for, until it answers with text. Tool calls and results are added

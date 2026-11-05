@@ -1,10 +1,11 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MyHospitalAI.Features.Appointments;
 using MyHospitalAI.Features.Doctors;
 
 namespace MyHospitalAI.Features.Chats.Tools;
 
-public sealed class GetAvailableSlotsTool : IAssistantTool
+public sealed partial class GetAvailableSlotsTool : IAssistantTool
 {
     // When the requested day is full, look this far ahead for the next free day.
     private const int SearchAheadDays = 14;
@@ -43,6 +44,15 @@ public sealed class GetAvailableSlotsTool : IAssistantTool
 
     public Task<string> RunAsync(JsonElement arguments, ToolContext context, CancellationToken cancellationToken)
     {
+        // Small models look up times as soon as a symptom is mentioned. Times are only looked up once the patient asks
+        // for them or to book, or is already choosing a time; until then the model suggests the doctor and asks.
+        if (context.PatientText is { } text && !AsksForTimes(text) && _drafts.GetOffer(context.PatientId) is null)
+        {
+            return Task.FromResult(
+                "Not looked up: the patient hasn't asked for appointment times or to book yet. Suggest the right doctor " +
+                "(with the fee) from the HOSPITAL INFORMATION, and ask whether they would like to book an appointment.");
+        }
+
         var doctor = DoctorLookup.Find(_doctorService, ToolArguments.RequiredString(arguments, "doctor"));
         var today = HospitalTime.Today(_time);
         var date = ToolArguments.OptionalDate(arguments, "date", today) ?? today;
@@ -101,6 +111,14 @@ public sealed class GetAvailableSlotsTool : IAssistantTool
             return hour >= hours.From && hour < hours.To;
         };
     }
+
+    // "Can I book?", "any free time on monday?", "when is he available", "tomorrow morning", "yes please"...
+    internal static bool AsksForTimes(string text) => TimesRequest().IsMatch(text);
+
+    [GeneratedRegex(
+        @"\b(?:book\w*|appointments?|slots?|times?|available|availability|free|schedule|reschedule|visit|see\s+(?:a|the|him|her|doctor|dr)|when|today|tonight|tomorrow|week|weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|evening|yes|yeah|yep|ok|okay|sure|please|go ahead)\b|\d{1,2}(?::\d{2})?\s*(?:am|pm)\b|\d{4}-\d{2}-\d{2}",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex TimesRequest();
 
     private static string Times(IReadOnlyList<TimeSlot> slots) =>
         $"{string.Join(", ", slots.Select(slot => ToolFormat.Time(slot.StartsAt)))} " +

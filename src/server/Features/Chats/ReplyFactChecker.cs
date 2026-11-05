@@ -213,7 +213,7 @@ public sealed partial class ReplyFactChecker
     private static partial Regex BookedWord();
 
     // The real reference format, see BookingReference.For.
-    [GeneratedRegex(@"\bBMD-[0-9A-F]{8}\b")]
+    [GeneratedRegex(@"\bMHA-[0-9A-F]{8}\b")]
     private static partial Regex BookingReferencePattern();
 
     // "reference number is 123456", "reference: AB12", "booking reference #9981".

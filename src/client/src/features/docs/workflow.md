@@ -592,6 +592,7 @@ Ollama sends the same with `arguments` as an object instead of a string. The too
 
 `GetAvailableSlotsTool.cs`:
 
+0. **Checks the patient asked for times.** Small models look up times as soon as a symptom is mentioned. So times are only looked up when the patient's message asks for them or to book ("book", "appointment", "free", "available", "when", "tomorrow", a weekday, "yes", ...), or when times were already shown to them. Otherwise the result is `Not looked up: the patient hasn't asked for appointment times or to book yet. Suggest the right doctor (with the fee) from the HOSPITAL INFORMATION, and ask whether they would like to book an appointment.`, and the model asks first.
 1. **Finds the doctor** from the full name, part of it, or the specialty in another form ("dermatologist"). An unknown name gives an error text the model can act on.
 2. **Works out the day:** "monday" becomes 2026-11-02 (small models are unreliable at dates). A day in the past is refused.
 3. **Gets the free slots**, keeping only the morning, afternoon or evening ones if `time_of_day` is given. If the day is full, it looks up to 14 days ahead.

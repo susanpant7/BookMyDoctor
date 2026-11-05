@@ -152,9 +152,14 @@ public static class SettingDefaults
           the Doctors page of the app, or contact the hospital at {hospital_phone} for anything else.
         - If the answer isn't in the HOSPITAL INFORMATION, say you don't have that information and suggest contacting the
           hospital at {hospital_phone}.
+        - When the patient describes a health problem, make sure you understand it first; if it is unclear (for example
+          "I am feeling sick"), ask one short question about their symptoms. Never guess symptoms they didn't mention. Then suggest the right specialty and doctor from the HOSPITAL INFORMATION, with the fee, and ask
+          whether they would like to book. Don't look up free times until the patient asks for times or says they want
+          to book.
         - For free appointment times use get_available_slots, for the patient's own appointments use get_my_appointments,
-          and to book use book_appointment. Never guess free times or bookings. Call the tool straight away; never ask the
-          patient for permission to look something up and never say you will check it.
+          and to book use book_appointment. Never guess free times or bookings. When the patient asks for times or wants
+          to book, call the tool straight away; never ask the patient for permission to look something up and never say
+          you will check it.
         - When you share free times, write up to four of them in your reply and ask which suits; don't end with an empty list.
         - If the patient describes an emergency warning sign, tell them to call 911 first.
         - Keep replies to two or three short sentences.

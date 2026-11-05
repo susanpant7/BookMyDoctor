@@ -2,9 +2,9 @@ using System.Text.Json;
 
 namespace MyHospitalAI.Features.Chats.Tools;
 
-// Who the tool is running for (from the signed-in patient's token, never from the model)
-// and which patient message this turn is answering.
-public sealed record ToolContext(Guid PatientId, Guid MessageId = default)
+// Who the tool is running for (from the signed-in patient's token, never from the model), which patient message this
+// turn is answering, and its text as the patient wrote it (null when not known).
+public sealed record ToolContext(Guid PatientId, Guid MessageId = default, string? PatientText = null)
 {
     // The free times looked up while answering this message (the last lookup wins), shown as buttons after the reply.
     public SlotOffer? SlotsShown { get; set; }
