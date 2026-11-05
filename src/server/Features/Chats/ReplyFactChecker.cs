@@ -179,6 +179,9 @@ public sealed partial class ReplyFactChecker
 
     private static IEnumerable<TimeOnly> TimesIn(string text) => ClockTimes(text).Select(found => found.Time);
 
+    // Whether the reply gives at least one of these times, written as 09:30, 9:30 or 9:30 AM.
+    public static bool MentionsAnyOf(string reply, IEnumerable<TimeOnly> times) => TimesIn(reply).Intersect(times).Any();
+
     private HashSet<decimal> KnownAmounts(IReadOnlyList<Doctor> doctors)
     {
         var amounts = doctors.SelectMany(doctor => new[] { doctor.ConsultationFee, doctor.FollowUpFee })

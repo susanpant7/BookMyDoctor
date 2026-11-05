@@ -112,11 +112,12 @@ public sealed partial class GetAvailableSlotsTool : IAssistantTool
         };
     }
 
-    // "Can I book?", "any free time on monday?", "when is he available", "tomorrow morning", "yes please"...
+    // "Can I book?", "any free time on monday?", "when is he available", "tomorrow morning", "yes please"... but not a
+    // symptom such as "my chest hurts when I climb stairs" or "fever for a long time".
     internal static bool AsksForTimes(string text) => TimesRequest().IsMatch(text);
 
     [GeneratedRegex(
-        @"\b(?:book\w*|appointments?|slots?|times?|available|availability|free|schedule|reschedule|visit|see\s+(?:a|the|him|her|doctor|dr)|when|today|tonight|tomorrow|week|weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|evening|yes|yeah|yep|ok|okay|sure|please|go ahead)\b|\d{1,2}(?::\d{2})?\s*(?:am|pm)\b|\d{4}-\d{2}-\d{2}",
+        @"\b(?:book\w*|appointments?|slots?|(?:free|what|which|any|other|another|earlier|later)\s+times?|times\s+(?:available|free)|available|availability|free|schedule|reschedule|visit|see\s+(?:a|the|him|her|doctor|dr)\b|when\s+(?:is|are|can|could|will|does|do)|today|tonight|tomorrow|next\s+week|this\s+week|weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|evening|yes|yeah|yep|ok|okay|sure|go\s+ahead)\b|\d{1,2}(?::\d{2})?\s*(?:am|pm)\b|\d{1,2}:\d{2}|\d{4}-\d{2}-\d{2}",
         RegexOptions.IgnoreCase)]
     private static partial Regex TimesRequest();
 

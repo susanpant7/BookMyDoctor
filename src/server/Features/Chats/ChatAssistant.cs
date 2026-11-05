@@ -21,6 +21,7 @@ public sealed class ChatAssistant : IChatAssistant
     private readonly IKnowledgeRetriever _retriever;
     private readonly IReadOnlyDictionary<string, IAssistantTool> _tools;
     private readonly ToolTranscripts _transcripts;
+    private readonly BookingDrafts _drafts;
     private readonly ReplyFactChecker _factChecker;
     private readonly TimeProvider _time;
     private readonly ILogger<ChatAssistant> _logger;
@@ -34,6 +35,7 @@ public sealed class ChatAssistant : IChatAssistant
         IKnowledgeRetriever retriever,
         IEnumerable<IAssistantTool> tools,
         ToolTranscripts transcripts,
+        BookingDrafts drafts,
         ReplyFactChecker factChecker,
         TimeProvider time,
         ILogger<ChatAssistant> logger)
@@ -46,6 +48,7 @@ public sealed class ChatAssistant : IChatAssistant
         _retriever = retriever;
         _tools = tools.ToDictionary(tool => tool.Name);
         _transcripts = transcripts;
+        _drafts = drafts;
         _factChecker = factChecker;
         _time = time;
         _logger = logger;
@@ -92,7 +95,9 @@ public sealed class ChatAssistant : IChatAssistant
         //    conversation) counts as known.
         var seenTexts = messages.Select(message => message.Content).ToList();
         IEnumerable<string> TurnToolResults() => toolMessages.Where(message => message.Role == "tool").Select(message => message.Content);
-        var problems = reply is null || !settings.FactCheck ? [] : _factChecker.FindProblems(reply, seenTexts, TurnToolResults());
+        List<string> Check(string text) =>
+            [.. _factChecker.FindProblems(text, seenTexts, TurnToolResults()), .. MissingTimesProblem(text, context.SlotsShown)];
+        var problems = reply is null || !settings.FactCheck ? [] : Check(reply);
         if (problems.Count > 0)
         {
             _logger.LogWarning("Reply failed the fact check, retrying: {Problems}", string.Join(" ", problems));
@@ -109,19 +114,27 @@ public sealed class ChatAssistant : IChatAssistant
             // The rejected draft and the correction quote the made-up facts, so they don't count as known;
             // only what was known before plus any tools called during the retry.
             seenTexts.AddRange(toolMessages.Skip(toolMessagesBeforeRetry).Select(message => message.Content));
-            if (reply is not null && _factChecker.FindProblems(reply, seenTexts, TurnToolResults()) is { Count: > 0 } stillWrong)
+            if (reply is not null && Check(reply) is { Count: > 0 } stillWrong)
             {
                 _logger.LogWarning("Reply failed the fact check again; using a safe reply instead: {Problems}", string.Join(" ", stillWrong));
-                // Never leave the patient believing they are booked when they aren't.
+                // Never leave the patient believing they are booked when they aren't. When free times were looked up,
+                // they are real, so the safe reply gives them (with the buttons); otherwise there are no buttons.
                 reply = stillWrong.Any(problem => problem.StartsWith(ReplyFactChecker.FalseBookingProblem, StringComparison.Ordinal))
                     ? NotBookedReply
-                    : settings.UncheckedReply;
-                // The free times belonged to the rejected reply, so no time buttons under the safe one.
-                context.SlotsShown = null;
+                    : context.SlotsShown is { } offer ? SlotsReply(offer) : settings.UncheckedReply;
             }
         }
 
         _transcripts.Save(patientMessage.PatientId, patientMessage.Id, toolMessages, settings.ToolHistoryTurns);
+        // No answer from the model (it kept calling tools): the free times it looked up, if any, are still worth giving.
+        reply ??= context.SlotsShown is { } looked ? SlotsReply(looked) : null;
+        // A new message hides the time buttons. When the reply talks about the times offered earlier without looking
+        // them up again ("yes" -> "which time suits you?"), they are shown again.
+        if (reply is not null && context.SlotsShown is null && _drafts.GetOffer(patientMessage.PatientId) is { } earlier &&
+            !MissingTimesProblem(reply, earlier).Any())
+        {
+            context.SlotsShown = earlier;
+        }
         return reply is null
             ? new AssistantReply(settings.UnavailableReply)
             : new AssistantReply(reply, context.SlotsShown);
@@ -165,6 +178,26 @@ public sealed class ChatAssistant : IChatAssistant
         _logger.LogWarning("Model was still calling tools after {Rounds} rounds", settings.MaxToolRounds);
         return null;
     }
+
+    // Free times were looked up for this reply, but it gives none of them (e.g. "I don't have that information" above
+    // the time buttons).
+    internal static IEnumerable<string> MissingTimesProblem(string reply, SlotOffer? offer)
+    {
+        if (offer is null || offer.Slots.Count == 0 ||
+            ReplyFactChecker.MentionsAnyOf(reply, offer.Slots.Select(slot => TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(slot.StartsAt, HospitalTime.Zone).DateTime))))
+        {
+            yield break;
+        }
+
+        yield return $"You looked up free times with {offer.DoctorName} for {offer.Date:dddd d MMMM}, but your reply doesn't give " +
+            "them. Write up to four of them and ask which time suits the patient.";
+    }
+
+    // The reply written by the server when the model's own reply can't be used but free times were looked up.
+    internal static string SlotsReply(SlotOffer offer) =>
+        $"{offer.DoctorName} is free on {offer.Date:dddd d MMMM} at " +
+        $"{string.Join(", ", offer.Slots.Take(4).Select(slot => ToolFormat.Time(slot.StartsAt)))}" +
+        $"{(offer.Slots.Count > 4 ? " and more" : "")}. Which time suits you? You can also pick one from the buttons below.";
 
     // Sent as a message from the "user" side because small models follow those more reliably than extra system text.
     internal static string FactCheckCorrection(IReadOnlyList<string> problems) => $"""
@@ -281,7 +314,7 @@ public sealed class ChatAssistant : IChatAssistant
             _logger.LogInformation("Search query rewritten in {Ms} ms: \"{Message}\" -> \"{Question}\"", clock.ElapsedMilliseconds, text, question);
             return question;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TimeoutException)
+        catch (Exception ex) when (ex is HttpRequestException or TimeoutException or TaskCanceledException)
         {
             _logger.LogWarning("The follow-up was not rewritten ({Error}); it is searched as it is", ex.Message);
             return null;

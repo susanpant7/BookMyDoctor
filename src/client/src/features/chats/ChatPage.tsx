@@ -166,7 +166,8 @@ export default function ChatPage() {
   const selectedLabel = bookingOptions?.slots.find((slot) => slot.startsAt === selectedSlot)?.label;
 
   return (
-    <main className="mx-auto flex h-[calc(100dvh-4rem)] max-w-3xl flex-col px-2 py-2 sm:px-4 sm:py-6">
+    // The page is exactly the visible screen below the navbar; only the messages scroll.
+    <main className="mx-auto flex h-[calc(100dvh-4rem)] max-w-3xl flex-col overflow-hidden px-2 py-2 sm:px-4 sm:py-6">
       <header className="flex items-center gap-3 rounded-t-2xl border border-stone-200 bg-white px-4 py-3">
         <Link
           to="/book"
@@ -206,6 +207,7 @@ export default function ChatPage() {
             <span className="typing-dot" />
           </Bubble>
         ) : null}
+        {error && <Alert message={error} />}
         {bookingOptions && (
           <div
             role="group"
@@ -215,7 +217,8 @@ export default function ChatPage() {
             <p className="text-sm font-semibold text-stone-900">
               {bookingOptions.doctorName} · {bookingOptions.day}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            {/* A whole day can have dozens of times; on a phone they scroll inside the box. */}
+            <div className="mt-3 flex max-h-32 flex-wrap gap-2 overflow-y-auto sm:max-h-none">
               {bookingOptions.slots.map((slot) => (
                 <button
                   key={slot.startsAt}
@@ -250,6 +253,8 @@ export default function ChatPage() {
           onChange={(event) => setText(event.target.value)}
           placeholder="Write a message"
           aria-label="Message"
+          // iPhones scroll the page up to make room for the keyboard and can leave it there; put it back.
+          onBlur={() => window.scrollTo({ top: 0 })}
           className="block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-stone-900 shadow-sm ring-1 ring-inset ring-stone-300 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-600"
         />
         <Button type="submit" disabled={sending || !connected || !text.trim()} aria-label="Send">
@@ -257,11 +262,6 @@ export default function ChatPage() {
           Send
         </Button>
       </form>
-      {error && (
-        <div className="mt-3">
-          <Alert message={error} />
-        </div>
-      )}
     </main>
   );
 }
