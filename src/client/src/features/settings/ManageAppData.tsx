@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Circle, LoaderCircle, X } from "lucide-react";
 import { loadDefaultDoctors } from "@/features/doctors/doctorsApi";
 import { loadDefaultKnowledge } from "@/features/knowledge/knowledgeApi";
-import { cleanUpData, restoreDefaultHospital, restoreDefaultSettings } from "@/features/settings/settingsApi";
+import { cleanUpData, clearChats, restoreDefaultHospital, restoreDefaultSettings } from "@/features/settings/settingsApi";
 import { loadDefaultSpecialties } from "@/features/specialties/specialtiesApi";
 import { loadDefaultPatients } from "@/features/users/usersApi";
 import { errorMessage } from "@/shared/api/errorMessage";
@@ -122,7 +122,7 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [steps, setSteps] = useState<Step[]>([]);
-  const [confirming, setConfirming] = useState<"all" | "cleanup" | Module | null>(null);
+  const [confirming, setConfirming] = useState<"all" | "cleanup" | "chats" | Module | null>(null);
 
   // Cleaning up or loading may have changed the knowledge.
   useEffect(() => {
@@ -156,6 +156,22 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
       setNotice("All data is cleaned up.");
     } catch (err) {
       setError(errorMessage(err, "Could not clean up the data. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeChats() {
+    setConfirming(null);
+    setError("");
+    setNotice("");
+    setSteps([]);
+    setBusy(true);
+    try {
+      const { deleted } = await clearChats();
+      setNotice(deleted === 0 ? "There were no chat messages to delete." : `Deleted ${deleted} chat ${deleted === 1 ? "message" : "messages"}.`);
+    } catch (err) {
+      setError(errorMessage(err, "Could not clear the chats. Please try again."));
     } finally {
       setBusy(false);
     }
@@ -261,6 +277,21 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
       <section className="rounded-2xl border border-red-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-2xl">
+            <h2 className="font-semibold text-red-700">Clear chats</h2>
+            <p className="mt-1 text-sm text-stone-500">
+              Deletes every patient's conversation with the assistant, and any booking a patient was in the middle of.
+              Appointments and all other data are kept. Patients start a new conversation the next time they open the chat.
+            </p>
+          </div>
+          <Button variant="danger" disabled={busy} onClick={() => setConfirming("chats")}>
+            Clear chats
+          </Button>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-red-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 max-w-2xl">
             <h2 className="font-semibold text-red-700">Clean up data</h2>
             <p className="mt-1 text-sm text-stone-500">
               Deletes all data, as on a fresh start. Your saved chat and embedding models are kept, and you stay signed in as
@@ -293,6 +324,18 @@ export default function ManageAppData({ onChanged }: { onChanged: () => void }) 
           busy={busy}
           busyLabel="Cleaning up..."
           onConfirm={cleanUp}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+
+      {confirming === "chats" && (
+        <ConfirmDialog
+          title="Clear all chats"
+          message="Delete every patient's chat messages? Appointments and all other data are kept. This cannot be undone."
+          confirmLabel="Clear chats"
+          busy={busy}
+          busyLabel="Clearing..."
+          onConfirm={removeChats}
           onCancel={() => setConfirming(null)}
         />
       )}

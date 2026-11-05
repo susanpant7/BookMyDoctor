@@ -83,6 +83,7 @@ Now everything is set up. Section 5 has more about the model settings.
 
 **Reset buttons on the Manage App Data tab.**
 
+- **Clear chats** deletes every patient's conversation with the assistant (they are saved in the database until then). Appointments and all other data are kept.
 - **Clean up data** deletes all data and settings, as on a fresh start. Our saved models are kept.
 - **Load default AI assistant data** puts the AI settings back (the chat model is Groq, no embedding model; unless the `AiDefaults__` variables in `.env` give starting ones). If that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
 

@@ -149,4 +149,11 @@ public sealed class SettingsController : ControllerBase
         await _dataCleanup.CleanUpAsync(cancellationToken);
         return NoContent();
     }
+
+    // Deletes all the chat messages; the rest of the data is kept.
+    [HttpPost("clear-chats")]
+    public async Task<ActionResult<ClearChatsResult>> ClearChats(CancellationToken cancellationToken) =>
+        Ok(new ClearChatsResult(await _dataCleanup.ClearChatsAsync(cancellationToken)));
 }
+
+public sealed record ClearChatsResult(int Deleted);

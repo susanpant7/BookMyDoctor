@@ -113,7 +113,7 @@ The database starts empty. The chat model starts as Groq (put `GROQ_API_KEY` in 
 2. **Settings → AI assistant**: choose the embedding model (*View models* and *Select* on a service, for example Cloudflare Workers AI with `CLOUDFLARE_API_KEY` and `CLOUDFLARE_ACCOUNT_ID`). Selecting the first embedding model loads the default knowledge files with it, and a dialog shows the progress. The chat model can be changed the same way (*Next model* finds one that answers). Ollama on this computer is offered only when the API runs in development, not on a server.
 3. Adjust **Settings → Hospital** and the other AI settings; changes apply to the next message.
 
-**Clean up data** deletes all data and settings, as on a fresh start (your saved models are kept). **Load default AI assistant data** resets the settings (the chat model is Groq, no embedding model; unless `AiDefaults__` variables are set); if that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
+Chats are saved in the database (`ChatMessages`); **Clear chats** deletes them all and keeps everything else. **Clean up data** deletes all data and settings, as on a fresh start (your saved models are kept). **Load default AI assistant data** resets the settings (the chat model is Groq, no embedding model; unless `AiDefaults__` variables are set); if that changes the embedding model, the stored knowledge is deleted, or embedded again with the default model.
 
 ## Chat and embedding models
 

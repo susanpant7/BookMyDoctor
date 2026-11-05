@@ -46,4 +46,19 @@ public sealed class DataCleanup
         _drafts.ClearAll();
         _transcripts.ClearAll();
     }
+
+    // Deletes every patient's chat messages, and the bookings in progress and lookups the assistant remembered for
+    // them. Everything else (appointments too) is kept. Returns how many messages were deleted.
+    public async Task<int> ClearChatsAsync(CancellationToken cancellationToken = default)
+    {
+        int deleted;
+        await using (var db = await _factory.CreateDbContextAsync(cancellationToken))
+        {
+            deleted = await db.ChatMessages.ExecuteDeleteAsync(cancellationToken);
+        }
+
+        _drafts.ClearAll();
+        _transcripts.ClearAll();
+        return deleted;
+    }
 }
