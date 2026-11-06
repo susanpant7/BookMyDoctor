@@ -18,6 +18,8 @@ public sealed class ChatAssistant : IChatAssistant
     private readonly IChatService _chatService;
     private readonly IUsersRepo _usersRepo;
     private readonly IHospitalRepo _hospitalRepo;
+    private readonly IDoctorsRepo _doctorsRepo;
+    private readonly KnowledgeSources _sources;
     private readonly IKnowledgeRetriever _retriever;
     private readonly IReadOnlyDictionary<string, IAssistantTool> _tools;
     private readonly ToolTranscripts _transcripts;
@@ -32,6 +34,8 @@ public sealed class ChatAssistant : IChatAssistant
         IChatService chatService,
         IUsersRepo usersRepo,
         IHospitalRepo hospitalRepo,
+        IDoctorsRepo doctorsRepo,
+        KnowledgeSources sources,
         IKnowledgeRetriever retriever,
         IEnumerable<IAssistantTool> tools,
         ToolTranscripts transcripts,
@@ -45,6 +49,8 @@ public sealed class ChatAssistant : IChatAssistant
         _chatService = chatService;
         _usersRepo = usersRepo;
         _hospitalRepo = hospitalRepo;
+        _doctorsRepo = doctorsRepo;
+        _sources = sources;
         _retriever = retriever;
         _tools = tools.ToDictionary(tool => tool.Name);
         _transcripts = transcripts;
@@ -63,7 +69,7 @@ public sealed class ChatAssistant : IChatAssistant
         var history = RecentHistory(_chatService.GetMessages(patientMessage.PatientId), settings.MaxHistoryMessages);
 
         // 1. Retrieve: find the knowledge chunks most related to what the patient just asked.
-        var knowledge = await RetrieveAsync(patientMessage, history, settings);
+        var knowledge = WithSpecialtyDoctors(await RetrieveAsync(patientMessage, history, settings));
 
         // 2. Instructions for the model. Kept identical from turn to turn so the model (Ollama, or the online
         //    provider's prompt cache) can reuse its work for the start of the prompt instead of re-reading it.
@@ -177,6 +183,52 @@ public sealed class ChatAssistant : IChatAssistant
 
         _logger.LogWarning("Model was still calling tools after {Rounds} rounds", settings.MaxToolRounds);
         return null;
+    }
+
+    // The retrieved text often names a specialty without its doctors ("For chest pain, book Cardiology"), and a small
+    // model then invents a doctor or a fee. So the sections of the doctors of the first specialties named (their names,
+    // fees and hours, from doctor-settings.md) are added, unless they are there already.
+    private const int MaxSpecialtiesAdded = 2;
+    private const int MaxDoctorsAdded = 3;
+
+    private IReadOnlyList<SearchResult> WithSpecialtyDoctors(IReadOnlyList<SearchResult> knowledge)
+    {
+        if (knowledge.Count == 0)
+        {
+            return knowledge;
+        }
+
+        var doctors = _doctorsRepo.GetAll();
+        var specialties = doctors.Select(doctor => doctor.Specialty).Distinct().ToList();
+        var named = knowledge
+            .SelectMany(result => specialties
+                .Select(specialty => (Specialty: specialty, Result: result, At: result.Document.Text.IndexOf(specialty, StringComparison.OrdinalIgnoreCase)))
+                .Where(found => found.At >= 0)
+                .OrderBy(found => found.At))
+            .DistinctBy(found => found.Specialty)
+            .Take(MaxSpecialtiesAdded)
+            .ToList();
+        if (named.Count == 0)
+        {
+            return knowledge;
+        }
+
+        var sections = _sources.GetDoctorSettings().ToDictionary(section => section.Id);
+        var added = named
+            .SelectMany(found => doctors
+                .Where(doctor => doctor.Specialty == found.Specialty)
+                .Select(doctor => sections.GetValueOrDefault($"{KnowledgeSources.DoctorSettingsSource}#{doctor.Id}"))
+                .OfType<KnowledgeDocument>()
+                .Select(section => new SearchResult(section, found.Result.Score)))
+            .Where(result => knowledge.All(known => known.Document.Id != result.Document.Id))
+            .Take(MaxDoctorsAdded)
+            .ToList();
+        if (added.Count > 0)
+        {
+            _logger.LogInformation("Added the doctors of {Specialties}: {Ids}",
+                string.Join(", ", named.Select(found => found.Specialty)), string.Join(", ", added.Select(result => result.Document.Id)));
+        }
+        return [.. knowledge, .. added];
     }
 
     // Free times were looked up for this reply, but it gives none of them (e.g. "I don't have that information" above
